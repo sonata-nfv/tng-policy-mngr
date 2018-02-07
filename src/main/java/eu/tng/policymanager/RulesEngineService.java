@@ -194,7 +194,6 @@ public class RulesEngineService {
                 monitoringMessageTO.getGsgid());
 
         monitoringStream.insert(monitoredComponent);
-        //kieSession.insert(monitoredComponent);
 
     }
 
