@@ -1,0 +1,6 @@
+<kmodule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xmlns="http://www.drools.org/xsd/kmodule">
+  <kbase name="GSGKnowledgeBase_gsg57bf07cbe4b0c0782e1d1637" default="true" eventProcessingMode="stream" equalsBehavior="identity" declarativeAgenda="disabled" scope="javax.enterprise.context.ApplicationScoped" packages="rules.gsg57bf07cbe4b0c0782e1d1637">
+    <ksession name="RulesEngineSession_gsg57bf07cbe4b0c0782e1d1637" type="stateful" default="false" clockType="realtime" beliefSystem="simple" scope="javax.enterprise.context.ApplicationScoped"/>
+  </kbase>
+</kmodule>

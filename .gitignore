@@ -1,0 +1,31 @@
+# Java
+*.class
+*.log
+
+# Package Files
+*.jar
+!compass*
+
+# Maven
+target/
+rules/
+
+# NetBeans
+build/
+nb-configuration.xml
+nbactions.xml
+
+# IntelliJ
+*.iml
+*.ipr
+*.iws
+.idea/
+*.bak
+
+# JRebel
+nb_jr_remoting.cfg
+rebel-remote.xml
+rebel.xml
+
+# OS X
+.DS_Store
