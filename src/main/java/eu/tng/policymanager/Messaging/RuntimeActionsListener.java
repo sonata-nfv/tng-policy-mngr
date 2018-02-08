@@ -53,7 +53,7 @@ public class RuntimeActionsListener {
 
         } else if (message.getRuleActionType().toString() == RuleActionType.COMPONENT_LIFECYCLE_MANAGEMENT.toString()) {
             activityDescription = "The component with nodeid " + message.getNodeid() + " should do " + message.getAction() + " by " + message.getValue() + " . Msg from Grounded graph ";
-            addTranscondingWorkers(message);
+            //addTranscondingWorkers(message);
         }
 
         logger.info(activityDescription);

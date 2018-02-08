@@ -1,0 +1,46 @@
+package rules.gsgpilotTranscodingService
+
+import eu.tng.policymanager.facts.*
+
+declare  MonitoredComponent 
+    @expires( 5m )
+    @role( event )
+
+end
+
+
+rule "highTranscodingRateRule"
+when
+    (
+    $tot0 := java.lang.Double( $tot0 >=150 ) from accumulate(     
+    $m0 := MonitoredComponent( name== "transcodingNode" && metric== "transcondingRate" ) over window:time(1m)from entry-point "MonitoringStream" ,
+        average( $m0.getValue() )  ) and
+    $tot1 := java.lang.Double( $tot1 >=1 ) from accumulate(     
+    $m1 := MonitoredComponent( name== "transcodingNode" && metric== "queueSize" ) over window:time(1m)from entry-point "MonitoringStream" ,
+        average( $m1.getValue() )  ) ) 
+then
+    insertLogical( new Action("pilotTranscodingService","transcodingNode",RuleActionType.COMPONENT_LIFECYCLE_MANAGEMENT,"2","infrastracture-start")); 
+
+end
+
+
+rule "lowTranscodingRateRule"
+when
+    (
+    $tot0 := java.lang.Double( $tot0 <150 ) from accumulate(     
+    $m0 := MonitoredComponent( name== "transcodingNode" && metric== "transcondingRate" ) over window:time(1m)from entry-point "MonitoringStream" ,
+        average( $m0.getValue() )  )and 
+    $tot3 := java.lang.Double( $tot3 >0 ) from accumulate(     
+    $m3 := MonitoredComponent( name== "transcodingNode" && metric== "transcondingRate" ) over window:time(1m)from entry-point "MonitoringStream" ,
+        average( $m3.getValue() )  ) and
+    $tot1 := java.lang.Double( $tot1 <3 ) from accumulate(     
+    $m1 := MonitoredComponent( name== "transcodingNode" && metric== "queueSize" ) over window:time(1m)from entry-point "MonitoringStream" ,
+        average( $m1.getValue() )  ) and  
+    $tot2 := java.lang.Double( $tot2 >=2 ) from accumulate(     
+    $m2 := MonitoredComponent( name== "transcodingNode" && metric== "activevm" ) over window:time(1m)from entry-point "MonitoringStream" ,
+        average( $m2.getValue() )  ) 
+   ) 
+then
+    insertLogical( new Action("pilotTranscodingService","transcodingNode",RuleActionType.COMPONENT_LIFECYCLE_MANAGEMENT,"2","infrastracture-stop")); 
+
+end

@@ -8,7 +8,7 @@
 
 # Maven
 target/
-rules/
+
 
 # NetBeans
 build/
