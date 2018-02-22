@@ -8,7 +8,7 @@ pipeline {
             echo 'Building..'
           }
         }
-        stage('Building tng-rep') {
+        stage('Building tng-policy-mngr') {
           steps {
             sh 'mvn clean install'
             sh 'docker build -t registry.sonata-nfv.eu:5000/tng-policy-mngr .'
@@ -23,7 +23,7 @@ pipeline {
             echo 'Publication of containers in local registry....'
           }
         }
-        stage('Publishing tng-rep') {
+        stage('Publishing tng-policy-mngr') {
           steps {
             sh 'docker push registry.sonata-nfv.eu:5000/tng-policy-mngr'
           }
