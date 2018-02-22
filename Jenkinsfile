@@ -8,11 +8,6 @@ pipeline {
             echo 'Building..'
           }
         }
-        stage('Building maven project') {
-          steps {
-            sh 'mvn clean install'
-          }
-        }
         stage('Building tng-policy-mngr') {
           steps {
             sh 'docker build -t registry.sonata-nfv.eu:5000/tng-policy-mngr .'
