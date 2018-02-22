@@ -29,7 +29,7 @@ when
     (
     $tot0 := java.lang.Double( $tot0 <150 ) from accumulate(     
     $m0 := MonitoredComponent( name== "transcodingNode" && metric== "transcondingRate" ) over window:time(1m)from entry-point "MonitoringStream" ,
-        average( $m0.getValue() )  )and 
+        average( $m0.getValue() )  ) and 
     $tot3 := java.lang.Double( $tot3 >0 ) from accumulate(     
     $m3 := MonitoredComponent( name== "transcodingNode" && metric== "transcondingRate" ) over window:time(1m)from entry-point "MonitoringStream" ,
         average( $m3.getValue() )  ) and
