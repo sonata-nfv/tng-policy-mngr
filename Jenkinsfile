@@ -7,7 +7,7 @@ pipeline {
                 sh '.pipeline/build/build.sh'
             }
         }
-        stage('Unit Tests') {
+        stage('Publish') {
            steps {
                echo 'publish to docker local registry..'
                sh '.pipeline/build/publish.sh'
