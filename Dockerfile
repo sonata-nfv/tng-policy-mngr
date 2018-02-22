@@ -6,6 +6,8 @@ ADD . /app
 
 RUN cd /app
 
+
+
 #EXPOSE 8161
 #EXPOSE 16161
 
@@ -15,5 +17,6 @@ RUN cd /app
 
 EXPOSE 8081
 
-COPY target/tng-policy-mngr-1.5.0.jar .
+RUN mvn clean install
+COPY target/tng-policy-mngr-1.5.0.jar /app/tng-policy-mngr-1.5.0.jar
 CMD ["java","-jar","tng-policy-mngr-1.5.0.jar"]
