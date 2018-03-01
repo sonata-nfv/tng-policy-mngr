@@ -12,14 +12,14 @@ end
 rule "highTranscodingRateRule"
 when
     (
-    $tot0 := java.lang.Double( $tot0 >=150 ) from accumulate(     
-    $m0 := MonitoredComponent( name== "transcodingNode" && metric== "transcondingRate" ) over window:time(1m)from entry-point "MonitoringStream" ,
+    $tot0 := java.lang.Double( $tot0 >=70 ) from accumulate(     
+    $m0 := MonitoredComponent( name== "vnf1" && metric== "CPULoad" ) over window:time(10m)from entry-point "MonitoringStream" ,
         average( $m0.getValue() )  ) and
-    $tot1 := java.lang.Double( $tot1 >=1 ) from accumulate(     
-    $m1 := MonitoredComponent( name== "transcodingNode" && metric== "queueSize" ) over window:time(1m)from entry-point "MonitoringStream" ,
+    $tot1 := java.lang.Double( $tot1 <=8 ) from accumulate(     
+    $m1 := MonitoredComponent( name== "vnf2" && metric== "RAM" ) over window:time(10m)from entry-point "MonitoringStream" ,
         average( $m1.getValue() )  ) ) 
 then
-    insertLogical( new Action("pilotTranscodingService","transcodingNode",RuleActionType.COMPONENT_LIFECYCLE_MANAGEMENT,"2","infrastracture-start")); 
+    insertLogical( new Action("pilotTranscodingService","vnf1",RuleActionType.Infrastructure,"3","ApplyFlavour")); 
 
 end
 
@@ -27,20 +27,19 @@ end
 rule "lowTranscodingRateRule"
 when
     (
-    $tot0 := java.lang.Double( $tot0 <150 ) from accumulate(     
-    $m0 := MonitoredComponent( name== "transcodingNode" && metric== "transcondingRate" ) over window:time(1m)from entry-point "MonitoringStream" ,
+    $tot0 := java.lang.Double( $tot0 < 3000 ) from accumulate(     
+    $m0 := MonitoredComponent( name== "VirtualLinkA" && metric== "EndToEndDelay" ) over window:time(10m)from entry-point "MonitoringStream" ,
         average( $m0.getValue() )  ) and 
-    $tot3 := java.lang.Double( $tot3 >0 ) from accumulate(     
-    $m3 := MonitoredComponent( name== "transcodingNode" && metric== "transcondingRate" ) over window:time(1m)from entry-point "MonitoringStream" ,
+    $tot3 := java.lang.Double( $tot3 > 60 ) from accumulate(     
+    $m3 := MonitoredComponent( name== "vnf1" && metric== "CPULoad" ) over window:time(10m)from entry-point "MonitoringStream" ,
         average( $m3.getValue() )  ) and
-    $tot1 := java.lang.Double( $tot1 <3 ) from accumulate(     
-    $m1 := MonitoredComponent( name== "transcodingNode" && metric== "queueSize" ) over window:time(1m)from entry-point "MonitoringStream" ,
-        average( $m1.getValue() )  ) and  
-    $tot2 := java.lang.Double( $tot2 >=2 ) from accumulate(     
-    $m2 := MonitoredComponent( name== "transcodingNode" && metric== "activevm" ) over window:time(1m)from entry-point "MonitoringStream" ,
-        average( $m2.getValue() )  ) 
+    $tot1 := java.lang.Double( $tot1 == 8 ) from accumulate(     
+    $m1 := MonitoredComponent( name== "vnf2" && metric== "RAM" ) over window:time(10m)from entry-point "MonitoringStream" ,
+        average( $m1.getValue() )  ) 
    ) 
 then
-    insertLogical( new Action("pilotTranscodingService","transcodingNode",RuleActionType.COMPONENT_LIFECYCLE_MANAGEMENT,"2","infrastracture-stop")); 
+    insertLogical( new Action("pilotTranscodingService","VirtualLinkA",RuleActionType.NetworkMechanism,"200","ProvideDedicatedBandwidth")); 
+    insertLogical( new Action("pilotTranscodingService","vnf1",RuleActionType.LifecycleManagement,"200","restart")); 
+    insertLogical( new Action("pilotTranscodingService","vnf1",RuleActionType.Profile,"Green","setProfile")); 
 
 end
