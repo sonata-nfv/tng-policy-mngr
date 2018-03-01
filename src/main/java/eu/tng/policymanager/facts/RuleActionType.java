@@ -14,5 +14,9 @@ public enum RuleActionType {
     COMPONENT_CONFIGURATION,
     VIRTUAL_FUNCTION,
     IAAS_MANAGEMENT,
-    ALERT_MESSAGE
+    ALERT_MESSAGE,
+    Infrastructure,
+    NetworkMechanism,
+    LifecycleManagement,
+    Profile
 }
