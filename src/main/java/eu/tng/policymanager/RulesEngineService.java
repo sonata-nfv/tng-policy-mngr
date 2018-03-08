@@ -25,8 +25,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
-import javax.jms.Message;
-import javax.jms.Topic;
+//import javax.jms.Message;
+//import javax.jms.Topic;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.kie.api.KieServices;
@@ -48,7 +48,10 @@ import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.conf.ClockTypeOption;
 import org.kie.api.runtime.rule.EntryPoint;
 import org.kie.internal.io.ResourceFactory;
-import org.springframework.jms.core.JmsTemplate;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
+//import org.springframework.jms.core.JmsTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Service
@@ -67,11 +70,17 @@ public class RulesEngineService {
 
     private final KieUtil kieUtil;
 
+//    @Autowired
+//    JmsTemplate jmsTemplate;
+//
+//    @Autowired
+//    Topic runtimeActionsTopic;
     @Autowired
-    JmsTemplate jmsTemplate;
+    private RabbitTemplate template;
 
+    @Qualifier("hello")
     @Autowired
-    Topic runtimeActionsTopic;
+    private Queue queue;
 
     @Autowired
     public RulesEngineService(KieUtil kieUtil) {
@@ -86,7 +95,7 @@ public class RulesEngineService {
     //fireAllRules every 5 minutes 1min== 60000
     @Scheduled(fixedRate = 60000)
     public void fireAllRulesOfRecommendationEngine() {
-        
+
         logger.info("Search for actions");
 
         String factSessionName = "RulesEngineSession_gsgpilotTranscodingService";
@@ -98,28 +107,31 @@ public class RulesEngineService {
 
             for (Action doaction : doactions) {
 
+                //note conf param is missing
+                ExpertSystemMessage expertSystemMessage = new ExpertSystemMessage();
+                expertSystemMessage.setRuleActionType(doaction.getRuleActionType());
+                expertSystemMessage.setAction(doaction.getAction());
+                expertSystemMessage.setGgid(doaction.getGsgid());
+                expertSystemMessage.setValue(String.valueOf(doaction.getValue()));
+
+                expertSystemMessage.setNodeid(doaction.getNodeid());
+                expertSystemMessage.setGname("pilotTranscodingService");
+
+                expertSystemMessage.setUsername("tngpolicymanager");
+
                 logger.info("Action Ready to send it to Pub/Sub to RUNTIME_ACTIONS_TOPIC:  " + doaction.toString());
-                jmsTemplate.setTimeToLive(1200000);
-                jmsTemplate.send(runtimeActionsTopic, (session) -> {
 
-                    //note conf param is missing
-                    ExpertSystemMessage expertSystemMessage = new ExpertSystemMessage();
-                    expertSystemMessage.setRuleActionType(doaction.getRuleActionType());
-                    expertSystemMessage.setAction(doaction.getAction());
-                    expertSystemMessage.setGgid(doaction.getGsgid());
-                    expertSystemMessage.setValue(String.valueOf(doaction.getValue()));
+                template.convertAndSend(queue.getName(), expertSystemMessage);
+                System.out.println(" [x] Sent '" + expertSystemMessage + "'");
 
-                    expertSystemMessage.setNodeid(doaction.getNodeid());
-                    expertSystemMessage.setGname("pilotTranscodingService");
-
-                    expertSystemMessage.setUsername("tngpolicymanager");
-
-                    Message m = session.createObjectMessage(expertSystemMessage);
-                    m.setStringProperty("context", "runtime_action");
-
-                    return m;
-                });
-
+//                jmsTemplate.setTimeToLive(1200000);
+//                jmsTemplate.send(runtimeActionsTopic, (session) -> {
+//
+//                    Message m = session.createObjectMessage(expertSystemMessage);
+//                    m.setStringProperty("context", "runtime_action");
+//
+//                    return m;
+//                });
             }
 
         }
@@ -270,7 +282,6 @@ public class RulesEngineService {
 //            throw new RuntimeException("Failed to load drools resource file.", e);
 //        }
 //    }
-
     public String mapActionType(String actionType) {
         String enumedActionType;
 
@@ -368,20 +379,23 @@ public class RulesEngineService {
 
         if (null != doaction) {
 
-            jmsTemplate.send(runtimeActionsTopic, (session) -> {
+            ExpertSystemMessage expertSystemMessage = new ExpertSystemMessage();
+            expertSystemMessage.setAction(doaction.getAction().getRuleActionType().toString());
+            expertSystemMessage.setValue(String.valueOf(doaction.getAction().getValue()));
+            expertSystemMessage.setGgid(doaction.getMonitoredComponent().getGroundedGraphid());
+            expertSystemMessage.setCid(doaction.getMonitoredComponent().getName());
+            expertSystemMessage.setValue(String.valueOf(doaction.getAction().getValue()));
 
-                ExpertSystemMessage expertSystemMessage = new ExpertSystemMessage();
-                expertSystemMessage.setAction(doaction.getAction().getRuleActionType().toString());
-                expertSystemMessage.setValue(String.valueOf(doaction.getAction().getValue()));
-                expertSystemMessage.setGgid(doaction.getMonitoredComponent().getGroundedGraphid());
-                expertSystemMessage.setCid(doaction.getMonitoredComponent().getName());
-                expertSystemMessage.setValue(String.valueOf(doaction.getAction().getValue()));
+            template.convertAndSend(queue.getName(), expertSystemMessage);
+            System.out.println(" [x] Sent '" + expertSystemMessage + "'");
 
-                Message m = session.createObjectMessage(expertSystemMessage);
-                m.setStringProperty("context", "runtime_action");
-
-                return m;
-            });
+//            jmsTemplate.send(runtimeActionsTopic, (session) -> {
+//
+//                Message m = session.createObjectMessage(expertSystemMessage);
+//                m.setStringProperty("context", "runtime_action");
+//
+//                return m;
+//            });
         }
 
         return doaction;
