@@ -5,7 +5,6 @@
  */
 package eu.tng.policymanager;
 
-import com.google.common.io.Resources;
 import eu.tng.policymanager.facts.RuleActionType;
 import eu.tng.policymanager.Messaging.ExpertSystemMessage;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
@@ -14,7 +13,6 @@ import eu.tng.policymanager.facts.DoActionToComponent;
 import eu.tng.policymanager.facts.MonitoredComponent;
 import eu.tng.policymanager.rules.generation.KieUtil;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,9 +23,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
-//import javax.jms.Message;
-//import javax.jms.Topic;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
@@ -43,8 +38,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.kie.api.builder.ReleaseId;
 import org.kie.api.conf.EventProcessingOption;
-import org.kie.api.io.Resource;
-import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.conf.ClockTypeOption;
 import org.kie.api.runtime.rule.EntryPoint;
 import org.kie.internal.io.ResourceFactory;
@@ -70,15 +63,10 @@ public class RulesEngineService {
 
     private final KieUtil kieUtil;
 
-//    @Autowired
-//    JmsTemplate jmsTemplate;
-//
-//    @Autowired
-//    Topic runtimeActionsTopic;
     @Autowired
     private RabbitTemplate template;
 
-    @Qualifier("hello")
+    @Qualifier("runtimeActionsQueue")
     @Autowired
     private Queue queue;
 
@@ -124,14 +112,6 @@ public class RulesEngineService {
                 template.convertAndSend(queue.getName(), expertSystemMessage);
                 System.out.println(" [x] Sent '" + expertSystemMessage + "'");
 
-//                jmsTemplate.setTimeToLive(1200000);
-//                jmsTemplate.send(runtimeActionsTopic, (session) -> {
-//
-//                    Message m = session.createObjectMessage(expertSystemMessage);
-//                    m.setStringProperty("context", "runtime_action");
-//
-//                    return m;
-//                });
             }
 
         }
@@ -272,16 +252,6 @@ public class RulesEngineService {
 
     }
 
-//    private Resource getResource(KieServices kieServices, String resourcePath) {
-//        try {
-//            InputStream is = Resources.getResource(resourcePath).openStream(); //guava
-//            return kieServices.getResources()
-//                    .newInputStreamResource(is)
-//                    .setResourceType(ResourceType.DRL);
-//        } catch (IOException e) {
-//            throw new RuntimeException("Failed to load drools resource file.", e);
-//        }
-//    }
     public String mapActionType(String actionType) {
         String enumedActionType;
 
@@ -389,13 +359,6 @@ public class RulesEngineService {
             template.convertAndSend(queue.getName(), expertSystemMessage);
             System.out.println(" [x] Sent '" + expertSystemMessage + "'");
 
-//            jmsTemplate.send(runtimeActionsTopic, (session) -> {
-//
-//                Message m = session.createObjectMessage(expertSystemMessage);
-//                m.setStringProperty("context", "runtime_action");
-//
-//                return m;
-//            });
         }
 
         return doaction;

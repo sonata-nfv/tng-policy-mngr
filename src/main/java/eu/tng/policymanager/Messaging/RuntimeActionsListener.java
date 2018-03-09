@@ -1,43 +1,21 @@
 package eu.tng.policymanager.Messaging;
 
 import eu.tng.policymanager.facts.RuleActionType;
-import eu.tng.policymanager.RulesEngineApp;
 import java.util.logging.Level;
-
 import org.springframework.stereotype.Component;
-
 import java.util.logging.Logger;
-import org.springframework.amqp.rabbit.annotation.RabbitHandler;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-///import org.springframework.jms.annotation.JmsListener;
-import org.springframework.web.client.RestTemplate;
 
 @Component
-//@RabbitListener(queues = "hello")
 public class RuntimeActionsListener {
 
-
-    @Value("${transcodingserver.url}")
-    private String TRANSCODING_SERVER_URL;
-
-    //@Autowired
-    //OpenStackAdapter openStackAdapter;
     /**
      * Instead of just using the annotation here, we can configure a
      * DefaultMessageListenerContainer which has more features.
      */
     private static final Logger logger = Logger.getLogger(RuntimeActionsListener.class.getName());
 
-//    @JmsListener(destination = RulesEngineApp.RUNTIME_ACTIONS_TOPIC, containerFactory = "myJmsContainerFactory",
-//            selector = "context = 'runtime_action'" /*, concurrency="5-10"*/
-//    /*, subscription="durable"*/
-//    )
-    //@RabbitHandler
     public void expertSystemMessageReceived(ExpertSystemMessage message) {
 
-        //logger.log(Level.INFO, "Receive to RUNTIME_ACTIONS_TOPIC action for ggid{0} and nodeid {1} with proposed action type {2} and value {3}", new Object[]{message.getGgid(), message.getNodeid(), message.getRuleActionType(), message.getValue()});
         logger.log(Level.INFO, "ExpertSystemMessageTO   is like this " + message.toString());
 
         String activityDescription = "";
@@ -62,7 +40,5 @@ public class RuntimeActionsListener {
 
         logger.info(activityDescription);
     }
-
-
 
 }

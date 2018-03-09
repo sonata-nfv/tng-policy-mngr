@@ -3,7 +3,6 @@ package eu.tng.policymanager;
 import eu.tng.policymanager.Messaging.MonitoringListener;
 import eu.tng.policymanager.Messaging.RuntimeActionsListener;
 import eu.tng.policymanager.config.DroolsConfig;
-import java.util.ArrayList;
 
 import java.util.Arrays;
 //import javax.jms.ConnectionFactory;
@@ -31,6 +30,7 @@ import org.springframework.context.annotation.Import;
 //import org.springframework.jms.config.SimpleJmsListenerContainerFactory;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
@@ -53,14 +53,13 @@ public class RulesEngineApp {
 
     private static Logger log = LoggerFactory.getLogger(RulesEngineApp.class);
 
-    public static final String POLICY_ENFORCEMENT_TOPIC = "eu.tng.policy.enforcement";
-    public static final String RUNTIME_ACTIONS_TOPIC = "eu.tng.runtime.actions";
-    final static String queueName = "hello";
+    public static final String RUNTIME_ACTIONS_QUEUE = "eu.tng.policy.runtime.actions";
+    //final static String queueName = "hello";
     final static String monitoringqueue = "son.monitoring.policy";
 
-    static {
-        System.setProperty("org.apache.activemq.SERIALIZABLE_PACKAGES", "eu.tng.policymanager,java.util,java.lang");
-    }
+//    static {
+//        System.setProperty("org.apache.activemq.SERIALIZABLE_PACKAGES", "eu.tng.policymanager,java.util,java.lang");
+//    }
 
     public static void main(String[] args) {
         ApplicationContext ctx = SpringApplication.run(RulesEngineApp.class, args);
@@ -77,8 +76,8 @@ public class RulesEngineApp {
 //        return factory;
 //    }
     @Bean
-    public Queue hello() {
-        return new Queue("hello");
+    public Queue runtimeActionsQueue() {
+        return new Queue(RUNTIME_ACTIONS_QUEUE);
     }
 
     @Bean
@@ -88,7 +87,7 @@ public class RulesEngineApp {
 
     @Bean
     Binding binding1(TopicExchange exchange) {
-        return BindingBuilder.bind(hello()).to(exchange).with(hello().getName());
+        return BindingBuilder.bind(runtimeActionsQueue()).to(exchange).with(runtimeActionsQueue().getName());
     }
 
     @Qualifier("container1")
@@ -97,7 +96,7 @@ public class RulesEngineApp {
             @Qualifier("listenerAdapter1") MessageListenerAdapter listenerAdapter) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        container.setQueueNames(queueName);
+        container.setQueueNames(RUNTIME_ACTIONS_QUEUE);
         container.setMessageListener(listenerAdapter);
         return container;
     }
@@ -122,7 +121,14 @@ public class RulesEngineApp {
     @Qualifier("listenerAdapter2")
     @Bean
     MessageListenerAdapter listenerAdapter2(MonitoringListener receiver) {
-        return new MessageListenerAdapter(receiver, "monitoringAlertReceived");
+        MessageListenerAdapter msgadapter = new MessageListenerAdapter(receiver, "monitoringAlertReceived");
+        msgadapter.setMessageConverter(converter());
+        return msgadapter;
+    }
+    
+     @Bean
+    public Jackson2JsonMessageConverter converter() {
+        return new Jackson2JsonMessageConverter();
     }
 
     @Qualifier("container2")
@@ -135,14 +141,5 @@ public class RulesEngineApp {
         container.setMessageListener(listenerAdapter);
         return container;
     }
-
-//    @Bean
-//    public Topic policyEnforcementTopic() {
-//        return new ActiveMQTopic(POLICY_ENFORCEMENT_TOPIC);
-//    }
-//
-//    @Bean
-//    public Topic runtimeActionsTopic() {
-//        return new ActiveMQTopic(RUNTIME_ACTIONS_TOPIC);
-//    }
+    
 }
