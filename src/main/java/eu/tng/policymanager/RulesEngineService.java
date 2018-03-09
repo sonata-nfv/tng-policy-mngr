@@ -5,7 +5,6 @@
  */
 package eu.tng.policymanager;
 
-import com.google.common.io.Resources;
 import eu.tng.policymanager.facts.RuleActionType;
 import eu.tng.policymanager.Messaging.ExpertSystemMessage;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
@@ -14,7 +13,8 @@ import eu.tng.policymanager.facts.DoActionToComponent;
 import eu.tng.policymanager.facts.MonitoredComponent;
 import eu.tng.policymanager.rules.generation.KieUtil;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
-import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,11 +24,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
-import javax.jms.Message;
-import javax.jms.Topic;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.json.JSONObject;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
@@ -43,19 +42,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.kie.api.builder.ReleaseId;
 import org.kie.api.conf.EventProcessingOption;
-import org.kie.api.io.Resource;
-import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.conf.ClockTypeOption;
 import org.kie.api.runtime.rule.EntryPoint;
 import org.kie.internal.io.ResourceFactory;
-import org.springframework.jms.core.JmsTemplate;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
+//import org.springframework.jms.core.JmsTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.yaml.snakeyaml.Yaml;
 
 @Service
 public class RulesEngineService {
 
     private static final Logger logger = Logger.getLogger(RulesEngineService.class.getName());
     private static final String rulesPackage = "rules";
+    private static final String current_dir = System.getProperty("user.dir");
     ReleaseId releaseId = KieServices.Factory.get().newReleaseId("eu.tng", "policymanager", "1.0");
 
     private final KieServices kieServices;
@@ -68,10 +70,11 @@ public class RulesEngineService {
     private final KieUtil kieUtil;
 
     @Autowired
-    JmsTemplate jmsTemplate;
+    private RabbitTemplate template;
 
+    @Qualifier("runtimeActionsQueue")
     @Autowired
-    Topic runtimeActionsTopic;
+    private Queue queue;
 
     @Autowired
     public RulesEngineService(KieUtil kieUtil) {
@@ -86,7 +89,7 @@ public class RulesEngineService {
     //fireAllRules every 5 minutes 1min== 60000
     @Scheduled(fixedRate = 60000)
     public void fireAllRulesOfRecommendationEngine() {
-        
+
         logger.info("Search for actions");
 
         String factSessionName = "RulesEngineSession_gsgpilotTranscodingService";
@@ -98,27 +101,22 @@ public class RulesEngineService {
 
             for (Action doaction : doactions) {
 
+                //note conf param is missing
+                ExpertSystemMessage expertSystemMessage = new ExpertSystemMessage();
+                expertSystemMessage.setRuleActionType(doaction.getRuleActionType());
+                expertSystemMessage.setAction(doaction.getAction());
+                expertSystemMessage.setGgid(doaction.getGsgid());
+                expertSystemMessage.setValue(String.valueOf(doaction.getValue()));
+
+                expertSystemMessage.setNodeid(doaction.getNodeid());
+                expertSystemMessage.setGname("pilotTranscodingService");
+
+                expertSystemMessage.setUsername("tngpolicymanager");
+
                 logger.info("Action Ready to send it to Pub/Sub to RUNTIME_ACTIONS_TOPIC:  " + doaction.toString());
-                jmsTemplate.setTimeToLive(1200000);
-                jmsTemplate.send(runtimeActionsTopic, (session) -> {
 
-                    //note conf param is missing
-                    ExpertSystemMessage expertSystemMessage = new ExpertSystemMessage();
-                    expertSystemMessage.setRuleActionType(doaction.getRuleActionType());
-                    expertSystemMessage.setAction(doaction.getAction());
-                    expertSystemMessage.setGgid(doaction.getGsgid());
-                    expertSystemMessage.setValue(String.valueOf(doaction.getValue()));
-
-                    expertSystemMessage.setNodeid(doaction.getNodeid());
-                    expertSystemMessage.setGname("pilotTranscodingService");
-
-                    expertSystemMessage.setUsername("tngpolicymanager");
-
-                    Message m = session.createObjectMessage(expertSystemMessage);
-                    m.setStringProperty("context", "runtime_action");
-
-                    return m;
-                });
+                template.convertAndSend(queue.getName(), expertSystemMessage);
+                System.out.println(" [x] Sent '" + expertSystemMessage + "'");
 
             }
 
@@ -260,17 +258,6 @@ public class RulesEngineService {
 
     }
 
-//    private Resource getResource(KieServices kieServices, String resourcePath) {
-//        try {
-//            InputStream is = Resources.getResource(resourcePath).openStream(); //guava
-//            return kieServices.getResources()
-//                    .newInputStreamResource(is)
-//                    .setResourceType(ResourceType.DRL);
-//        } catch (IOException e) {
-//            throw new RuntimeException("Failed to load drools resource file.", e);
-//        }
-//    }
-
     public String mapActionType(String actionType) {
         String enumedActionType;
 
@@ -296,103 +283,12 @@ public class RulesEngineService {
         return enumedActionType;
     }
 
-    // Following functions are used only by unit tests - is code to get cleared
-    /**
-     * Search the {@link KieSession} for bus passes.
-     */
-    private DoActionToComponent findDoAction(KieSession kieSession) {
-
-        // Find all DoAction facts and 1st generation child classes of DoAction.
-        ObjectFilter doActionFilter = new ObjectFilter() {
-            @Override
-            public
-                    boolean accept(Object object) {
-                if (DoActionToComponent.class
-                        .equals(object.getClass())) {
-
-                    return true;
-                }
-
-                if (DoActionToComponent.class
-                        .equals(object.getClass().getSuperclass())) {
-
-                    return true;
-                }
-                return false;
-            }
-        };
-        System.out.println("------New FACT----------");
-        printFactsMessage(kieSession);
-
-        List<DoActionToComponent> facts = new ArrayList<DoActionToComponent>();
-
-        for (FactHandle handle : kieSession.getEntryPoint("MonitoringStream").getFactHandles(doActionFilter)) {
-            facts.add((DoActionToComponent) kieSession.getObject(handle));
-        }
-        if (facts.size() == 0) {
-            System.out.println("There are no facts at working memory");
-            return null;
-        }
-        // Assumes that the rules will always be generating a single doaction. 
-        return facts.get(0);
-    }
-
-    /**
-     * create a new Fact insert a MonitoredComponent's details and fire rules to
-     * determine what kind of runtime action is to be issued.
-     *
-     * @param monitoredComponent
-     * @return
-     */
-    public DoActionToComponent getDoAction(MonitoredComponent monitoredComponent) {
-
-        String factKnowledgebase = "GSGKnowledgeBase_" + monitoredComponent.getGroundedGraphid();
-        String factSessionName = "RulesEngineSession_" + monitoredComponent.getGroundedGraphid();
-
-        Collection<String> kiebases = kieContainer.getKieBaseNames();
-
-        if (!kiebases.contains(factKnowledgebase)) {
-            logger.log(java.util.logging.Level.WARNING, "Missing Knowledge base {0}", factKnowledgebase);
-            return null;
-        }
-
-        KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
-
-        System.out.println("kiesessin info" + kieSession.getEntryPointId());
-
-        EntryPoint monitoringStream = kieSession.getEntryPoint("MonitoringStream");
-
-        monitoringStream.insert(monitoredComponent);
-
-        DoActionToComponent doaction = findDoAction(kieSession);
-
-        if (null != doaction) {
-
-            jmsTemplate.send(runtimeActionsTopic, (session) -> {
-
-                ExpertSystemMessage expertSystemMessage = new ExpertSystemMessage();
-                expertSystemMessage.setAction(doaction.getAction().getRuleActionType().toString());
-                expertSystemMessage.setValue(String.valueOf(doaction.getAction().getValue()));
-                expertSystemMessage.setGgid(doaction.getMonitoredComponent().getGroundedGraphid());
-                expertSystemMessage.setCid(doaction.getMonitoredComponent().getName());
-                expertSystemMessage.setValue(String.valueOf(doaction.getAction().getValue()));
-
-                Message m = session.createObjectMessage(expertSystemMessage);
-                m.setStringProperty("context", "runtime_action");
-
-                return m;
-            });
-        }
-
-        return doaction;
-    }
-
     private void loadRulesFromFile() {
         logger.info("Loading Rules from File to production memory");
         String knowledgebasename = "gsgpilotTranscodingService";
         String drlPath4deployment = "/rules/gsgpilotTranscodingService/gsgpilotTranscodingService.drl";
         try {
-            String current_dir = System.getProperty("user.dir");
+
             Path policyPackagePath = Paths.get(current_dir + "/" + RULESPACKAGE + "/" + knowledgebasename);
             String data = "";
             //1st add default rules
@@ -415,8 +311,9 @@ public class RulesEngineService {
 
         String ret = "";
         try {
+            //InputStream inputstream = this.getClass().getResourceAsStream("/rules/gsgpilotTranscodingService/gsgpilotTranscodingService.drl");
+            InputStream inputstream = new FileInputStream(current_dir + "/rules/gsgpilotTranscodingService/gsgpilotTranscodingService.drl");
 
-            InputStream inputstream = this.getClass().getResourceAsStream("/rules/gsgpilotTranscodingService/gsgpilotTranscodingService.drl");
             ret = IOUtils.toString(inputstream, "UTF-8");
 
         } //EoM  
@@ -424,6 +321,56 @@ public class RulesEngineService {
             Logger.getLogger(RulesEngineService.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         return ret;
+    }
+
+    public boolean savePolicyDescriptor(String policyDescriptor) {
+        FileOutputStream out = null;
+        try {
+
+            JSONObject runtimedescriptor = new JSONObject(policyDescriptor);
+            String policyname = runtimedescriptor.getString("name");
+
+            String drlPath4deployment = "/policy_descriptors/" + policyname + ".yml";
+            out = new FileOutputStream(current_dir + "/" + drlPath4deployment);
+            out.write(jsonToYaml(runtimedescriptor).getBytes());
+            out.close();
+
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(RulesEngineService.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(RulesEngineService.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } finally {
+            try {
+                out.close();
+            } catch (IOException ex) {
+                Logger.getLogger(RulesEngineService.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            }
+        }
+        return true;
+    }
+
+    public boolean deletePolicyDescriptor(String policyDescriptorname) {
+        try {
+            Path policyDescriptorPath = Paths.get(current_dir + "/policy_descriptors/" + policyDescriptorname + ".yml");
+            Files.delete(policyDescriptorPath);
+
+        } catch (IOException ex) {
+            Logger.getLogger(RulesEngineService.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        return true;
+    }
+
+    private String jsonToYaml(JSONObject jsonobject) {
+        Yaml yaml = new Yaml();
+
+        // get json string
+        String prettyJSONString = jsonobject.toString(4);
+        // mapping
+        Map<String, Object> map = (Map<String, Object>) yaml.load(prettyJSONString);
+        // convert to yaml string (yaml formatted string)
+        String output = yaml.dump(map);
+        //logger.info(output);
+        return output;
     }
 
 }//EoC
