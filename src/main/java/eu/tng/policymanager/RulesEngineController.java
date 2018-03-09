@@ -1,6 +1,7 @@
 package eu.tng.policymanager;
 
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
+import org.json.JSONObject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,19 @@ public class RulesEngineController {
 
         return true;
 
+    }
+
+    @RequestMapping(value = "/savePolicyDescriptor", method = RequestMethod.POST)
+    public boolean savePolicyDescriptor(@RequestBody String tobject) {
+        rulesEngineService.savePolicyDescriptor(tobject);
+        return true;
+    }
+
+    @RequestMapping(value = "/deletePolicyDescriptor", method = RequestMethod.POST)
+    public boolean deletePolicyDescriptor(@RequestBody String policynamejson) {
+        JSONObject policyname = new JSONObject(policynamejson);
+        rulesEngineService.deletePolicyDescriptor(policyname.getString("policyname"));
+        return true;
     }
 
 }

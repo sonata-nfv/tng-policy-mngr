@@ -73,6 +73,12 @@
             <artifactId>guava</artifactId>
             <version>r05</version>
         </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.20</version>
+        </dependency>
+
     </dependencies>
     <build>
         <pluginManagement>
