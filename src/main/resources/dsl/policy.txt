@@ -1,0 +1,23 @@
+policytest
+parentpolicyengine:otherpolicytest
+parentpolicyengine:otherpolicytest
+
+policyruleunoPEP
+priority 1
+inertia 30m
+when:
+(event{"subject":"component","predicate":"hasvalue","object":"test"} > 3 over window:time(10m) aggr:avg) OR ((event{"subject":"component","predicate":"hasvalue","object":7} > 3) AND ((event{"subject":"component","predicate":"hasvalue","object":"test"} > 3) OR (event{"subject":"component","predicate":"hasvalue","object":"test"} < 6)))
+then:
+event{"subject":"component","predicate":"hasvalue","object":"test"} 
+action{id:actionid,type:horizontalscale,value:30} target{id:targetid} action{id:actionid,type:horizontalscale,value:30} target{id:targetid} 
+action{id:actionid,type:lifecycle,value:restart} target{id:targetid}
+action{id:actionid,type:verticalscaleVCPU,value:-1} target{id:targetid}
+action{id:actionid,type:componentconf} target{id:targetid,type:attribute,value:100}
+action{id:actionid,type:log,value:messagetext} target{id:targetid}
+
+policyruledosPVP
+priority 1
+when:
+event{"subject":"targetid","predicate":"hasAppliedAction","object":"actionid"} = actionid AND event{"subject":"component","predicate":"hasvalue","object":"test"} > 60 over window:time(10m) aggr:avg
+then:
+action{id:actionid,type:log,value:actionissuccesfullyapplied} target{id:targetid}

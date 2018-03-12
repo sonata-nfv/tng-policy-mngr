@@ -1,8 +1,10 @@
 package eu.tng.policymanager;
 
+import eu.tng.policymanager.Gpolicy.Gpolicy;
 import eu.tng.policymanager.Messaging.MonitoringListener;
 import eu.tng.policymanager.Messaging.RuntimeActionsListener;
 import eu.tng.policymanager.config.DroolsConfig;
+import java.io.FileInputStream;
 
 import java.util.Arrays;
 //import javax.jms.ConnectionFactory;
@@ -41,7 +43,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @ComponentScan({
     "eu.tng.policymanager",
     "eu.tng.policymanager.rules",
-    "rules"
+    "rules",
+    "dsl",
+    "descriptors"
 }
 )
 //Import component specific configurations
@@ -54,27 +58,19 @@ public class RulesEngineApp {
     private static Logger log = LoggerFactory.getLogger(RulesEngineApp.class);
 
     public static final String RUNTIME_ACTIONS_QUEUE = "eu.tng.policy.runtime.actions";
-    //final static String queueName = "hello";
     final static String monitoringqueue = "son.monitoring.policy";
-
-//    static {
-//        System.setProperty("org.apache.activemq.SERIALIZABLE_PACKAGES", "eu.tng.policymanager,java.util,java.lang");
-//    }
+   
 
     public static void main(String[] args) {
+      
         ApplicationContext ctx = SpringApplication.run(RulesEngineApp.class, args);
-
         String[] beanNames = ctx.getBeanDefinitionNames();
         Arrays.sort(beanNames);
+        Gpolicy gpolicy = new Gpolicy();
+        gpolicy.validateGpolicyClasses();
+
     }
 
-//    @Bean // Strictly speaking this bean is not necessary as boot creates a default
-//    JmsListenerContainerFactory<?> myJmsContainerFactory(ConnectionFactory connectionFactory) {
-//        SimpleJmsListenerContainerFactory factory = new SimpleJmsListenerContainerFactory();
-//        factory.setConnectionFactory(connectionFactory);
-//        factory.setPubSubDomain(true);
-//        return factory;
-//    }
     @Bean
     public Queue runtimeActionsQueue() {
         return new Queue(RUNTIME_ACTIONS_QUEUE);
@@ -109,7 +105,7 @@ public class RulesEngineApp {
 
     @Bean
     public Queue monitoringAlerts() {
-        return new Queue("son.monitoring.policy",false);
+        return new Queue("son.monitoring.policy", false);
     }
 
     @Bean
@@ -125,8 +121,8 @@ public class RulesEngineApp {
         msgadapter.setMessageConverter(converter());
         return msgadapter;
     }
-    
-     @Bean
+
+    @Bean
     public Jackson2JsonMessageConverter converter() {
         return new Jackson2JsonMessageConverter();
     }
@@ -141,5 +137,5 @@ public class RulesEngineApp {
         container.setMessageListener(listenerAdapter);
         return container;
     }
-    
+
 }

@@ -10,7 +10,6 @@ import eu.tng.policymanager.Messaging.ExpertSystemMessage;
 import static eu.tng.policymanager.config.DroolsConfig.POLICY_DESCRIPTORS_PACKAGE;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
 import eu.tng.policymanager.facts.Action;
-import eu.tng.policymanager.facts.DoActionToComponent;
 import eu.tng.policymanager.facts.MonitoredComponent;
 import eu.tng.policymanager.rules.generation.KieUtil;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
@@ -389,6 +388,7 @@ public class RulesEngineService {
     
     private void addPolicyRules(String groundedServicegraphid, String policyname){
         //TODO convert yml to drools
+        
         //TODO load drools to kiebase
     }
 
@@ -399,7 +399,7 @@ public class RulesEngineService {
             JSONObject runtimedescriptor = new JSONObject(policyDescriptor);
             String policyname = runtimedescriptor.getString("name");
 
-            String drlPath4deployment = "/policy_descriptors/" + policyname + ".yml";
+            String drlPath4deployment = "/descriptors/" + policyname + ".yml";
             out = new FileOutputStream(current_dir + "/" + drlPath4deployment);
             out.write(jsonToYaml(runtimedescriptor).getBytes());
             out.close();
@@ -420,7 +420,7 @@ public class RulesEngineService {
 
     public boolean deletePolicyDescriptor(String policyDescriptorname) {
         try {
-            Path policyDescriptorPath = Paths.get(current_dir + "/policy_descriptors/" + policyDescriptorname + ".yml");
+            Path policyDescriptorPath = Paths.get(current_dir + "/descriptors/" + policyDescriptorname + ".yml");
             Files.delete(policyDescriptorPath);
 
         } catch (IOException ex) {
