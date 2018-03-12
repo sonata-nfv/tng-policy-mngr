@@ -7,12 +7,14 @@ package eu.tng.policymanager;
 
 import eu.tng.policymanager.facts.RuleActionType;
 import eu.tng.policymanager.Messaging.ExpertSystemMessage;
+import static eu.tng.policymanager.config.DroolsConfig.POLICY_DESCRIPTORS_PACKAGE;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
 import eu.tng.policymanager.facts.Action;
 import eu.tng.policymanager.facts.DoActionToComponent;
 import eu.tng.policymanager.facts.MonitoredComponent;
 import eu.tng.policymanager.rules.generation.KieUtil;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -321,6 +323,73 @@ public class RulesEngineService {
             Logger.getLogger(RulesEngineService.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         return ret;
+    }
+
+    /*
+     Add a new knowledge base & session & corresponding rules so as to update kieModule
+     */
+    public void addNewKnowledgebase(String groundedServicegraphid, String policyname) {
+
+        Collection<String> kiebases = kieContainer.getKieBaseNames();
+        String factKnowledgebase = "GSGKnowledgeBase_gsg" + groundedServicegraphid;
+
+        if ("null".equals(policyname) || policyname == null) {
+            logger.log(java.util.logging.Level.WARNING, "Grounded Service graph is deploed with none policy assigned");
+            return;
+        }
+
+        if (kiebases.contains(factKnowledgebase)) {
+            logger.log(java.util.logging.Level.WARNING, "Knowledge base {0} already added", factKnowledgebase);
+            return;
+        }
+
+        File f = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
+        if (!f.exists() && !f.isDirectory()) {
+            logger.log(java.util.logging.Level.WARNING, "Policy with name {0} does not exist at Catalogues", policyname);
+            return;
+        }
+
+        //GroundedServicegraph groundedServicegraph = (GroundedServicegraph) groundedServiceGraphManagement.getGroundedServicegraph(groundedServicegraphid);
+        String knowledgebasename = "gsg" + groundedServicegraphid;
+
+        System.out.println("knowledgebasename" + knowledgebasename);
+        KieBaseModel kieBaseModel1 = kieModuleModel.newKieBaseModel("ArcadiaGSGKnowledgeBase_" + knowledgebasename).setDefault(true).setEventProcessingMode(EventProcessingOption.STREAM);
+
+        kieBaseModel1.addPackage(rulesPackage + "." + knowledgebasename);
+
+        String factSessionName = "RulesEngineSession_" + knowledgebasename;
+        kieBaseModel1.newKieSessionModel(factSessionName).setClockType(ClockTypeOption.get("realtime"));
+
+        Double newversion = Double.parseDouble(releaseId.getVersion()) + 0.1;
+
+        ReleaseId releaseId2 = kieServices.newReleaseId("eu.tng", "policymanager", newversion.toString());
+
+        KieBuilder kieBuilder = kieServices.newKieBuilder(kieFileSystem);
+
+        kieFileSystem.generateAndWritePomXML(releaseId2);
+
+        kieFileSystem.writeKModuleXML(kieModuleModel.toXML());
+        logger.log(java.util.logging.Level.INFO, "kieModuleModel--ToXML\n{0}", kieModuleModel.toXML());
+
+        addPolicyRules(groundedServicegraphid, policyname);
+
+        kieBuilder.buildAll();
+
+        if (kieBuilder.getResults()
+                .hasMessages(Level.ERROR)) {
+            throw new RuntimeException("Build Errors:\n" + kieBuilder.getResults().toString());
+        }
+
+        kieContainer = kieServices.newKieContainer(releaseId2);
+
+        KieSession kieSession = kieContainer.newKieSession(factSessionName);
+        kieUtil.fireKieSession(kieSession, factSessionName);
+
+    }
+    
+    private void addPolicyRules(String groundedServicegraphid, String policyname){
+        //TODO convert yml to drools
+        //TODO load drools to kiebase
     }
 
     public boolean savePolicyDescriptor(String policyDescriptor) {

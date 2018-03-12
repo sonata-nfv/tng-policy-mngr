@@ -46,4 +46,15 @@ public class RulesEngineController {
         return true;
     }
 
+    //This REST API should be replaced by asyncronous interaction within son-broker
+    @RequestMapping(value = "/addKnowledgebase", method = RequestMethod.POST)
+    public boolean addKnowledgebase(@RequestBody String SLMObject) {
+        JSONObject SLMJsonObject = new JSONObject(SLMObject);
+        log.info("Rest create addKnowledgebase" + SLMJsonObject.getString("groundedNSid") + " with policyid " + SLMJsonObject.getString("policyid"));
+        rulesEngineService.addNewKnowledgebase(SLMJsonObject.getString("groundedNSid"), SLMJsonObject.getString("policyid"));
+
+        return true;
+
+    }
+
 }
