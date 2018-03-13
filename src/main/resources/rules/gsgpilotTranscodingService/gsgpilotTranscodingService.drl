@@ -9,14 +9,22 @@ declare  MonitoredComponent
 end
 
 
+rule "actionUponAlert"
+when
+    LogMetric( gnsid=="pilotTranscodingService" && componentid=="vnf1" && value== "notification01" )
+then
+    insertLogical( new Action("pilotTranscodingService","vnf1",RuleActionType.Infrastructure,"3","ApplyFlavour")); 
+
+end
+
 rule "highTranscodingRateRule"
 when
     (
     $tot0 := java.lang.Double( $tot0 >=70 ) from accumulate(     
-    $m0 := MonitoredComponent( name== "vnf1" && metric== "CPULoad" ) over window:time(10m)from entry-point "MonitoringStream" ,
+    $m0 := MonitoredComponent( groundedGraphid=="pilotTranscodingService" && name== "vnf1" && metric== "CPULoad" ) over window:time(10m)from entry-point "MonitoringStream" ,
         average( $m0.getValue() )  ) and
     $tot1 := java.lang.Double( $tot1 <=8 ) from accumulate(     
-    $m1 := MonitoredComponent( name== "vnf2" && metric== "RAM" ) over window:time(10m)from entry-point "MonitoringStream" ,
+    $m1 := MonitoredComponent(groundedGraphid=="pilotTranscodingService" && name== "vnf2" && metric== "RAM" ) over window:time(10m)from entry-point "MonitoringStream" ,
         average( $m1.getValue() )  ) ) 
 then
     insertLogical( new Action("pilotTranscodingService","vnf1",RuleActionType.Infrastructure,"3","ApplyFlavour")); 

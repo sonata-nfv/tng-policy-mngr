@@ -28,7 +28,7 @@ whenpart           : expression ( ANDOR expression )* ;
 
 expression          : (basicexpression | parexpression) ;
 
-basicexpression     : event condition;
+basicexpression     : event condition?;
 
 condition           : OPERATOR threshold ('over window:time('NUMBER TIMEUNIT') aggr:'AGGREGATIONFUNTION)?;
 
@@ -42,23 +42,23 @@ suggestion          : (event | pep ) NEWLINE?;
 /*pep                 : action command message;*/
 pep                 : action target;
 
-event               : 'event' '{' subject predicate object propagate? expires? '}' WHITESPACE* ;
+event               : 'event' '{' field+ propagate? expires? '}' WHITESPACE* ;
 
 /*Action Definition*/
 
 action             : 'action' '{' 'id:' WORD ',type:' WORD (',value:' (WORD | NUMBER))? '}' WHITESPACE ;
 
 /*Target Definition*/
-target              : 'target' '{' 'id:' WORD (',type:' WORD ',value:' (WORD | NUMBER))? '}' WHITESPACE? ;
+target              : 'target' '{' 'gnsid:' WORD (',cid:' (WORD | NUMBER))? '}' WHITESPACE? ;
 
 
 
-subject             : '"subject":' '"'WORD'"';
-predicate           : ',"predicate":' '"'WORD'"' ;
-object              : ',"object":' ('"'WORD'"' | NUMBER);
+/*subject            : '"subject":' '"'WORD'"';
+predicate           : ',"predicate":' '"'WORD'"' ;*/
+field               : COMMA?'"'WORD'":' ('"'WORD'"' | NUMBER );
 
-propagate              : ',"propagate":' BOOLEAN;
-expires              : ',"expires":'   '"'NUMBER TIMEUNIT'"';
+propagate           : ',"propagate":' BOOLEAN;
+expires             : ',"expires":'   '"'NUMBER TIMEUNIT'"';
 
 name                : WORD WHITESPACE;
 
@@ -128,7 +128,7 @@ ANDOR               : WHITESPACE? ('AND' | 'OR') WHITESPACE?;
 OPEN_PAREN          : '(';
 CLOSE_PAREN         : ')';
 
-
+COMMA               : ',' ;
 
 
 

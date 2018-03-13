@@ -4,12 +4,8 @@ import eu.tng.policymanager.Gpolicy.Gpolicy;
 import eu.tng.policymanager.Messaging.MonitoringListener;
 import eu.tng.policymanager.Messaging.RuntimeActionsListener;
 import eu.tng.policymanager.config.DroolsConfig;
-import java.io.FileInputStream;
 
 import java.util.Arrays;
-//import javax.jms.ConnectionFactory;
-//import javax.jms.Topic;
-//import org.apache.activemq.command.ActiveMQTopic;
 
 import org.springframework.amqp.core.Queue;
 
@@ -27,9 +23,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
-//import org.springframework.jms.annotation.EnableJms;
-//import org.springframework.jms.config.JmsListenerContainerFactory;
-//import org.springframework.jms.config.SimpleJmsListenerContainerFactory;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;

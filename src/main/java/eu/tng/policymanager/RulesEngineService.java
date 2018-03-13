@@ -5,12 +5,16 @@
  */
 package eu.tng.policymanager;
 
+import com.google.gson.Gson;
 import eu.tng.policymanager.facts.RuleActionType;
 import eu.tng.policymanager.Messaging.ExpertSystemMessage;
 import static eu.tng.policymanager.config.DroolsConfig.POLICY_DESCRIPTORS_PACKAGE;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
-import eu.tng.policymanager.facts.Action;
+import eu.tng.policymanager.facts.action.Action;
+import eu.tng.policymanager.facts.action.ComponentResourceAllocationAction;
+import eu.tng.policymanager.facts.LogMetric;
 import eu.tng.policymanager.facts.MonitoredComponent;
+import eu.tng.policymanager.facts.action.NetworkManagementAction;
 import eu.tng.policymanager.rules.generation.KieUtil;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
 import java.io.File;
@@ -49,7 +53,6 @@ import org.kie.internal.io.ResourceFactory;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
-//import org.springframework.jms.core.JmsTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.yaml.snakeyaml.Yaml;
 
@@ -102,22 +105,18 @@ public class RulesEngineService {
 
             for (Action doaction : doactions) {
 
-                //note conf param is missing
-                ExpertSystemMessage expertSystemMessage = new ExpertSystemMessage();
-                expertSystemMessage.setRuleActionType(doaction.getRuleActionType());
-                expertSystemMessage.setAction(doaction.getAction());
-                expertSystemMessage.setGgid(doaction.getGsgid());
-                expertSystemMessage.setValue(String.valueOf(doaction.getValue()));
+                
+                if (doaction instanceof ComponentResourceAllocationAction) {
+                    ComponentResourceAllocationAction doactionsubclass = (ComponentResourceAllocationAction) doaction;
+                    template.convertAndSend(queue.getName(), doactionsubclass.toString());
+                    System.out.println(" [x] Sent '" + doactionsubclass.toString() + "'");
+                }
 
-                expertSystemMessage.setNodeid(doaction.getNodeid());
-                expertSystemMessage.setGname("pilotTranscodingService");
-
-                expertSystemMessage.setUsername("tngpolicymanager");
-
-                logger.info("Action Ready to send it to Pub/Sub to RUNTIME_ACTIONS_TOPIC:  " + doaction.toString());
-
-                template.convertAndSend(queue.getName(), expertSystemMessage);
-                System.out.println(" [x] Sent '" + expertSystemMessage + "'");
+                if (doaction instanceof NetworkManagementAction) {
+                    NetworkManagementAction doactionsubclass = (NetworkManagementAction) doaction;
+                    template.convertAndSend(queue.getName(), doactionsubclass.toString());
+                    System.out.println(" [x] Sent '" + doactionsubclass.toString() + "'");
+                }
 
             }
 
@@ -196,6 +195,26 @@ public class RulesEngineService {
 
     }
 
+    public void createLogFact(LogMetric logMetric) {
+
+        String factKnowledgebase = "GSGKnowledgeBase_gsg" + logMetric.getGnsid();
+
+        Collection<String> kiebases = kieContainer.getKieBaseNames();
+
+        if (!kiebases.contains(factKnowledgebase)) {
+            logger.log(java.util.logging.Level.WARNING, "Missing Knowledge base {0}", factKnowledgebase);
+            return;
+        }
+
+        String factSessionName = "RulesEngineSession_gsg" + logMetric.getGnsid();
+        KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
+
+        System.out.println("Ιnsert logmetric fact: " + logMetric.toString());
+
+        kieSession.insert(logMetric);
+
+    }
+
     /**
      * Search the {@link KieSession} for bus passes.
      */
@@ -204,17 +223,12 @@ public class RulesEngineService {
         // Find all DoAction facts and 1st generation child classes of DoAction.
         ObjectFilter doActionFilter = new ObjectFilter() {
             @Override
-            public
-                    boolean accept(Object object) {
-                if (Action.class
-                        .equals(object.getClass())) {
-
+            public boolean accept(Object object) {
+                if (Action.class.equals(object.getClass())) {
                     return true;
                 }
 
-                if (Action.class
-                        .equals(object.getClass().getSuperclass())) {
-
+                if (Action.class.equals(object.getClass().getSuperclass())) {
                     return true;
                 }
                 return false;
@@ -225,6 +239,7 @@ public class RulesEngineService {
         List<Action> facts = new ArrayList<Action>();
 
         for (FactHandle handle : kieSession.getFactHandles(doActionFilter)) {
+
             facts.add((Action) kieSession.getObject(handle));
         }
 
@@ -385,10 +400,10 @@ public class RulesEngineService {
         kieUtil.fireKieSession(kieSession, factSessionName);
 
     }
-    
-    private void addPolicyRules(String groundedServicegraphid, String policyname){
+
+    private void addPolicyRules(String groundedServicegraphid, String policyname) {
         //TODO convert yml to drools
-        
+
         //TODO load drools to kiebase
     }
 

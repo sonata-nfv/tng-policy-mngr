@@ -1,27 +1,23 @@
 package eu.tng.policymanager.Messaging;
 
-
-
-import eu.tng.policymanager.facts.RuleActionType;
 import java.io.Serializable;
 
 /**
  *
  * @author Eleni Fotopoulou <efotopoulou@ubitech.eu>
  */
-public class ExpertSystemMessage implements Serializable{
+public class ExpertSystemMessage implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private String ggid;
-    private String gname;
+    private String nsid;
     private String cid;
     private String nodeid;
-    private RuleActionType ruleActionType;
+    private String ruleActionType;
     private String action;
     private String confParameter;
     private String value;
-    private String username;
 
     public String getGgid() {
         return ggid;
@@ -71,43 +67,32 @@ public class ExpertSystemMessage implements Serializable{
         this.nodeid = nodeid;
     }
 
-    public RuleActionType getRuleActionType() {
+    public String getRuleActionType() {
         return ruleActionType;
     }
 
-    public void setRuleActionType(RuleActionType ruleActionType) {
+    public void setRuleActionType(String ruleActionType) {
         this.ruleActionType = ruleActionType;
     }
 
-    public String getUsername() {
-        return username;
+    public String getNsid() {
+        return nsid;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setNsid(String nsid) {
+        this.nsid = nsid;
     }
 
-    public String getGname() {
-        return gname;
-    }
-
-    public void setGname(String gname) {
-        this.gname = gname;
-    }
-    
-    
-    
     @Override
     public String toString() {
         return "ExpertSystemMessage: { ggid=\"" + ggid + "\""
-                + ",gname=\"" + gname + "\""
+                + ",nsid=\"" + nsid + "\""
                 + ", cid=" + cid
                 + ", nodeid=" + nodeid
                 + ", ruleActionType=" + ruleActionType
                 + ", action=" + action
                 + ", confParameter=" + confParameter
-                + ", value=" + value                
-                + ",username=\"" + username + "\"}";
+                + ", value=" + value + "\"}";
     }
 
 }

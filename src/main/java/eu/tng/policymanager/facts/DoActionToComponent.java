@@ -5,7 +5,7 @@
  */
 package eu.tng.policymanager.facts;
 
-import eu.tng.policymanager.facts.Action;
+import eu.tng.policymanager.facts.action.Action;
 
 /**
  *
