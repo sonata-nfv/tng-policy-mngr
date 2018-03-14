@@ -1,0 +1,73 @@
+# do NOT delete: this is used by tng-sdk-descriptorgen
+# default YAML description of an policy example
+
+
+---
+descriptor_schema: "https://raw.githubusercontent.com/sonata-nfv/tng-schema/master/policy-descriptor/policy-schema.yml"
+
+name: "samplepolicydemocomplex"
+
+policyRules:
+  - name: "actionUponAlert"
+    salience: 1
+    inertia: 
+      value: 30
+      duration_unit: "m"
+    conditions: 
+      condition: AND
+      rules:
+       - id: vnf1.LogMetric
+         field: vnf1.LogMetric
+         type: string
+         input: text
+         operator: equal
+         value: 'mon_rule_vm_cpu_perc'
+    actions:
+     - action_object: "ComponentResourceAllocationAction"
+       action_type: "InfrastructureType"
+       name: "ApplyFlavour"
+       value: "3"
+       target: "vnf1"
+  - name: "lowTranscodingRateRule"
+    duration: 
+      value: 10
+      duration_unit: "m"
+    aggregation : "avg"
+    conditions: 
+      condition: AND
+      rules:
+        - id: VirtualLinkA.EndToEndDelay
+          field: price
+          type: double
+          input: number
+          operator: less
+          value: '3000'
+        - condition: OR
+          rules:
+          - id: vnf1.CPULoad
+            field: vnf1.CPULoad
+            type: integer
+            input: select
+            operator: greater
+            value: '60'
+          - id: vnf2.RAM
+            field: vnf2.RAM
+            type: integer
+            input: select
+            operator: equal
+            value: '8'
+    actions:
+     - action_type: "NetworkMechanism"
+       name: "ProvideDedicatedBandwidth"
+       value: "200"
+       target: "VirtualLinkA"
+     - action_type: "LifecycleManagement"
+       name: "restart"
+       target: "vnf1"
+       stability_period: 
+         value: 30
+         duration_unit: "m"
+     - action_type: "Profile"
+       name: "setProfile"
+       profile_tag: "Green"
+       target: "vnf1"

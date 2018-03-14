@@ -7,7 +7,6 @@ package eu.tng.policymanager;
 
 import com.google.gson.Gson;
 import eu.tng.policymanager.facts.RuleActionType;
-import eu.tng.policymanager.Messaging.ExpertSystemMessage;
 import static eu.tng.policymanager.config.DroolsConfig.POLICY_DESCRIPTORS_PACKAGE;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
 import eu.tng.policymanager.facts.action.Action;
@@ -15,7 +14,10 @@ import eu.tng.policymanager.facts.action.ComponentResourceAllocationAction;
 import eu.tng.policymanager.facts.LogMetric;
 import eu.tng.policymanager.facts.MonitoredComponent;
 import eu.tng.policymanager.facts.action.NetworkManagementAction;
+import eu.tng.policymanager.repository.PolicyRule;
 import eu.tng.policymanager.rules.generation.KieUtil;
+import eu.tng.policymanager.repository.PolicyYamlFile;
+import eu.tng.policymanager.repository.RuleCondition;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
 import java.io.File;
 import java.io.FileInputStream;
@@ -81,6 +83,9 @@ public class RulesEngineService {
     private Queue queue;
 
     @Autowired
+    PolicyYamlFile policyYamlFile;
+
+    @Autowired
     public RulesEngineService(KieUtil kieUtil) {
         logger.info("Rule Engine Session initializing...");
         this.kieServices = KieServices.Factory.get();
@@ -105,7 +110,6 @@ public class RulesEngineService {
 
             for (Action doaction : doactions) {
 
-                
                 if (doaction instanceof ComponentResourceAllocationAction) {
                     ComponentResourceAllocationAction doactionsubclass = (ComponentResourceAllocationAction) doaction;
                     template.convertAndSend(queue.getName(), doactionsubclass.toString());
@@ -342,10 +346,10 @@ public class RulesEngineService {
     /*
      Add a new knowledge base & session & corresponding rules so as to update kieModule
      */
-    public void addNewKnowledgebase(String groundedServicegraphid, String policyname) {
+    public void addNewKnowledgebase(String gnsid, String policyname) {
 
         Collection<String> kiebases = kieContainer.getKieBaseNames();
-        String factKnowledgebase = "GSGKnowledgeBase_gsg" + groundedServicegraphid;
+        String factKnowledgebase = "GSGKnowledgeBase_gsg" + gnsid;
 
         if ("null".equals(policyname) || policyname == null) {
             logger.log(java.util.logging.Level.WARNING, "Grounded Service graph is deploed with none policy assigned");
@@ -364,7 +368,7 @@ public class RulesEngineService {
         }
 
         //GroundedServicegraph groundedServicegraph = (GroundedServicegraph) groundedServiceGraphManagement.getGroundedServicegraph(groundedServicegraphid);
-        String knowledgebasename = "gsg" + groundedServicegraphid;
+        String knowledgebasename = "gsg" + gnsid;
 
         System.out.println("knowledgebasename" + knowledgebasename);
         KieBaseModel kieBaseModel1 = kieModuleModel.newKieBaseModel("ArcadiaGSGKnowledgeBase_" + knowledgebasename).setDefault(true).setEventProcessingMode(EventProcessingOption.STREAM);
@@ -385,7 +389,7 @@ public class RulesEngineService {
         kieFileSystem.writeKModuleXML(kieModuleModel.toXML());
         logger.log(java.util.logging.Level.INFO, "kieModuleModel--ToXML\n{0}", kieModuleModel.toXML());
 
-        addPolicyRules(groundedServicegraphid, policyname);
+        addPolicyRules(gnsid, policyname);
 
         kieBuilder.buildAll();
 
@@ -401,10 +405,31 @@ public class RulesEngineService {
 
     }
 
-    private void addPolicyRules(String groundedServicegraphid, String policyname) {
+    private void addPolicyRules(String gnsid, String policyname) {
         //TODO convert yml to drools
 
-        //TODO load drools to kiebase
+        //1. Fech yml file
+        File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
+        PolicyYamlFile policyyml = policyYamlFile.readYaml(policydescriptor);
+
+        logger.info("get mi first policy rule name" + policyyml.getPolicyRules().get(0).getName());
+
+        List<PolicyRule> policyrules = policyyml.getPolicyRules();
+        Gson gson = new Gson();
+        for (PolicyRule policyrule : policyrules) {
+            logger.info("rule name " + policyrule.getName());
+
+            RuleCondition rulecondition = policyrule.getConditions();
+            logger.info("rule conditions as json " + gson.toJson(rulecondition));
+
+            List<eu.tng.policymanager.repository.Action> ruleactions = policyrule.getActions();
+            logger.info("rule actions as json " + gson.toJson(ruleactions));
+
+           //2. convert yml to dsl
+           //3.convert dsl to drl
+            
+            
+        }
     }
 
     public boolean savePolicyDescriptor(String policyDescriptor) {

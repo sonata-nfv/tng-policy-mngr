@@ -4,6 +4,7 @@ import eu.tng.policymanager.Gpolicy.Gpolicy;
 import eu.tng.policymanager.Messaging.MonitoringListener;
 import eu.tng.policymanager.Messaging.RuntimeActionsListener;
 import eu.tng.policymanager.config.DroolsConfig;
+import eu.tng.policymanager.repository.PolicyYamlFile;
 
 import java.util.Arrays;
 
@@ -52,16 +53,20 @@ public class RulesEngineApp {
 
     public static final String RUNTIME_ACTIONS_QUEUE = "eu.tng.policy.runtime.actions";
     final static String monitoringqueue = "son.monitoring.policy";
-   
 
     public static void main(String[] args) {
-      
+
         ApplicationContext ctx = SpringApplication.run(RulesEngineApp.class, args);
         String[] beanNames = ctx.getBeanDefinitionNames();
         Arrays.sort(beanNames);
         Gpolicy gpolicy = new Gpolicy();
         gpolicy.validateGpolicyClasses();
 
+    }
+
+    @Bean
+    public PolicyYamlFile policyYamlFile() {
+        return new PolicyYamlFile();
     }
 
     @Bean

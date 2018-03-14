@@ -50,8 +50,8 @@ public class RulesEngineController {
     @RequestMapping(value = "/addKnowledgebase", method = RequestMethod.POST)
     public boolean addKnowledgebase(@RequestBody String SLMObject) {
         JSONObject SLMJsonObject = new JSONObject(SLMObject);
-        log.info("Rest create addKnowledgebase" + SLMJsonObject.getString("groundedNSid") + " with policyid " + SLMJsonObject.getString("policyid"));
-        rulesEngineService.addNewKnowledgebase(SLMJsonObject.getString("groundedNSid"), SLMJsonObject.getString("policyid"));
+        log.info("Rest create addKnowledgebase" + SLMJsonObject.toString());
+        rulesEngineService.addNewKnowledgebase(SLMJsonObject.getString("gnsid"), SLMJsonObject.getString("policyname"));
 
         return true;
 
