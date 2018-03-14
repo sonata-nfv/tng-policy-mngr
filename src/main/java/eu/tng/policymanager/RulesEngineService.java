@@ -6,6 +6,7 @@
 package eu.tng.policymanager;
 
 import com.google.gson.Gson;
+import eu.tng.policymanager.GPolicy.GPolicy;
 import eu.tng.policymanager.facts.RuleActionType;
 import static eu.tng.policymanager.config.DroolsConfig.POLICY_DESCRIPTORS_PACKAGE;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
@@ -84,6 +85,9 @@ public class RulesEngineService {
 
     @Autowired
     PolicyYamlFile policyYamlFile;
+
+    @Autowired
+    GPolicy gPolicy;
 
     @Autowired
     public RulesEngineService(KieUtil kieUtil) {
@@ -425,10 +429,10 @@ public class RulesEngineService {
             List<eu.tng.policymanager.repository.Action> ruleactions = policyrule.getActions();
             logger.info("rule actions as json " + gson.toJson(ruleactions));
 
-           //2. convert yml to dsl
-           //3.convert dsl to drl
-            
-            
+            //2. convert yml to dsl
+            //3.convert dsl to drl
+            gPolicy.validateGpolicyClasses(new File(current_dir + "/dsl/policy.txt"));
+
         }
     }
 

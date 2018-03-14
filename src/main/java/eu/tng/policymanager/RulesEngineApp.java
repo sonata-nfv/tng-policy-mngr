@@ -1,6 +1,6 @@
 package eu.tng.policymanager;
 
-import eu.tng.policymanager.Gpolicy.Gpolicy;
+import eu.tng.policymanager.GPolicy.GPolicy;
 import eu.tng.policymanager.Messaging.MonitoringListener;
 import eu.tng.policymanager.Messaging.RuntimeActionsListener;
 import eu.tng.policymanager.config.DroolsConfig;
@@ -59,14 +59,16 @@ public class RulesEngineApp {
         ApplicationContext ctx = SpringApplication.run(RulesEngineApp.class, args);
         String[] beanNames = ctx.getBeanDefinitionNames();
         Arrays.sort(beanNames);
-        Gpolicy gpolicy = new Gpolicy();
-        gpolicy.validateGpolicyClasses();
-
     }
 
     @Bean
     public PolicyYamlFile policyYamlFile() {
         return new PolicyYamlFile();
+    }
+
+    @Bean
+    public GPolicy gpolicy() {
+        return new GPolicy();
     }
 
     @Bean

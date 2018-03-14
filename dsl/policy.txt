@@ -7,4 +7,4 @@ inertia 30m
 when:
 event{"componentid":"vnf","value":"mon_rule_vm_cpu_perc","objectType":"LogMetric"}
 then:
-action{id:ApplyFlavour,type:InfrastructureType,value:3} target{gnsid:pilotTranscodingService,cid:vnf} 
+action{id:ApplyFlavour,type:InfrastructureType,value:3} target{gnsid:pilotTranscodingService,cid:vnf}
