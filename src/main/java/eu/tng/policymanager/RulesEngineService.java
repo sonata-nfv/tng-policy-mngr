@@ -19,6 +19,7 @@ import eu.tng.policymanager.repository.PolicyRule;
 import eu.tng.policymanager.rules.generation.KieUtil;
 import eu.tng.policymanager.repository.PolicyYamlFile;
 import eu.tng.policymanager.repository.RuleCondition;
+import eu.tng.policymanager.rules.generation.RepositoryUtil;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,6 +36,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import org.apache.commons.io.IOUtils;
+import org.drools.compiler.lang.DrlDumper;
+import org.drools.compiler.lang.api.CEDescrBuilder;
+import org.drools.compiler.lang.api.DescrFactory;
+import org.drools.compiler.lang.api.PackageDescrBuilder;
+import org.drools.compiler.lang.api.RuleDescrBuilder;
+import org.drools.compiler.lang.descr.AndDescr;
 import org.json.JSONObject;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
@@ -66,6 +73,7 @@ public class RulesEngineService {
     private static final String rulesPackage = "rules";
     private static final String current_dir = System.getProperty("user.dir");
     ReleaseId releaseId = KieServices.Factory.get().newReleaseId("eu.tng", "policymanager", "1.0");
+    private static final String FACTS_EXPIRATION = "5m";
 
     private final KieServices kieServices;
     private final KieFileSystem kieFileSystem;
@@ -371,11 +379,10 @@ public class RulesEngineService {
             return;
         }
 
-        //GroundedServicegraph groundedServicegraph = (GroundedServicegraph) groundedServiceGraphManagement.getGroundedServicegraph(groundedServicegraphid);
         String knowledgebasename = "gsg" + gnsid;
 
         System.out.println("knowledgebasename" + knowledgebasename);
-        KieBaseModel kieBaseModel1 = kieModuleModel.newKieBaseModel("ArcadiaGSGKnowledgeBase_" + knowledgebasename).setDefault(true).setEventProcessingMode(EventProcessingOption.STREAM);
+        KieBaseModel kieBaseModel1 = kieModuleModel.newKieBaseModel("GSGKnowledgeBase_" + knowledgebasename).setDefault(true).setEventProcessingMode(EventProcessingOption.STREAM);
 
         kieBaseModel1.addPackage(rulesPackage + "." + knowledgebasename);
 
@@ -419,20 +426,62 @@ public class RulesEngineService {
         logger.info("get mi first policy rule name" + policyyml.getPolicyRules().get(0).getName());
 
         List<PolicyRule> policyrules = policyyml.getPolicyRules();
+
         Gson gson = new Gson();
+
+        PackageDescrBuilder packageDescrBuilder = DescrFactory.newPackage();
+        packageDescrBuilder
+                .name(rulesPackage + "." + gnsid)
+                .newImport().target("eu.tng.policymanager.facts.*").end()
+                .newImport().target("eu.tng.policymanager.facts.action.*").end()
+                .newImport().target("eu.tng.policymanager.facts.enums.*").end()
+                .newDeclare().type().name("MonitoredComponent").newAnnotation("role").value("event").end()
+                .newAnnotation("expires").value(FACTS_EXPIRATION).end().end();
+
         for (PolicyRule policyrule : policyrules) {
-            logger.info("rule name " + policyrule.getName());
+//            logger.info("rule name " + policyrule.getName());
+//
+//            RuleCondition rulecondition = policyrule.getConditions();
+//            logger.info("rule conditions as json " + gson.toJson(rulecondition));
+//
+
+            RuleDescrBuilder droolrule = packageDescrBuilder
+                    .newRule()
+                    .name(policyrule.getName());
+
+            CEDescrBuilder<RuleDescrBuilder, AndDescr> when = droolrule.lhs();
 
             RuleCondition rulecondition = policyrule.getConditions();
-            logger.info("rule conditions as json " + gson.toJson(rulecondition));
+
+            //logger.info("the rules to pass "+gson.toJson(rulecondition.getRules()));
+            JSONObject jsonrulewhen = new JSONObject(gson.toJson(rulecondition));
+
+            when = RepositoryUtil.constructDroolsRule(when, jsonrulewhen, policyrule.getConditions().getCondition());
+            String rhs_actions = "";
 
             List<eu.tng.policymanager.repository.Action> ruleactions = policyrule.getActions();
             logger.info("rule actions as json " + gson.toJson(ruleactions));
 
-            //2. convert yml to dsl
-            //3.convert dsl to drl
-            gPolicy.validateGpolicyClasses(new File(current_dir + "/dsl/policy.txt"));
+            for (eu.tng.policymanager.repository.Action ruleaction : ruleactions) {
+                String action_object = ruleaction.getAction_object();
 
+                rhs_actions += "insertLogical( new " + action_object + "(\"" + ruleaction.getTarget() + "\","
+                        + ruleaction.getAction_type() + "." + ruleaction.getName() + ",\"" + ruleaction.getValue() + "\")); \n";
+
+            }
+            droolrule.rhs(rhs_actions);
+            droolrule.end();
+            String created_rules = new DrlDumper().dump(packageDescrBuilder.getDescr());
+            created_rules = created_rules.replace("|", "over");
+            System.out.println(created_rules);
+
+            //2. convert yml to dsl
+            //String droolsRuleSTR = RepositoryUtil.constructDroolsRule(gnsid, policyrules);
+//            logger.info("------------------- " + policyyml.getPolicyRules().get(0).getName() + " drl rules" + "------------------- ");
+//            logger.info(droolsRuleSTR);
+
+            //3.convert dsl to drl
+            //gPolicy.validateGpolicyClasses(new File(current_dir + "/dsl/policy.txt"));
         }
     }
 

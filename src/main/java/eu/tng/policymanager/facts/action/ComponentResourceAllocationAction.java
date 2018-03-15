@@ -16,9 +16,8 @@ public class ComponentResourceAllocationAction extends Action {
     String componentid;
     InfrastructureType resourceAllocationType;
 
-    public ComponentResourceAllocationAction(String gnsid, String componentid, InfrastructureType resourceAllocationType, String value) {
+    public ComponentResourceAllocationAction(String componentid, InfrastructureType resourceAllocationType, String value) {
         this.componentid = componentid;
-        this.gnsid = gnsid;
         this.resourceAllocationType = resourceAllocationType;
         this.value = value;
     }
@@ -42,7 +41,6 @@ public class ComponentResourceAllocationAction extends Action {
     @Override
     public String toString() {
         return "ComponentResourceAllocationAction: { componentid=\"" + componentid + "\""
-                + ", gnsid=" + gnsid
                 + ", value=" + value
                 + ",resourceAllocationType=\"" + resourceAllocationType + "\"}";
     }
@@ -56,13 +54,13 @@ public class ComponentResourceAllocationAction extends Action {
             return false;
         }
         ComponentResourceAllocationAction that = (ComponentResourceAllocationAction) o;
-        return this.gnsid.equals(that.gnsid) && this.value == that.value && this.componentid.equals(that.componentid) && this.resourceAllocationType.equals(that.resourceAllocationType);
+        return this.value == that.value && this.componentid.equals(that.componentid) && this.resourceAllocationType.equals(that.resourceAllocationType);
     }
 
     @Override
     public int hashCode() {
         int result = resourceAllocationType.hashCode();
-        result = (int) (31 * result + componentid.hashCode() + gnsid.hashCode());
+        result = (int) (31 * result + componentid.hashCode());
         return result;
     }
 

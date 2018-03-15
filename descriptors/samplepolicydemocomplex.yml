@@ -37,7 +37,7 @@ policyRules:
       condition: AND
       rules:
         - id: VirtualLinkA.EndToEndDelay
-          field: price
+          field: VirtualLinkA.EndToEndDelay
           type: double
           input: number
           operator: less

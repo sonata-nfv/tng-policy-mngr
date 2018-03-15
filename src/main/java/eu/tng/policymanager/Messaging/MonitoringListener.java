@@ -23,8 +23,12 @@ public class MonitoringListener {
         logger.log(Level.INFO, "monitoring alert   is like this " + message.toString());
         logger.log(Level.INFO, "alert name: " + message.get("alertname"));
 
+        //Consumption of alerts from son-broker
         if (message.containsKey("alertname")) {
-            LogMetric logMetric = new LogMetric("pilotTranscodingService", "vnf1", message.get("alertname").toString());
+
+            String gnsid = message.get("serviceID").toString();
+
+            LogMetric logMetric = new LogMetric(gnsid, "vnf1", message.get("alertname").toString());
             rulesEngineService.createLogFact(logMetric);
         }
 
