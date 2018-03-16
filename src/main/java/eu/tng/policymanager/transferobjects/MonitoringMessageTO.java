@@ -6,8 +6,8 @@
 package eu.tng.policymanager.transferobjects;
 
 
-import eu.tng.policymanager.enums.MetricValueTypes;
-import eu.tng.policymanager.enums.MonitoringTypes;
+import eu.tng.policymanager.facts.enums.MetricValueTypes;
+import eu.tng.policymanager.facts.enums.MonitoringTypes;
 import java.io.Serializable;
 import java.util.Date;
 

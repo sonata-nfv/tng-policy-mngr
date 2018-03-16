@@ -3,13 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.tng.policymanager.enums;
+package eu.tng.policymanager.facts.enums;
 
 /**
  *
  * @author Eleni Fotopoulou <efotopoulou@ubitech.eu>
  */
-public enum MonitoringTypes {
-    USER_DEFINED_METRICS,
-    VM_METRICS
+public enum MetricValueTypes {
+    Integer,
+    Float,
+    String
 }

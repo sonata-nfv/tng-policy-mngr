@@ -1,0 +1,43 @@
+package rules.e68aeee88a704249ab2dc03eda6b3e8b 
+
+import eu.tng.policymanager.facts.*
+import eu.tng.policymanager.facts.action.*
+import eu.tng.policymanager.facts.enums.*
+
+declare  MonitoredComponent 
+    @expires( 5m )
+    @role( event )
+
+end
+
+
+rule "actionUponAlert"
+when
+    
+    LogMetric( componentid== "vnf1" && value== "mon_rule_vm_cpu_perc" ) from entry-point "MonitoringStream"  
+then
+insertLogical( new ComponentResourceAllocationAction("e68aeee88a704249ab2dc03eda6b3e8b","vnf1",InfrastructureType.ApplyFlavour,"3")); 
+
+
+end
+
+rule "lowTranscodingRateRule"
+when
+    
+    $tot0 := java.lang.Double( $tot0 <3000.0 ) from accumulate(     
+    $m0 := MonitoredComponent( name== "VirtualLinkA" && metric== "EndToEndDelay" ) over window:time(70s)from entry-point "MonitoringStream" ,
+        average( $m0.getValue() )  )  
+    (
+    $tot0 := java.lang.Double( $tot0 >60 ) from accumulate(     
+    $m0 := MonitoredComponent( name== "vnf1" && metric== "CPULoad" ) over window:time(70s)from entry-point "MonitoringStream" ,
+        average( $m0.getValue() )  ) or
+    $tot1 := java.lang.Double( $tot1 ==8 ) from accumulate(     
+    $m1 := MonitoredComponent( name== "vnf2" && metric== "RAM" ) over window:time(70s)from entry-point "MonitoringStream" ,
+        average( $m1.getValue() )  ) ) 
+then
+insertLogical( new NetworkManagementAction("e68aeee88a704249ab2dc03eda6b3e8b","VirtualLinkA",NetworkMechanismType.ProvideDedicatedBandwidth,"200")); 
+
+
+end
+
+

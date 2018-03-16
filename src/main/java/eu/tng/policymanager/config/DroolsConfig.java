@@ -22,6 +22,8 @@ public class DroolsConfig {
     public static final String KNOWLEDGEBASE_PREFIX = "kb";
     public static final String FACT_KNOWLEDGEBASE_BASE_PREFIX = "KnowledgeBase_kb";
     public static final String RULESPACKAGE = "rules";
+    public static final String POLICY_DESCRIPTORS_PACKAGE = "descriptors";
+    public static final String DSL_PACKAGE = "descriptors";
     public static final String SESSION_PREFIX = "RulesEngineSession_";
     public static final String FACT_SESSION_PREFIX = "RulesEngineSession_kb";
 

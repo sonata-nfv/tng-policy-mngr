@@ -1,0 +1,30 @@
+# do NOT delete: this is used by tng-sdk-descriptorgen
+# default YAML description of an policy example
+
+
+---
+descriptor_schema: "https://raw.githubusercontent.com/sonata-nfv/tng-schema/master/policy-descriptor/policy-schema.yml"
+
+name: "samplepolicydemo"
+
+policyRules:
+  - name: "actionUponAlert"
+    salience: 1
+    inertia: 
+      value: 30
+      duration_unit: "m"
+    conditions: 
+      condition: AND
+      rules:
+       - id: vnf1.LogMetric
+         field: vnf1.LogMetric
+         type: string
+         input: text
+         operator: equal
+         value: 'mon_rule_vm_cpu_perc'
+    actions:
+     - action_object: "ComponentResourceAllocationAction"
+       action_type: "InfrastructureType"
+       name: "ApplyFlavour"
+       value: "3"
+       target: "vnf1"

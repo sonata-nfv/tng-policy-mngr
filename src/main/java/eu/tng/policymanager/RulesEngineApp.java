@@ -1,13 +1,12 @@
 package eu.tng.policymanager;
 
+import eu.tng.policymanager.GPolicy.GPolicy;
 import eu.tng.policymanager.Messaging.MonitoringListener;
 import eu.tng.policymanager.Messaging.RuntimeActionsListener;
 import eu.tng.policymanager.config.DroolsConfig;
+import eu.tng.policymanager.repository.PolicyYamlFile;
 
 import java.util.Arrays;
-//import javax.jms.ConnectionFactory;
-//import javax.jms.Topic;
-//import org.apache.activemq.command.ActiveMQTopic;
 
 import org.springframework.amqp.core.Queue;
 
@@ -25,9 +24,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
-//import org.springframework.jms.annotation.EnableJms;
-//import org.springframework.jms.config.JmsListenerContainerFactory;
-//import org.springframework.jms.config.SimpleJmsListenerContainerFactory;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -41,7 +37,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @ComponentScan({
     "eu.tng.policymanager",
     "eu.tng.policymanager.rules",
-    "rules"
+    "rules",
+    "dsl",
+    "descriptors"
 }
 )
 //Import component specific configurations
@@ -54,27 +52,25 @@ public class RulesEngineApp {
     private static Logger log = LoggerFactory.getLogger(RulesEngineApp.class);
 
     public static final String RUNTIME_ACTIONS_QUEUE = "eu.tng.policy.runtime.actions";
-    //final static String queueName = "hello";
     final static String monitoringqueue = "son.monitoring.policy";
 
-//    static {
-//        System.setProperty("org.apache.activemq.SERIALIZABLE_PACKAGES", "eu.tng.policymanager,java.util,java.lang");
-//    }
-
     public static void main(String[] args) {
-        ApplicationContext ctx = SpringApplication.run(RulesEngineApp.class, args);
 
+        ApplicationContext ctx = SpringApplication.run(RulesEngineApp.class, args);
         String[] beanNames = ctx.getBeanDefinitionNames();
         Arrays.sort(beanNames);
     }
 
-//    @Bean // Strictly speaking this bean is not necessary as boot creates a default
-//    JmsListenerContainerFactory<?> myJmsContainerFactory(ConnectionFactory connectionFactory) {
-//        SimpleJmsListenerContainerFactory factory = new SimpleJmsListenerContainerFactory();
-//        factory.setConnectionFactory(connectionFactory);
-//        factory.setPubSubDomain(true);
-//        return factory;
-//    }
+    @Bean
+    public PolicyYamlFile policyYamlFile() {
+        return new PolicyYamlFile();
+    }
+
+    @Bean
+    public GPolicy gpolicy() {
+        return new GPolicy();
+    }
+
     @Bean
     public Queue runtimeActionsQueue() {
         return new Queue(RUNTIME_ACTIONS_QUEUE);
@@ -109,7 +105,7 @@ public class RulesEngineApp {
 
     @Bean
     public Queue monitoringAlerts() {
-        return new Queue("son.monitoring.policy",false);
+        return new Queue("son.monitoring.policy", false);
     }
 
     @Bean
@@ -125,8 +121,8 @@ public class RulesEngineApp {
         msgadapter.setMessageConverter(converter());
         return msgadapter;
     }
-    
-     @Bean
+
+    @Bean
     public Jackson2JsonMessageConverter converter() {
         return new Jackson2JsonMessageConverter();
     }
@@ -141,5 +137,5 @@ public class RulesEngineApp {
         container.setMessageListener(listenerAdapter);
         return container;
     }
-    
+
 }

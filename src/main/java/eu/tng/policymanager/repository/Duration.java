@@ -3,14 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.tng.policymanager.enums;
+package eu.tng.policymanager.repository;
 
 /**
  *
  * @author Eleni Fotopoulou <efotopoulou@ubitech.eu>
  */
-public enum MetricValueTypes {
-    Integer,
-    Float,
-    String
+public class Duration {
+    
 }

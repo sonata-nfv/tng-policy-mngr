@@ -1,6 +1,8 @@
 package rules.gsgpilotTranscodingService
 
 import eu.tng.policymanager.facts.*
+import eu.tng.policymanager.facts.action.*
+import eu.tng.policymanager.facts.enums.*
 
 declare  MonitoredComponent 
     @expires( 5m )
@@ -8,6 +10,20 @@ declare  MonitoredComponent
 
 end
 
+declare  LogMetric 
+    @expires( 5m )
+    @role( event )
+
+end
+
+
+rule "actionUponAlert"
+when
+    LogMetric(componentid=="vnf1" && value== "mon_rule_vm_cpu_perc" )
+then
+    insertLogical( new ComponentResourceAllocationAction("pilotTranscodingService","vnf1",InfrastructureType.ApplyFlavour,"3")); 
+
+end
 
 rule "highTranscodingRateRule"
 when
@@ -19,8 +35,7 @@ when
     $m1 := MonitoredComponent( name== "vnf2" && metric== "RAM" ) over window:time(10m)from entry-point "MonitoringStream" ,
         average( $m1.getValue() )  ) ) 
 then
-    insertLogical( new Action("pilotTranscodingService","vnf1",RuleActionType.Infrastructure,"3","ApplyFlavour")); 
-
+    insertLogical( new ComponentResourceAllocationAction("pilotTranscodingService","vnf1",InfrastructureType.ApplyFlavour,"3"));
 end
 
 
@@ -38,8 +53,8 @@ when
         average( $m1.getValue() )  ) 
    ) 
 then
-    insertLogical( new Action("pilotTranscodingService","VirtualLinkA",RuleActionType.NetworkMechanism,"200","ProvideDedicatedBandwidth")); 
-    insertLogical( new Action("pilotTranscodingService","vnf1",RuleActionType.LifecycleManagement,"200","restart")); 
-    insertLogical( new Action("pilotTranscodingService","vnf1",RuleActionType.Profile,"Green","setProfile")); 
+    insertLogical( new NetworkManagementAction("pilotTranscodingService","VirtualLinkA",NetworkMechanismType.ProvideDedicatedBandwidth,"200")); 
+    //insertLogical( new Action("pilotTranscodingService","vnf1",RuleActionType.LifecycleManagement,"200","restart")); 
+    //insertLogical( new Action("pilotTranscodingService","vnf1",RuleActionType.Profile,"Green","setProfile")); 
 
 end
