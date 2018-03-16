@@ -144,7 +144,8 @@ public class RepositoryUtil {
                     .end()
                     .end();
         } else if (expression.getString("eventType").equalsIgnoreCase("LogMetric")) {
-            tempAND.pattern("LogMetric").constraint("componentid== \"" + expression.getString("pattern") + "\" && " + expression.getString("constraint")).end().end();
+            tempAND.pattern("LogMetric").constraint("componentid== \"" + expression.getString("pattern") + "\" && " + expression.getString("constraint"))
+                    .from().entryPoint("MonitoringStream").end().end();
         }
 
         return tempAND;
@@ -168,7 +169,8 @@ public class RepositoryUtil {
                     .end()
                     .end();
         } else if (expression.getString("eventType").equalsIgnoreCase("LogMetric")) {
-            tempOR.pattern("LogMetric").constraint("componentid== \"" + expression.getString("pattern") + "\" && " + expression.getString("constraint")).end().end();
+            tempOR.pattern("LogMetric").constraint("componentid== \"" + expression.getString("pattern") + "\" && " + expression.getString("constraint"))
+                    .from().entryPoint("MonitoringStream").end().end();
 
         }
         return tempOR;

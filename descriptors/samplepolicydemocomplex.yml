@@ -57,17 +57,8 @@ policyRules:
             operator: equal
             value: '8'
     actions:
-     - action_type: "NetworkMechanism"
+     - action_object: "NetworkManagementAction"
+       action_type: "NetworkMechanismType"
        name: "ProvideDedicatedBandwidth"
        value: "200"
        target: "VirtualLinkA"
-     - action_type: "LifecycleManagement"
-       name: "restart"
-       target: "vnf1"
-       stability_period: 
-         value: 30
-         duration_unit: "m"
-     - action_type: "Profile"
-       name: "setProfile"
-       profile_tag: "Green"
-       target: "vnf1"

@@ -32,8 +32,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import org.apache.commons.io.IOUtils;
 import org.drools.compiler.lang.DrlDumper;
@@ -112,30 +114,32 @@ public class RulesEngineService {
     public void fireAllRulesOfRecommendationEngine() {
 
         logger.info("Search for actions");
+        ConcurrentHashMap map = kieUtil.seeThreadMap();
+        for (Object key : map.keySet()) {
+            System.out.println("factSessionName " + key.toString());
+            String factSessionName = key.toString();
+            KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
+            List<Action> doactions = findAction(kieSession);
 
-        String factSessionName = "RulesEngineSession_gsgpilotTranscodingService";
-        KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
+            if (doactions.size() > 0) {
 
-        List<Action> doactions = findAction(kieSession);
+                for (Action doaction : doactions) {
 
-        if (doactions.size() > 0) {
+                    if (doaction instanceof ComponentResourceAllocationAction) {
+                        ComponentResourceAllocationAction doactionsubclass = (ComponentResourceAllocationAction) doaction;
+                        template.convertAndSend(queue.getName(), doactionsubclass.toString());
+                        System.out.println(" [x] Sent '" + doactionsubclass.toString() + "'");
+                    }
 
-            for (Action doaction : doactions) {
+                    if (doaction instanceof NetworkManagementAction) {
+                        NetworkManagementAction doactionsubclass = (NetworkManagementAction) doaction;
+                        template.convertAndSend(queue.getName(), doactionsubclass.toString());
+                        System.out.println(" [x] Sent '" + doactionsubclass.toString() + "'");
+                    }
 
-                if (doaction instanceof ComponentResourceAllocationAction) {
-                    ComponentResourceAllocationAction doactionsubclass = (ComponentResourceAllocationAction) doaction;
-                    template.convertAndSend(queue.getName(), doactionsubclass.toString());
-                    System.out.println(" [x] Sent '" + doactionsubclass.toString() + "'");
-                }
-
-                if (doaction instanceof NetworkManagementAction) {
-                    NetworkManagementAction doactionsubclass = (NetworkManagementAction) doaction;
-                    template.convertAndSend(queue.getName(), doactionsubclass.toString());
-                    System.out.println(" [x] Sent '" + doactionsubclass.toString() + "'");
                 }
 
             }
-
         }
 
     }
@@ -199,13 +203,17 @@ public class RulesEngineService {
         String factSessionName = "RulesEngineSession_gsg" + monitoringMessageTO.getGsgid();
         KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
 
+        logger.info("FactCount " + kieSession.getFactCount());
+
         EntryPoint monitoringStream = kieSession.getEntryPoint("MonitoringStream");
 
-        System.out.println("Ιnsert monitoredComponent to session with nodeid " + monitoringMessageTO.getNodeid() + " metric name " + monitoringMessageTO.getMetricName() + " , value = " + monitoringMessageTO.getMetricValue() + " , and gsgid " + monitoringMessageTO.getGsgid());
         MonitoredComponent monitoredComponent = new MonitoredComponent(monitoringMessageTO.getNodeid(),
                 monitoringMessageTO.getMetricName(),
                 Double.valueOf(monitoringMessageTO.getMetricValue()),
                 monitoringMessageTO.getGsgid());
+
+        System.out.println("Ιnsert monitoredComponent to session  " + monitoredComponent.toString());
+        logger.info(monitoringStream.getEntryPointId() + "  -------  " + monitoringStream.getFactCount());
 
         monitoringStream.insert(monitoredComponent);
 
@@ -227,7 +235,12 @@ public class RulesEngineService {
 
         System.out.println("Ιnsert logmetric fact: " + logMetric.toString());
 
-        kieSession.insert(logMetric);
+        //kieSession.insert(logMetric);
+        EntryPoint monitoringStream = kieSession.getEntryPoint("MonitoringStream");
+
+        logger.info(monitoringStream.getEntryPointId() + "  -------  " + monitoringStream.getFactCount());
+
+        monitoringStream.insert(logMetric);
 
     }
 
@@ -388,6 +401,7 @@ public class RulesEngineService {
 
         String factSessionName = "RulesEngineSession_" + knowledgebasename;
         kieBaseModel1.newKieSessionModel(factSessionName).setClockType(ClockTypeOption.get("realtime"));
+        /////////////////////////
 
         Double newversion = Double.parseDouble(releaseId.getVersion()) + 0.1;
 
@@ -410,6 +424,7 @@ public class RulesEngineService {
         }
 
         kieContainer = kieServices.newKieContainer(releaseId2);
+        //////////////////////////
 
         KieSession kieSession = kieContainer.newKieSession(factSessionName);
         kieUtil.fireKieSession(kieSession, factSessionName);
@@ -417,72 +432,86 @@ public class RulesEngineService {
     }
 
     private void addPolicyRules(String gnsid, String policyname) {
-        //TODO convert yml to drools
+        try {
+            //TODO convert yml to drools
 
-        //1. Fech yml file
-        File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
-        PolicyYamlFile policyyml = policyYamlFile.readYaml(policydescriptor);
+            //1. Fech yml file
+            File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
+            PolicyYamlFile policyyml = policyYamlFile.readYaml(policydescriptor);
 
-        logger.info("get mi first policy rule name" + policyyml.getPolicyRules().get(0).getName());
+            logger.info("get mi first policy rule name" + policyyml.getPolicyRules().get(0).getName());
 
-        List<PolicyRule> policyrules = policyyml.getPolicyRules();
+            List<PolicyRule> policyrules = policyyml.getPolicyRules();
 
-        Gson gson = new Gson();
+            Gson gson = new Gson();
 
-        PackageDescrBuilder packageDescrBuilder = DescrFactory.newPackage();
-        packageDescrBuilder
-                .name(rulesPackage + "." + gnsid)
-                .newImport().target("eu.tng.policymanager.facts.*").end()
-                .newImport().target("eu.tng.policymanager.facts.action.*").end()
-                .newImport().target("eu.tng.policymanager.facts.enums.*").end()
-                .newDeclare().type().name("MonitoredComponent").newAnnotation("role").value("event").end()
-                .newAnnotation("expires").value(FACTS_EXPIRATION).end().end();
+            PackageDescrBuilder packageDescrBuilder = DescrFactory.newPackage();
+            packageDescrBuilder
+                    .name(rulesPackage + "." + gnsid)
+                    .newImport().target("eu.tng.policymanager.facts.*").end()
+                    .newImport().target("eu.tng.policymanager.facts.action.*").end()
+                    .newImport().target("eu.tng.policymanager.facts.enums.*").end()
+                    .newDeclare().type().name("MonitoredComponent").newAnnotation("role").value("event").end()
+                    .newAnnotation("expires").value(FACTS_EXPIRATION).end().end();
 
-        for (PolicyRule policyrule : policyrules) {
+            for (PolicyRule policyrule : policyrules) {
 //            logger.info("rule name " + policyrule.getName());
 //
 //            RuleCondition rulecondition = policyrule.getConditions();
 //            logger.info("rule conditions as json " + gson.toJson(rulecondition));
 //
 
-            RuleDescrBuilder droolrule = packageDescrBuilder
-                    .newRule()
-                    .name(policyrule.getName());
+                RuleDescrBuilder droolrule = packageDescrBuilder
+                        .newRule()
+                        .name(policyrule.getName());
 
-            CEDescrBuilder<RuleDescrBuilder, AndDescr> when = droolrule.lhs();
+                CEDescrBuilder<RuleDescrBuilder, AndDescr> when = droolrule.lhs();
 
-            RuleCondition rulecondition = policyrule.getConditions();
+                RuleCondition rulecondition = policyrule.getConditions();
 
-            //logger.info("the rules to pass "+gson.toJson(rulecondition.getRules()));
-            JSONObject jsonrulewhen = new JSONObject(gson.toJson(rulecondition));
+                //logger.info("the rules to pass "+gson.toJson(rulecondition.getRules()));
+                JSONObject jsonrulewhen = new JSONObject(gson.toJson(rulecondition));
 
-            when = RepositoryUtil.constructDroolsRule(when, jsonrulewhen, policyrule.getConditions().getCondition());
-            String rhs_actions = "";
+                when = RepositoryUtil.constructDroolsRule(when, jsonrulewhen, policyrule.getConditions().getCondition());
+                String rhs_actions = "";
 
-            List<eu.tng.policymanager.repository.Action> ruleactions = policyrule.getActions();
-            logger.info("rule actions as json " + gson.toJson(ruleactions));
+                List<eu.tng.policymanager.repository.Action> ruleactions = policyrule.getActions();
+                logger.info("rule actions as json " + gson.toJson(ruleactions));
 
-            for (eu.tng.policymanager.repository.Action ruleaction : ruleactions) {
-                String action_object = ruleaction.getAction_object();
+                for (eu.tng.policymanager.repository.Action ruleaction : ruleactions) {
+                    String action_object = ruleaction.getAction_object();
 
-                rhs_actions += "insertLogical( new " + action_object + "(\"" + ruleaction.getTarget() + "\","
-                        + ruleaction.getAction_type() + "." + ruleaction.getName() + ",\"" + ruleaction.getValue() + "\")); \n";
+                    rhs_actions += "insertLogical( new " + action_object + "(\"" + gnsid + "\",\"" + ruleaction.getTarget() + "\","
+                            + ruleaction.getAction_type() + "." + ruleaction.getName() + ",\"" + ruleaction.getValue() + "\")); \n";
 
+                }
+                droolrule.rhs(rhs_actions);
+                droolrule.end();
+
+                //2. convert yml to dsl
+                //String droolsRuleSTR = RepositoryUtil.constructDroolsRule(gnsid, policyrules);
+//            logger.info("------------------- " + policyyml.getPolicyRules().get(0).getName() + " drl rules" + "------------------- ");
+//            logger.info(droolsRuleSTR);
+                //3.convert dsl to drl
+                //gPolicy.validateGpolicyClasses(new File(current_dir + "/dsl/policy.txt"));
             }
-            droolrule.rhs(rhs_actions);
-            droolrule.end();
+
             String created_rules = new DrlDumper().dump(packageDescrBuilder.getDescr());
             created_rules = created_rules.replace("|", "over");
             System.out.println(created_rules);
+            String knowledgebasename = "gsg" + gnsid;
 
-            //2. convert yml to dsl
-            //String droolsRuleSTR = RepositoryUtil.constructDroolsRule(gnsid, policyrules);
-//            logger.info("------------------- " + policyyml.getPolicyRules().get(0).getName() + " drl rules" + "------------------- ");
-//            logger.info(droolsRuleSTR);
-
-            //3.convert dsl to drl
-            //gPolicy.validateGpolicyClasses(new File(current_dir + "/dsl/policy.txt"));
+            Path policyPackagePath = Paths.get(current_dir + "/" + RULESPACKAGE + "/" + knowledgebasename);
+            Files.createDirectories(policyPackagePath);
+            String drlPath4deployment = "rules" + "/" + knowledgebasename + "/" + knowledgebasename + ".drl";
+            FileOutputStream out = new FileOutputStream(current_dir + "/" + drlPath4deployment);
+            out.write(created_rules.getBytes());
+            out.close();
+            kieFileSystem.write(ResourceFactory.newFileResource(current_dir + "/" + rulesPackage + "/" + knowledgebasename + "/" + knowledgebasename + ".drl"));
+        } catch (IOException ex) {
+            Logger.getLogger(RulesEngineService.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+
     }
 
     public boolean savePolicyDescriptor(String policyDescriptor) {

@@ -51,7 +51,7 @@ public class RulesEngineController {
     public boolean addKnowledgebase(@RequestBody String SLMObject) {
         JSONObject SLMJsonObject = new JSONObject(SLMObject);
         log.info("Rest create addKnowledgebase" + SLMJsonObject.toString());
-        rulesEngineService.addNewKnowledgebase(SLMJsonObject.getString("gnsid"), SLMJsonObject.getString("policyname"));
+        rulesEngineService.addNewKnowledgebase(SLMJsonObject.getString("gnsid").replaceAll("-",""), SLMJsonObject.getString("policyname"));
 
         return true;
 
