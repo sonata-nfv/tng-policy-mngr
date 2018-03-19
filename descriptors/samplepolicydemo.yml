@@ -1,30 +1,28 @@
-# do NOT delete: this is used by tng-sdk-descriptorgen
-# default YAML description of an policy example
-
-
----
-descriptor_schema: "https://raw.githubusercontent.com/sonata-nfv/tng-schema/master/policy-descriptor/policy-schema.yml"
-
-name: "samplepolicydemo"
-
+name: samplepolicydemo
+descriptor_schema: https://raw.githubusercontent.com/sonata-nfv/tng-schema/master/policy-descriptor/policy-schema.yml
 policyRules:
-  - name: "actionUponAlert"
-    salience: 1
-    inertia: 
-      value: 30
-      duration_unit: "m"
-    conditions: 
-      condition: AND
-      rules:
-       - id: vnf1.LogMetric
-         field: vnf1.LogMetric
-         type: string
-         input: text
-         operator: equal
-         value: 'mon_rule_vm_cpu_perc'
-    actions:
-     - action_object: "ComponentResourceAllocationAction"
-       action_type: "InfrastructureType"
-       name: "ApplyFlavour"
-       value: "3"
-       target: "vnf1"
+- salience: 1
+  inertia: {value: 30, duration_unit: m}
+  name: actionUponAlert
+  conditions:
+    condition: AND
+    rules:
+    - {input: text, field: vnf1.LogMetric, id: vnf1.LogMetric, type: string, value: mon_rule_vm_cpu_perc,
+      operator: equal}
+  actions:
+  - {action_type: InfrastructureType, name: ApplyFlavour, value: '3', action_object: ComponentResourceAllocationAction,
+    target: vnf1}
+- salience: 1
+  duration: {value: 10, duration_unit: m}
+  inertia: {value: 30, duration_unit: m}
+  name: highTranscodingRateRule
+  aggregation: avg
+  conditions:
+    condition: AND
+    rules:
+    - {input: number, field: vnf1.CPULoad, id: vnf1.CPULoad, type: double, value: '70',
+      operator: greater}
+    - {input: select, field: vnf2.RAM, id: vnf2.RAM, type: integer, value: '8', operator: less}
+  actions:
+  - {action_type: InfrastructureType, name: ApplyFlavour, value: '3', action_object: ComponentResourceAllocationAction,
+    target: vnf1}
