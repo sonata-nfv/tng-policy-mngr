@@ -32,7 +32,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -111,7 +110,7 @@ public class RulesEngineService {
 
     //fireAllRules every 5 minutes 1min== 60000
     @Scheduled(fixedRate = 60000)
-    public void fireAllRulesOfRecommendationEngine() {
+    public void searchForGeneratedActions() {
 
         logger.info("Search for actions");
         ConcurrentHashMap map = kieUtil.seeThreadMap();

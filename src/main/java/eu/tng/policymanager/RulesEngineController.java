@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author Eleni Fotopoulou <efotopoulou@ubitech.eu>
  */
 @RestController
-@RequestMapping("/expertsystem")
+@RequestMapping("/tngpolicymanager")
 public class RulesEngineController {
 
     private static final Logger log = LoggerFactory.getLogger(RulesEngineController.class);
