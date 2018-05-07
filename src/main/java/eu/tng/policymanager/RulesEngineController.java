@@ -51,8 +51,8 @@ public class RulesEngineController {
     }
 
     //This REST API should be replaced by asyncronous interaction within son-broker
-    @RequestMapping(value = "/activate", method = RequestMethod.POST)
-    public boolean addKnowledgebase(@RequestBody String SLMObject) {
+    @RequestMapping(value = "/{policy_descriptor_uuid}/activations", method = RequestMethod.POST)
+    public boolean addKnowledgebase(@RequestBody String SLMObject, @PathVariable("policy_descriptor_uuid") String policy_descriptor_uuid) {
         JSONObject SLMJsonObject = new JSONObject(SLMObject);
         log.info("Rest create addKnowledgebase" + SLMJsonObject.toString());
         rulesEngineService.addNewKnowledgebase(SLMJsonObject.getString("gnsid").replaceAll("-", ""), SLMJsonObject.getString("policyname"));
@@ -62,8 +62,8 @@ public class RulesEngineController {
     }
 
     //This REST API should be replaced by asyncronous interaction within son-broker
-    @RequestMapping(value = "/deactivate", method = RequestMethod.POST)
-    public boolean removeKnowledgebase(@RequestBody String SLMObject) {
+    @RequestMapping(value = "/{policy_descriptor_uuid}/deactivations", method = RequestMethod.POST)
+    public boolean removeKnowledgebase(@RequestBody String SLMObject, @PathVariable("policy_descriptor_uuid") String policy_descriptor_uuid) {
         log.info("Pending to be implemented");
         return true;
         

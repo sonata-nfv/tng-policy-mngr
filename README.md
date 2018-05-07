@@ -71,11 +71,11 @@ Following table shows the API endpoints of the Policy Manager.
 
 | Action | HTTP Method | Endpoint |
 | --------------- | ------- | -------------------------------------------- |
-| Create a Policy | `PUT` |`/api/policymngr/v1/policy-descriptor`|
+| Create a Policy | `POST` |`/api/policymngr/v1/policy-descriptor`|
 | Delete a Policy | `DELETE` | `/api/policymngr/v1/policy-descriptor/{policy_descriptor_uuid}`|
 | View existing Policies | `GET` |`/api/policymngr/v1/policy-descriptor/list`|
-| Enforce Policy | `POST` | `/api/policymngr/v1/policy-descriptor/activate` |
-| Deactivate Policy | `POST` | `/api/policymngr/v1/policy-descriptor/deactivate` |
+| Enforce Policy | `POST` | `/api/policymngr/v1/policy-descriptor/{policy_descriptor_uuid}/activations` |
+| Deactivate Policy | `POST` | `/api/policymngr/v1/policy-descriptor/{policy_descriptor_uuid}/deactivations` |
 
 ## Development
 
