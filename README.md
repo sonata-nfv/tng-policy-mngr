@@ -96,7 +96,12 @@ All pull requests are automatically tested by Jenkins and will only be accepted 
 You can also run the test manually on your local machine. To do so, you need to do:
 
 ```bash
-$ todo
+// build the tng-policy-mngr
+$ docker build --no-cache -t registry.sonata-nfv.eu:5000/tng-policy-mngr .
+// instantiate rabbitmq
+$ docker run -d -p 5672:5672 -p 8080:15672 -p 1883:1883 --name son-broker --net=sonata --network-alias=son-broker  -e RABBITMQ_CONSOLE_LOG=new  rabbitmq:3-management
+// instantiate tng-policy-mngr
+$ docker run -p 8081:8081 -i -t --name tng-policy-mngr --net=sonata  registry.sonata-nfv.eu:5000/tng-policy-mngr
 ```
 
 ## License
