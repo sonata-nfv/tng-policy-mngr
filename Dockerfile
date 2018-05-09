@@ -12,4 +12,4 @@ COPY --from=0  /app/target/tng-policy-mngr-1.5.0.jar /app/tng-policy-mngr-1.5.0.
 COPY --from=0  /app/descriptors /app/descriptors
 COPY --from=0  /app/rules /app/rules
 WORKDIR /app
-CMD ["java","-jar","tng-policy-mngr-1.5.0.jar"]
+CMD ["java","-jar","-Dspring.profiles.active=development","tng-policy-mngr-1.5.0.jar"]
