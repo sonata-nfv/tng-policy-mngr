@@ -64,6 +64,7 @@ import org.kie.internal.io.ResourceFactory;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.yaml.snakeyaml.Yaml;
 
@@ -97,6 +98,8 @@ public class RulesEngineService {
 
     @Autowired
     GPolicy gPolicy;
+
+
 
     @Autowired
     public RulesEngineService(KieUtil kieUtil) {
@@ -513,14 +516,15 @@ public class RulesEngineService {
 
     }
 
-    public boolean savePolicyDescriptor(String policyDescriptor) {
+    public String savePolicyDescriptor(String policyDescriptor) {
         FileOutputStream out = null;
+        String drlPath4deployment = null ;
         try {
 
             JSONObject runtimedescriptor = new JSONObject(policyDescriptor);
             String policyname = runtimedescriptor.getString("name");
 
-            String drlPath4deployment = "/descriptors/" + policyname + ".yml";
+             drlPath4deployment = "/descriptors/" + policyname + ".yml";
             out = new FileOutputStream(current_dir + "/" + drlPath4deployment);
             out.write(jsonToYaml(runtimedescriptor).getBytes());
             out.close();
@@ -536,7 +540,7 @@ public class RulesEngineService {
                 Logger.getLogger(RulesEngineService.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
             }
         }
-        return true;
+        return (current_dir + "/" + drlPath4deployment);
     }
 
     public boolean deletePolicyDescriptor(String policyDescriptorname) {
