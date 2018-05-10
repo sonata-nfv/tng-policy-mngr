@@ -83,90 +83,10 @@ public class RulesEngineController {
         try {
             responseone = restTemplate.postForObject(policies_url, httpEntity, String.class);
 
-            log.info("responseOne" + responseone);
-
         } catch (Exception e) {
-            log.info("-------------------------------responseOne Exception-------------------------------");
-            e.printStackTrace();
-            //return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone);
-            //log.info("responseOne" + responseone);
-        }
-        ResponseEntity responseTwo = null;
-        try {
-            responseTwo = restTemplate.exchange(policies_url, HttpMethod.POST, httpEntity, String.class);
-        } catch (Exception e) {
-            log.info("-------------------------------responseTwo Exception-------------------------------");
-            e.printStackTrace();
-            //return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseTwo);
 
-        }
-        ResponseEntity<String> responseThree = null;
-        try {
-            responseThree = restTemplate.postForEntity(policies_url, httpEntity, String.class);
-        } catch (Exception e) {
-            log.info("-------------------------------responseThree Exception-------------------------------");
-            e.printStackTrace();
-            //return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseThree);
-
-        }
-
-        log.info("i call catalogues with basic Jersey library");
-        ClientResponse response = null;
-        try {
-
-            Client client = Client.create();
-
-            WebResource webResource = client.resource(policies_url);
-
-            webResource.accept(MediaType.APPLICATION_JSON_UTF8_VALUE);
-            response = webResource.type("application/json").post(ClientResponse.class, tobject);
-
-            if (response.getStatus() != 201) {
-                throw new RuntimeException("Failed : HTTP error code : "
-                        + response.getStatus());
-            }
-
-            System.out.println("Output from Server .... \n");
-            output = response.getEntity(String.class);
-            System.out.println(output);
-
-        } catch (Exception e) {
-            log.info("-------------------------------response with Jersey Exception-------------------------------");
-            log.info("Failed : HTTP error code : " + response.getStatus());
-            //e.printStackTrace();
-            //return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + response.getStatus());
-
-        }
-        log.info("i call catalogues HttpURLConnection - same way as slas");
-        try {
-
-            URL object = new URL(policies_url);
-
-            HttpURLConnection con = (HttpURLConnection) object.openConnection();
-            con.setDoOutput(true);
-            con.setDoInput(true);
-            con.setRequestProperty("Content-Type", "application/json");
-            con.setRequestProperty("Accept", "application/json");
-            con.setRequestMethod("POST");
-            OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
-            wr.write(tobject);
-            wr.flush();
-
-            StringBuilder sb = new StringBuilder();
-            int HttpResult = con.getResponseCode();
-            if (HttpResult == HttpURLConnection.HTTP_OK) {
-                BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), "utf-8"));
-                String line = null;
-                while ((line = br.readLine()) != null) {
-                    sb.append(line + "\n");
-                }
-                br.close();
-                System.out.println("" + sb.toString());
-            } else {
-                System.out.println(con.getResponseMessage());
-            }
-        } catch (Exception e) {
-            log.info("-------------------------------response with HttpURLConnection Exception-------------------------------");
+            return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
+                    + ". Check if policy vendor or version are null");
         }
 
         return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED, output);
