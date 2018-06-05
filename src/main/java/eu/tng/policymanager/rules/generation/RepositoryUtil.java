@@ -5,19 +5,12 @@
  */
 package eu.tng.policymanager.rules.generation;
 
-import com.google.gson.Gson;
-import eu.tng.policymanager.repository.Action;
-import eu.tng.policymanager.repository.PolicyRule;
-import eu.tng.policymanager.repository.RuleCondition;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.logging.Logger;
 import org.drools.compiler.lang.api.CEDescrBuilder;
-import org.drools.compiler.lang.api.DescrFactory;
-import org.drools.compiler.lang.api.PackageDescrBuilder;
 import org.drools.compiler.lang.api.RuleDescrBuilder;
 import org.drools.compiler.lang.descr.AndDescr;
 import org.drools.compiler.lang.descr.OrDescr;
@@ -41,7 +34,7 @@ public class RepositoryUtil {
 
         //End of expression
         if (null == expressionObject) {
-            logger.info("i am null here");
+            //logger.info("i am null here");
             if (logicaloperator == null) {
                 return whendroolrule;
             }
@@ -49,14 +42,14 @@ public class RepositoryUtil {
             return whendroolrule;
         }
         if (expressionObject instanceof JSONObject) {
-            logger.info("i am object: " + expressionObject.toString());
+            //logger.info("i am object: " + expressionObject.toString());
             JSONObject tmpObject = ((JSONObject) expressionObject);
             whendroolrule = constructDroolsRule(whendroolrule, tmpObject.getJSONArray("rules"), tmpObject.getString("condition"));
             expressionObject = null;
 
         } else if (expressionObject instanceof JSONArray) {
 
-            logger.info("i am array: " + expressionObject.toString());
+            //logger.info("i am array: " + expressionObject.toString());
 
             JSONArray tmpArray = ((JSONArray) expressionObject);
             CEDescrBuilder<CEDescrBuilder<RuleDescrBuilder, AndDescr>, AndDescr> tempAND = null;

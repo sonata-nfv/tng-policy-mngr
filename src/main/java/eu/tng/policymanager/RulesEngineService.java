@@ -15,6 +15,7 @@ import eu.tng.policymanager.facts.action.ComponentResourceAllocationAction;
 import eu.tng.policymanager.facts.LogMetric;
 import eu.tng.policymanager.facts.MonitoredComponent;
 import eu.tng.policymanager.facts.action.NetworkManagementAction;
+import eu.tng.policymanager.facts.enums.Status;
 import eu.tng.policymanager.repository.PolicyRule;
 import eu.tng.policymanager.rules.generation.KieUtil;
 import eu.tng.policymanager.repository.PolicyYamlFile;
@@ -64,7 +65,6 @@ import org.kie.internal.io.ResourceFactory;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.yaml.snakeyaml.Yaml;
 
@@ -98,8 +98,6 @@ public class RulesEngineService {
 
     @Autowired
     GPolicy gPolicy;
-
-
 
     @Autowired
     public RulesEngineService(KieUtil kieUtil) {
@@ -268,10 +266,23 @@ public class RulesEngineService {
         System.out.println("------New FACT----------");
 
         List<Action> facts = new ArrayList<Action>();
+        List<Action> factsToBeUpdated = new ArrayList<>();
 
         for (FactHandle handle : kieSession.getFactHandles(doActionFilter)) {
 
-            facts.add((Action) kieSession.getObject(handle));
+            Action action = (Action) kieSession.getObject(handle);
+
+            if (action.getStatus() == Status.not_send) {
+                action.setStatus(Status.send);
+                facts.add(action);
+                factsToBeUpdated.add(action);
+            }
+
+        }
+
+        for (Action actionToBeUpdated : factsToBeUpdated) {
+            kieSession.insert(actionToBeUpdated);
+
         }
 
         if (facts.size() > 0) {
@@ -426,7 +437,6 @@ public class RulesEngineService {
         }
 
         kieContainer = kieServices.newKieContainer(releaseId2);
-        //////////////////////////
 
         KieSession kieSession = kieContainer.newKieSession(factSessionName);
         kieUtil.fireKieSession(kieSession, factSessionName);
@@ -441,7 +451,7 @@ public class RulesEngineService {
             File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
             PolicyYamlFile policyyml = policyYamlFile.readYaml(policydescriptor);
 
-            logger.info("get mi first policy rule name" + policyyml.getPolicyRules().get(0).getName());
+            //logger.info("get mi first policy rule name" + policyyml.getPolicyRules().get(0).getName());
 
             List<PolicyRule> policyrules = policyyml.getPolicyRules();
 
@@ -454,6 +464,8 @@ public class RulesEngineService {
                     .newImport().target("eu.tng.policymanager.facts.action.*").end()
                     .newImport().target("eu.tng.policymanager.facts.enums.*").end()
                     .newDeclare().type().name("MonitoredComponent").newAnnotation("role").value("event").end()
+                    .newAnnotation("expires").value(FACTS_EXPIRATION).end().end()
+                    .newDeclare().type().name("ComponentResourceAllocationAction").newAnnotation("role").value("event").end()
                     .newAnnotation("expires").value(FACTS_EXPIRATION).end().end();
 
             for (PolicyRule policyrule : policyrules) {
@@ -484,7 +496,7 @@ public class RulesEngineService {
                     String action_object = ruleaction.getAction_object();
 
                     rhs_actions += "insertLogical( new " + action_object + "(\"" + gnsid + "\",\"" + ruleaction.getTarget() + "\","
-                            + ruleaction.getAction_type() + "." + ruleaction.getName() + ",\"" + ruleaction.getValue() + "\")); \n";
+                            + ruleaction.getAction_type() + "." + ruleaction.getName() + ",\"" + ruleaction.getValue() + "\",Status.not_send)); \n";
 
                 }
                 droolrule.rhs(rhs_actions);
@@ -518,13 +530,13 @@ public class RulesEngineService {
 
     public String savePolicyDescriptor(String policyDescriptor) {
         FileOutputStream out = null;
-        String drlPath4deployment = null ;
+        String drlPath4deployment = null;
         try {
 
             JSONObject runtimedescriptor = new JSONObject(policyDescriptor);
             String policyname = runtimedescriptor.getString("name");
 
-             drlPath4deployment = "/descriptors/" + policyname + ".yml";
+            drlPath4deployment = "/descriptors/" + policyname + ".yml";
             out = new FileOutputStream(current_dir + "/" + drlPath4deployment);
             out.write(jsonToYaml(runtimedescriptor).getBytes());
             out.close();

@@ -1,0 +1,31 @@
+network_service: {vendor: tango, name: default-nsd, version: '0.9'}
+vendor: tango
+name: samplepolicydemo7
+descriptor_schema: https://raw.githubusercontent.com/sonata-nfv/tng-schema/master/policy-descriptor/policy-schema.yml
+policyRules:
+- salience: 1
+  inertia: {value: 30, duration_unit: m}
+  name: actionUponAlert
+  conditions:
+    condition: AND
+    rules:
+    - {input: text, field: vnf1.LogMetric, id: vnf1.LogMetric, type: string, value: mon_rule_vm_cpu_perc,
+      operator: equal}
+  actions:
+  - {action_type: InfrastructureType, name: ApplyFlavour, value: '3', action_object: ComponentResourceAllocationAction,
+    target: vnf1}
+- salience: 1
+  duration: {value: 10, duration_unit: m}
+  inertia: {value: 30, duration_unit: m}
+  name: highTranscodingRateRule
+  aggregation: avg
+  conditions:
+    condition: AND
+    rules:
+    - {input: number, field: vnf1.CPULoad, id: vnf1.CPULoad, type: double, value: '70',
+      operator: greater}
+    - {input: select, field: vnf2.RAM, id: vnf2.RAM, type: integer, value: '8', operator: less}
+  actions:
+  - {action_type: InfrastructureType, name: ApplyFlavour, value: '3', action_object: ComponentResourceAllocationAction,
+    target: vnf1}
+version: '0.1'

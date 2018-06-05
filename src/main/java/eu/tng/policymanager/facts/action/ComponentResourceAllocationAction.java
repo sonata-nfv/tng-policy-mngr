@@ -6,6 +6,7 @@
 package eu.tng.policymanager.facts.action;
 
 import eu.tng.policymanager.facts.enums.InfrastructureType;
+import eu.tng.policymanager.facts.enums.Status;
 
 /**
  *
@@ -16,11 +17,12 @@ public class ComponentResourceAllocationAction extends Action {
     String componentid;
     InfrastructureType resourceAllocationType;
 
-    public ComponentResourceAllocationAction(String gnsid, String componentid, InfrastructureType resourceAllocationType, String value) {
+    public ComponentResourceAllocationAction(String gnsid, String componentid, InfrastructureType resourceAllocationType, String value, Status status) {
         this.gnsid = gnsid;
         this.componentid = componentid;
         this.resourceAllocationType = resourceAllocationType;
         this.value = value;
+        this.status = status;
     }
 
     public String getComponentid() {

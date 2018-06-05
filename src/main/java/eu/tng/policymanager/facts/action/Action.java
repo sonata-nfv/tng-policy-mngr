@@ -5,6 +5,7 @@
  */
 package eu.tng.policymanager.facts.action;
 
+import eu.tng.policymanager.facts.enums.Status;
 import eu.tng.policymanager.facts.enums.UnitType;
 import eu.tng.policymanager.facts.enums.ValueType;
 
@@ -19,6 +20,7 @@ public class Action {
     String value;
     ValueType valueType;
     UnitType valueUnit;
+    Status status;
 
     public String getNsid() {
         return nsid;
@@ -60,13 +62,22 @@ public class Action {
         this.valueUnit = valueUnit;
     }
 
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
     @Override
     public String toString() {
         return "Action: { valueType=\"" + valueType + "\""
                 + ", nsid=" + nsid
                 + ", gnsid=" + gnsid
                 + ", value=" + value
-                + ",valueUnit=\"" + valueUnit + "\"}";
+                + ",valueUnit=\"" + valueUnit
+                + ", status=" + status + "\"}";
     }
 
     @Override

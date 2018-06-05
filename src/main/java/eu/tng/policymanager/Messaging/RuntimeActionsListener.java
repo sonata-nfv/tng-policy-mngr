@@ -12,7 +12,7 @@ public class RuntimeActionsListener {
     
     public void expertSystemMessageReceived(String message) {
 
-        logger.log(Level.INFO, "NetworkManagementAction   is like this {0}", message);
+        logger.log(Level.INFO, "Received Action is like this {0}", message);
 
     }
 
