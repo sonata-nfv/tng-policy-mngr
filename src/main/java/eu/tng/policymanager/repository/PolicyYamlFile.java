@@ -27,6 +27,15 @@ public class PolicyYamlFile {
     private String descriptor_schema;
 
     @JsonProperty
+    private String vendor;
+    
+    @JsonProperty
+    private String version;
+
+    @JsonProperty
+    private NetworkService network_service;
+
+    @JsonProperty
     private List<PolicyRule> policyRules;
 
     public static PolicyYamlFile readYaml(final File file) {
@@ -64,5 +73,30 @@ public class PolicyYamlFile {
     public void setDescriptor_schema(String descriptor_schema) {
         this.descriptor_schema = descriptor_schema;
     }
+
+    public NetworkService getNetwork_service() {
+        return network_service;
+    }
+
+    public void setNetwork_service(NetworkService network_service) {
+        this.network_service = network_service;
+    }
+
+    public String getVendor() {
+        return vendor;
+    }
+
+    public void setVendor(String vendor) {
+        this.vendor = vendor;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+    
 
 }
