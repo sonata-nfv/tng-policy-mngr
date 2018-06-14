@@ -1,35 +1,20 @@
 package eu.tng.policymanager;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
 import eu.tng.policymanager.response.BasicResponseCode;
 import eu.tng.policymanager.response.PolicyRestResponse;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
 import java.util.Optional;
-import java.util.logging.Level;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,7 +27,7 @@ import org.springframework.web.client.RestTemplate;
  * @author Eleni Fotopoulou <efotopoulou@ubitech.eu>
  */
 @RestController
-@RequestMapping("/api/policymngr/v1/policy-descriptor")
+@RequestMapping("/api/v1")
 public class RulesEngineController {
 
     private static final Logger log = LoggerFactory.getLogger(RulesEngineController.class);
@@ -52,6 +37,9 @@ public class RulesEngineController {
 
     @Value("${tng.cat.policies}")
     private String policies_url;
+    
+    @Value("${github.repo}")
+    private String github_repo;
 
     @RequestMapping(value = "/newMonitoringMessage", method = RequestMethod.POST)
     public boolean newMonitoringMessage(@RequestBody MonitoringMessageTO tobject) {
@@ -61,7 +49,7 @@ public class RulesEngineController {
 
     @RequestMapping(value = "", method = RequestMethod.GET)
     public PolicyRestResponse getInfoPolicyManager() {
-        return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICIES_INFO, "https://github.com/sonata-nfv/tng-policy-mngr");
+        return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICIES_INFO, github_repo);
     }
 
     @RequestMapping(value = "", method = RequestMethod.POST)
@@ -101,35 +89,22 @@ public class RulesEngineController {
         return true;
     }
 
+    //Not used
     @RequestMapping(value = "/list", method = RequestMethod.GET)
     public String listPolicies() {
         log.info("Fecth all policies");
         RestTemplate restTemplate = new RestTemplate();
-        //HttpHeaders headers = new HttpHeaders();
-        //headers.add("Content-Type", "application/json");
-        //ResponseEntity<String> response = restTemplate.getForEntity(policieslist, String.class);
-        //JSONArray response = restTemplate.getForObject(policieslist, JSONArray.class);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
         ResponseEntity<String> response = restTemplate.exchange(policies_url, HttpMethod.GET, entity, String.class);
-
-        ///////////////////////////////////Test
-//        String tobject ="{\n  \"name\": \"samplepolicydemo11\",\n  \"descriptor_schema\": \"https://raw.githubusercontent.com/sonata-nfv/tng-schema/master/policy-descriptor/policy-schema.yml\",\n  \"policyRules\": [\n    {\n      \"salience\": 1,\n      \"inertia\": {\n        \"value\": 30,\n        \"duration_unit\": \"m\"\n      },\n      \"name\": \"actionUponAlert\",\n      \"conditions\": {\n        \"condition\": \"AND\",\n        \"rules\": [\n          {\n            \"input\": \"text\",\n            \"field\": \"vnf1.LogMetric\",\n            \"id\": \"vnf1.LogMetric\",\n            \"type\": \"string\",\n            \"value\": \"mon_rule_vm_cpu_perc\",\n            \"operator\": \"equal\"\n          }\n        ]\n      },\n      \"actions\": [\n        {\n          \"action_type\": \"InfrastructureType\",\n          \"name\": \"ApplyFlavour\",\n          \"value\": \"3\",\n          \"action_object\": \"ComponentResourceAllocationAction\",\n          \"target\": \"vnf1\"\n        }\n      ]\n    },\n    {\n      \"salience\": 1,\n      \"duration\": {\n        \"value\": 10,\n        \"duration_unit\": \"m\"\n      },\n      \"inertia\": {\n        \"value\": 30,\n        \"duration_unit\": \"m\"\n      },\n      \"name\": \"highTranscodingRateRule\",\n      \"aggregation\": \"avg\",\n      \"conditions\": {\n        \"condition\": \"AND\",\n        \"rules\": [\n          {\n            \"input\": \"number\",\n            \"field\": \"vnf1.CPULoad\",\n            \"id\": \"vnf1.CPULoad\",\n            \"type\": \"double\",\n            \"value\": \"70\",\n            \"operator\": \"greater\"\n          },\n          {\n            \"input\": \"select\",\n            \"field\": \"vnf2.RAM\",\n            \"id\": \"vnf2.RAM\",\n            \"type\": \"integer\",\n            \"value\": \"8\",\n            \"operator\": \"less\"\n          }\n        ]\n      },\n      \"actions\": [\n        {\n          \"action_type\": \"InfrastructureType\",\n          \"name\": \"ApplyFlavour\",\n          \"value\": \"3\",\n          \"action_object\": \"ComponentResourceAllocationAction\",\n          \"target\": \"vnf1\"\n        }\n      ]\n    }\n  ]\n}";
-//        HttpHeaders headers1 = new HttpHeaders();
-//        headers1.setContentType(MediaType.APPLICATION_JSON);
-//        HttpEntity<String> entity1 = new HttpEntity<>(tobject, headers1);
-//
-//        ResponseEntity<String> response1 = restTemplate.exchange("http://localhost:8081/api/policymngr/v1/policy-descriptor", HttpMethod.POST, entity1, String.class);
-//
-//        log.info(response1.getBody());
-//        
+     
         return response.getBody();
     }
 
     //This REST API should be replaced by asyncronous interaction within son-broker
-    @RequestMapping(value = "/{policy_descriptor_uuid}/activations", method = RequestMethod.POST)
+    @RequestMapping(value = "/activation/{policy_descriptor_uuid}", method = RequestMethod.POST)
     public PolicyRestResponse addKnowledgebase(@RequestBody String SLMObject, @PathVariable("policy_descriptor_uuid") String policy_descriptor_uuid
     ) {
         JSONObject SLMJsonObject = new JSONObject(SLMObject);
@@ -141,7 +116,7 @@ public class RulesEngineController {
     }
 
     //This REST API should be replaced by asyncronous interaction within son-broker
-    @RequestMapping(value = "/{policy_descriptor_uuid}/deactivations", method = RequestMethod.POST)
+    @RequestMapping(value = "/deactivation/{policy_descriptor_uuid}", method = RequestMethod.POST)
     public PolicyRestResponse removeKnowledgebase(@RequestBody String SLMObject, @PathVariable("policy_descriptor_uuid") String policy_descriptor_uuid
     ) {
         log.info("Pending to be implemented");

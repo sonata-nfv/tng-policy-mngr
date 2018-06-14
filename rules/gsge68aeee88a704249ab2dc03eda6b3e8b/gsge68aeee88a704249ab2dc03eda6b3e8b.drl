@@ -10,13 +10,19 @@ declare  MonitoredComponent
 
 end
 
+declare  ComponentResourceAllocationAction 
+    @expires( 5m )
+    @role( event )
+
+end
+
 
 rule "actionUponAlert"
 when
     
     LogMetric( componentid== "vnf1" && value== "mon_rule_vm_cpu_perc" ) from entry-point "MonitoringStream"  
 then
-insertLogical( new ComponentResourceAllocationAction("e68aeee88a704249ab2dc03eda6b3e8b","vnf1",InfrastructureType.ApplyFlavour,"3")); 
+insertLogical( new ComponentResourceAllocationAction("e68aeee88a704249ab2dc03eda6b3e8b","vnf1",InfrastructureType.ApplyFlavour,"3",Status.not_send)); 
 
 
 end
@@ -31,7 +37,7 @@ when
     $m1 := MonitoredComponent( name== "vnf2" && metric== "RAM" ) over window:time(70s)from entry-point "MonitoringStream" ,
         average( $m1.getValue() )  ) ) 
 then
-insertLogical( new ComponentResourceAllocationAction("e68aeee88a704249ab2dc03eda6b3e8b","vnf1",InfrastructureType.ApplyFlavour,"3")); 
+insertLogical( new ComponentResourceAllocationAction("e68aeee88a704249ab2dc03eda6b3e8b","vnf1",InfrastructureType.ApplyFlavour,"3",Status.not_send)); 
 
 
 end
