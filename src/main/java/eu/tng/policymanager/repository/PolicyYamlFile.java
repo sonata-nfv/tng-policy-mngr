@@ -8,7 +8,6 @@ package eu.tng.policymanager.repository;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import eu.tng.policymanager.repository.PolicyRule;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -30,7 +29,7 @@ public class PolicyYamlFile {
     @JsonProperty
     private List<PolicyRule> policyRules;
 
-    public PolicyYamlFile readYaml(final File file) {
+    public static PolicyYamlFile readYaml(final File file) {
         PolicyYamlFile policyYamlFile = null;
         final ObjectMapper mapper = new ObjectMapper(new YAMLFactory()); // jackson databind
         try {
