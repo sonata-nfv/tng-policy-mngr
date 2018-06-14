@@ -58,7 +58,10 @@ public class ComponentResourceAllocationAction extends Action {
             return false;
         }
         ComponentResourceAllocationAction that = (ComponentResourceAllocationAction) o;
-        return this.value == that.value && this.gnsid.equals(that.gnsid) && this.componentid.equals(that.componentid) && this.resourceAllocationType.equals(that.resourceAllocationType);
+        return this.value == that.value && this.gnsid.equals(that.gnsid) 
+                && this.componentid.equals(that.componentid) 
+                && this.resourceAllocationType.equals(that.resourceAllocationType)
+                && this.status.equals(that.status);
     }
 
     @Override
