@@ -37,7 +37,7 @@ public class RulesEngineController {
 
     @Value("${tng.cat.policies}")
     private String policies_url;
-    
+
     @Value("${github.repo}")
     private String github_repo;
 
@@ -52,13 +52,11 @@ public class RulesEngineController {
         return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICIES_INFO, github_repo);
     }
 
+    //TODO: clean java headers!!!!!!!!!!!!!!!
     @RequestMapping(value = "", method = RequestMethod.POST)
     public PolicyRestResponse savePolicyDescriptor(@RequestBody String tobject) {
-        String output = "";
-        //save locally
-        rulesEngineService.savePolicyDescriptor(tobject);
         //save to catalogues
-        log.info("i call catalogues with spring rest template");
+        log.info("i call catalogues with spring rest template so as to create the policy descriptor");
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.set("Content-Type", "application/json");
@@ -71,22 +69,45 @@ public class RulesEngineController {
         try {
             responseone = restTemplate.postForObject(policies_url, httpEntity, String.class);
 
+            JSONObject policyDescriptor = new JSONObject(responseone);
+            String policy_uuid = policyDescriptor.getString("uuid");
+            //save locally
+            rulesEngineService.savePolicyDescriptor(tobject,policy_uuid);
+
         } catch (Exception e) {
 
             return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
                     + ". Check if policy vendor or version are null");
         }
 
-        return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED, output);
+        return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED, responseone);
 
     }
 
     @RequestMapping(value = "/{policy_descriptor_uuid}", method = RequestMethod.DELETE)
-    public boolean deletePolicyDescriptor(@RequestBody String policynamejson, @PathVariable("policy_descriptor_uuid") String policy_descriptor_uuid
+    public PolicyRestResponse deletePolicyDescriptor(@PathVariable("policy_descriptor_uuid") String policy_descriptor_uuid
     ) {
-        JSONObject policyname = new JSONObject(policynamejson);
-        rulesEngineService.deletePolicyDescriptor(policyname.getString("policyname"));
-        return true;
+        //JSONObject policyname = new JSONObject(policynamejson);
+        //rulesEngineService.deletePolicyDescriptor(policyname.getString("policyname"));
+        
+
+        log.info("i call catalogues with spring rest template so as to delete the policy descriptor");
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.set("Content-Type", "application/json");
+
+       
+        try {
+            restTemplate.delete(policies_url);
+            rulesEngineService.deletePolicyDescriptor(policy_descriptor_uuid);
+
+        } catch (Exception e) {
+
+            return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DELETED_FAILURE, "Failed : HTTP error code : " 
+                    + ". Check if policy vendor or version are null");
+        }
+
+        return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DELETED, "");
     }
 
     //Not used
@@ -99,7 +120,7 @@ public class RulesEngineController {
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
         ResponseEntity<String> response = restTemplate.exchange(policies_url, HttpMethod.GET, entity, String.class);
-     
+
         return response.getBody();
     }
 
@@ -116,10 +137,10 @@ public class RulesEngineController {
     }
 
     //This REST API should be replaced by asyncronous interaction within son-broker
-    @RequestMapping(value = "/deactivation/{policy_descriptor_uuid}", method = RequestMethod.POST)
-    public PolicyRestResponse removeKnowledgebase(@RequestBody String SLMObject, @PathVariable("policy_descriptor_uuid") String policy_descriptor_uuid
+    @RequestMapping(value = "/deactivation/{nsr_id}", method = RequestMethod.POST)
+    public PolicyRestResponse removeKnowledgebase(@RequestBody String SLMObject, @PathVariable("nsr_id") String nsr_id
     ) {
-        log.info("Pending to be implemented");
+        rulesEngineService.removeKnowledgebase(nsr_id);
         return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DEACTIVATED, Optional.empty());
 
     }
@@ -136,7 +157,9 @@ public class RulesEngineController {
         final static String POLICY_ACTIVATED = "Policy is succesfully activated";
         final static String POLICY_DEACTIVATED = "Policy is succesfully deactivated";
         final static String POLICY_CREATED = "Policy is succesfully created";
+        final static String POLICY_DELETED = "Policy is succesfully deleted";
         final static String POLICY_CREATED_FAILURE = "Policy failed to be created at catalogues";
+        final static String POLICY_DELETED_FAILURE = "Policy failed to be deleted at catalogues";
 
     }
 

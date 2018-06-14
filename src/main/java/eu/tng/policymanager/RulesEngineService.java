@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.drools.compiler.lang.DrlDumper;
 import org.drools.compiler.lang.api.CEDescrBuilder;
@@ -457,6 +458,7 @@ public class RulesEngineService {
         //TODO convert yml to drools
         //1. Fech yml file
         File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
+        logger.info("get file from - "+current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
         PolicyYamlFile policyyml = PolicyYamlFile.readYaml(policydescriptor);
 
         //logger.info("get mi first policy rule name" + policyyml.getPolicyRules().get(0).getName());
@@ -544,13 +546,14 @@ public class RulesEngineService {
         }
     }
 
-    public String savePolicyDescriptor(String policyDescriptor) {
+    public String savePolicyDescriptor(String policyDescriptor,String policy_uuid) {
         FileOutputStream out = null;
         String drlPath4deployment = null;
         try {
 
             JSONObject runtimedescriptor = new JSONObject(policyDescriptor);
-            String policyname = runtimedescriptor.getString("name");
+            //String policyname = runtimedescriptor.getString("name");
+            String policyname =policy_uuid;
 
             drlPath4deployment = "/descriptors/" + policyname + ".yml";
             out = new FileOutputStream(current_dir + "/" + drlPath4deployment);
@@ -586,6 +589,56 @@ public class RulesEngineService {
         }
         return true;
     }
+    
+    
+    /*
+     Remove a new knowledge base & session & corresponding rules so as to update kieModule
+     */
+    public void removeKnowledgebase(String gnsid) {
+        try {
+
+            Collection<String> kiebases = kieContainer.getKieBaseNames();
+
+            String factKnowledgebase = "GSGKnowledgeBase_gsg" + gnsid;
+
+            if (!kiebases.contains(factKnowledgebase)) {
+                logger.log(java.util.logging.Level.WARNING, "Knowledge base {0} already removed", factKnowledgebase);
+                return;
+            }
+
+            String knowledgebasename = "gsg" + gnsid;
+            kieModuleModel.removeKieBaseModel("GSGKnowledgeBase_" + knowledgebasename);
+            kieFileSystem.writeKModuleXML(kieModuleModel.toXML());
+            logger.log(java.util.logging.Level.INFO, "kieModuleModel--ToXML\n{0}", kieModuleModel.toXML());
+
+            //TODO remove policy rules
+            String current_dir = System.getProperty("user.dir");
+            FileUtils.deleteDirectory(new File(current_dir + "/rules" + "/" + knowledgebasename));
+            //delete session
+            String factSessionName = "RulesEngineSession_gsg" + gnsid;
+            kieUtil.haltKieSession(factSessionName);
+
+            Double newversion = Double.parseDouble(releaseId.getVersion()) + 0.1;
+            ReleaseId releaseId2 = kieServices.newReleaseId("eu.tng", "policymanager", newversion.toString());
+            KieBuilder kieBuilder = kieServices.newKieBuilder(kieFileSystem);
+            kieBuilder.buildAll();
+
+            if (kieBuilder.getResults()
+                    .hasMessages(Level.ERROR)) {
+                throw new RuntimeException("Build Errors:\n" + kieBuilder.getResults().toString());
+            }
+
+            kieContainer = kieServices.newKieContainer(releaseId2);
+
+        } catch (IOException ex) {
+            Logger.getLogger(RulesEngineService.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+
+    }
+
+    
+    
+    
 
     private String jsonToYaml(JSONObject jsonobject) {
         Yaml yaml = new Yaml();
