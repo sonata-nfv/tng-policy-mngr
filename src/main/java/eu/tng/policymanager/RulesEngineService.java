@@ -446,50 +446,9 @@ public class RulesEngineService {
         }
 
         kieContainer = kieServices.newKieContainer(releaseId2);
-        //kieContainer.updateToVersion(releaseId2);
 
         KieSession kieSession = kieContainer.newKieSession(factSessionName);
         kieUtil.fireKieSession(kieSession, factSessionName);
-
-    }
-
-    public void updateToVersion() {
-
-        String knowledgebasename = "gsgmysession";
-        String factSessionName = "RulesEngineSession_" + knowledgebasename;
-        KieBaseModel kieBaseModel1 = kieModuleModel.newKieBaseModel("GSGKnowledgeBase_" + knowledgebasename).setDefault(true).setEventProcessingMode(EventProcessingOption.STREAM);
-
-        kieBaseModel1.newKieSessionModel(factSessionName).setClockType(ClockTypeOption.get("realtime"));
-
-        ReleaseId releaseId2 = kieServices.newReleaseId("org.drools.workshop", "my-first-drools-kjar", "1.0-SNAPSHOT");
-        this.kieContainer = kieServices.newKieContainer(releaseId2);
-        //kieContainer.updateToVersion(releaseId2);
-
-        KieScanner kScanner = kieServices.newKieScanner(kieContainer);
-
-        kScanner.scanNow();
-
-//        kieFileSystem.write(ResourceFactory.newFileResource(current_dir + "/" + rulesPackage + "/" + knowledgebasename + "/" + knowledgebasename + ".drl"));
-//
-//        kieFileSystem.generateAndWritePomXML(releaseId2);
-//
-//        kieFileSystem.writeKModuleXML(kieModuleModel.toXML());
-        
-
-        KieSession kieSession = kieContainer.newKieSession("mysession");
-
-        kieUtil.fireKieSession(kieSession, factSessionName);
-
-        Collection<String> kbasename = kieContainer.getKieBaseNames();
-        for (String kbasename1 : kbasename) {
-            logger.info("kbasename " + kbasename1);
-            Collection<String> KieSessionNames = kieContainer.getKieSessionNamesInKieBase(kbasename1);
-            for (String KieSessionName : KieSessionNames) {
-                logger.info("KieSessionName " + KieSessionName);
-            }
-        }
-        
-        logger.log(java.util.logging.Level.INFO, "kieModuleModel--ToXML\n{0}", kieModuleModel.toXML());
 
     }
 
