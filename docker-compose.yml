@@ -1,0 +1,23 @@
+version: '3'
+services:
+  mongodb:
+    image: mongo
+    container_name: policy-mongodb
+    ports:
+        - 27017:27017
+
+  tng-policy-mngr:
+    build:
+     context: .
+     dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongodb
+    restart: always
+    
+networks:
+  default:
+    external:
+      name: sonata
+

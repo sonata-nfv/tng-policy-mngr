@@ -28,6 +28,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 /**
  * The main class, which Spring Boot uses to bootstrap the application.
@@ -44,7 +46,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 )
 //Import component specific configurations
 @Import({DroolsConfig.class})
-@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
+@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
+@EnableMongoRepositories("eu.tng.policymanager.repository.dao")
 @EnableScheduling
 //@EnableJms
 public class RulesEngineApp {
