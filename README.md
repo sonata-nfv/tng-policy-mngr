@@ -73,6 +73,8 @@ Following table shows the API endpoints of the Policy Manager.
 | --------------- | ------- | -------------------------------------------- |
 | Create a Policy | `POST` |`/api/v1`|
 | Delete a Policy | `DELETE` |`/api/v1/{policy_descriptor_uuid}`|
+| Bind a Policy to an SLA | `GET` |`/api/v1/{policy_uuid}/sla/{sla_uuid}`|
+| Define a Policy as default | `GET` |`/api/v1/{policy_uuid}/default`|
 | Enforce Policy | `POST` |`/api/v1/activation/{policy_descriptor_uuid}/` |
 | Deactivate Policy | `POST` |`/api/v1/deactivation/{policy_descriptor_uuid}` |
 
