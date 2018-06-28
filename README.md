@@ -73,10 +73,11 @@ Following table shows the API endpoints of the Policy Manager.
 | --------------- | ------- | -------------------------------------------- |
 | GET a list of all runtime policies | `GET` |`/api/v1`|
 | Create a Policy | `POST` |`/api/v1`|
+| GET a policy | `GET` |`/api/v1/{policy_uuid}`|
 | Update a Policy | `PUT` |`/api/v1`|
 | Delete a Policy | `DELETE` |`/api/v1/{policy_uuid}`|
-| Bind a Policy to an SLA | `POST` |`/api/v1/{policy_uuid}`|
-| Define a Policy as default | `POST` |`/api/v1/{policy_uuid}`|
+| Bind a Policy to an SLA | `PATCH` |`/api/v1/{policy_uuid}`|
+| Define a Policy as default | `PATCH` |`/api/v1/{policy_uuid}`|
 | Enforce Policy | `POST` |`/api/v1/{nsr_uuid}/activation` |
 | Deactivate Policy | `POST` |`/api/v1/{nsr_uuid}/deactivation` |
 
