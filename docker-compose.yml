@@ -1,8 +1,8 @@
 version: '3'
 services:
-  mongodb:
+  son-mongo:
     image: mongo
-    container_name: policy-mongodb
+    container_name: son-mongo
     ports:
         - 27017:27017
 
@@ -13,7 +13,7 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      - mongodb
+      - son-mongo
     restart: always
     
 networks:

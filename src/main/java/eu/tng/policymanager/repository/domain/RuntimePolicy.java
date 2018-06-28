@@ -24,7 +24,7 @@ public class RuntimePolicy {
 
     private String slaid;
     
-    private boolean is_default;
+    private boolean defaultPolicy;
 
     public String getId() {
         return id;
@@ -34,12 +34,12 @@ public class RuntimePolicy {
         this.id = id;
     }
 
-    public boolean isIs_default() {
-        return is_default;
+    public boolean isDefaultPolicy() {
+        return defaultPolicy;
     }
 
-    public void setIs_default(boolean is_default) {
-        this.is_default = is_default;
+    public void setDefaultPolicy(boolean defaultPolicy) {
+        this.defaultPolicy = defaultPolicy;
     }
 
     public String getPolicyid() {
