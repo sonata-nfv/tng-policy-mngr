@@ -1,5 +1,6 @@
 package eu.tng.policymanager;
 
+import com.google.gson.Gson;
 import eu.tng.policymanager.repository.dao.RuntimePolicyRepository;
 import eu.tng.policymanager.repository.domain.RuntimePolicy;
 import eu.tng.policymanager.response.BasicResponseCode;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -139,23 +141,35 @@ public class RulesEngineController {
 
     //Delete a Policy
     @RequestMapping(value = "/{policy_uuid}", method = RequestMethod.DELETE)
-    public PolicyRestResponse deletePolicyDescriptor(@PathVariable("policy_uuid") String policy_uuid) {
+    public ResponseEntity deletePolicyDescriptor(@PathVariable("policy_uuid") String policy_uuid) {
 
         log.info("i call catalogues with spring rest template so as to delete the policy descriptor");
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.set("Content-Type", "application/json");
 
+        Gson gson = new Gson();
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+
         try {
             restTemplate.delete(policies_url + "/" + policy_uuid);
             rulesEngineService.deletePolicyDescriptor(policy_uuid);
 
         } catch (Exception e) {
+            PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DELETED_FAILURE, e.getMessage());
+            String responseAsString = gson.toJson(response);
 
-            return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DELETED_FAILURE, e.getMessage());
+            responseHeaders.set("Content-Length", String.valueOf(responseAsString.length()));
+            ResponseEntity responseEntity = new ResponseEntity(responseAsString, responseHeaders, HttpStatus.OK);
+            return responseEntity;
         }
 
-        return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DELETED, true);
+        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DELETED, true);
+        String responseAsString = gson.toJson(response);
+        responseHeaders.set("Content-Length", String.valueOf(responseAsString.length()));
+        ResponseEntity responseEntity = new ResponseEntity(responseAsString, responseHeaders, HttpStatus.OK);
+        return responseEntity;
     }
 
     // Bind a Policy to an SLA
