@@ -132,8 +132,10 @@ public class RulesEngineService {
 
                     if (doaction instanceof ComponentResourceAllocationAction) {
                         ComponentResourceAllocationAction doactionsubclass = (ComponentResourceAllocationAction) doaction;
-                        template.convertAndSend(queue.getName(), doactionsubclass.toString());
-                        System.out.println(" [x] Sent '" + doactionsubclass.toString() + "'");
+                        Gson gson = new Gson();
+                        
+                        template.convertAndSend(queue.getName(), gson.toJson(doactionsubclass));
+                        System.out.println(" [x] Sent '" + gson.toJson(doactionsubclass) + "'");
                     }
 
                     if (doaction instanceof NetworkManagementAction) {
