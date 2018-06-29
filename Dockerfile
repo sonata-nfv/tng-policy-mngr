@@ -12,4 +12,8 @@ COPY --from=0  /app/target/tng-policy-mngr-1.5.0.jar /app/tng-policy-mngr-1.5.0.
 COPY --from=0  /app/descriptors /app/descriptors
 COPY --from=0  /app/rules /app/rules
 WORKDIR /app
-CMD ["java","-jar","-Dspring.profiles.active=development","tng-policy-mngr-1.5.0.jar"]
+ENV MONGO_DB son-mongo
+ENV HOST_BROKER son-broker
+ENV CATALOGUE tng-cat:4011
+#ENV CATALOGUE pre-int-sp-ath.5gtango.eu:4011
+CMD ["java","-jar","tng-policy-mngr-1.5.0.jar"]
