@@ -68,14 +68,12 @@ public class RulesEngineController {
     //TODO: clean java headers!!!!!!!!!!!!!!!
     //Create a Policy
     @RequestMapping(value = "", method = RequestMethod.POST)
-    public PolicyRestResponse createPolicyDescriptor(@RequestBody String tobject) {
+    public ResponseEntity createPolicyDescriptor(@RequestBody String tobject) {
         //save to catalogues
         log.info("Create a Policy");
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders httpHeaders = new HttpHeaders();
-        //httpHeaders.set("Content-Type", "application/json");
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        //httpHeaders.add("Accept", MediaType.APPLICATION_JSON.toString());
 
         HttpEntity<String> httpEntity = new HttpEntity<>(tobject, httpHeaders);
 
@@ -91,11 +89,13 @@ public class RulesEngineController {
 
         } catch (Exception e) {
             //log.info(e.getMessage());
-            return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
+            PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
                     + ". Check if policy vendor or version are null");
+            return buildResponseEntity(response);
         }
 
-        return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED, responseone);
+        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED, responseone);
+        return buildResponseEntity(response);
 
     }
 
@@ -113,9 +113,9 @@ public class RulesEngineController {
         return response.getBody();
     }
 
-    //Update a Policy
+    //Update a Policy -TO BE CHECKED
     @RequestMapping(value = "", method = RequestMethod.PUT)
-    public PolicyRestResponse updatePolicyDescriptor(@RequestBody String tobject) {
+    public ResponseEntity updatePolicyDescriptor(@RequestBody String tobject) {
         log.info("Update a policy descriptor");
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders httpHeaders = new HttpHeaders();
@@ -132,10 +132,12 @@ public class RulesEngineController {
             //rulesEngineService.savePolicyDescriptor(tobject, policy_uuid);
         } catch (Exception e) {
             //log.info(e.getMessage());
-            return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_UPDATED_FAILURE, "Check connection with tng-cat");
+            PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_UPDATED_FAILURE, "Check connection with tng-cat");
+            return buildResponseEntity(response);
         }
 
-        return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_UPDATED, tobject);
+        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_UPDATED, tobject);
+        return buildResponseEntity(response);
 
     }
 
@@ -166,16 +168,13 @@ public class RulesEngineController {
         }
 
         PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DELETED, true);
-        String responseAsString = gson.toJson(response);
-        responseHeaders.set("Content-Length", String.valueOf(responseAsString.length()));
-        ResponseEntity responseEntity = new ResponseEntity(responseAsString, responseHeaders, HttpStatus.OK);
-        return responseEntity;
+        return buildResponseEntity(response);
     }
 
     // Bind a Policy to an SLA
     // Define a Policy as default
     @RequestMapping(value = "/{policy_uuid}", method = RequestMethod.PATCH)
-    public PolicyRestResponse updateRuntimePolicy(@RequestBody RuntimePolicy tobject, @PathVariable("policy_uuid") String policy_uuid) {
+    public ResponseEntity updateRuntimePolicy(@RequestBody RuntimePolicy tobject, @PathVariable("policy_uuid") String policy_uuid) {
 
         Optional<RuntimePolicy> runtimepolicy = runtimePolicyRepository.findByPolicyid(policy_uuid);
         RuntimePolicy rp;
@@ -200,26 +199,47 @@ public class RulesEngineController {
         }
         runtimePolicyRepository.save(rp);
 
-        return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_METADATA_UPDATED, runtimepolicy);
+        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_METADATA_UPDATED, runtimepolicy);
+        return buildResponseEntity(response);
     }
 
     //This REST API should be replaced by asyncronous interaction within son-broker
     @RequestMapping(value = "/{nsr_uuid}/activation", method = RequestMethod.POST)
-    public PolicyRestResponse addKnowledgebase(@RequestBody String SLMObject, @PathVariable("nsr_uuid") String nsr_uuid
+    public ResponseEntity addKnowledgebase(@RequestBody String SLMObject, @PathVariable("nsr_uuid") String nsr_uuid
     ) {
         JSONObject SLMJsonObject = new JSONObject(SLMObject);
         log.info("Rest create addKnowledgebase" + SLMJsonObject.toString());
         rulesEngineService.addNewKnowledgebase(nsr_uuid.replaceAll("-", ""), SLMJsonObject.getString("policy_uuid"));
 
-        return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ACTIVATED, Optional.empty());
+        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ACTIVATED, Optional.empty());
+        return buildResponseEntity(response);
 
     }
 
     //This REST API should be replaced by asyncronous interaction within son-broker
     @RequestMapping(value = "/{nsr_uuid}/deactivation/", method = RequestMethod.POST)
-    public PolicyRestResponse removeKnowledgebase(@RequestBody String SLMObject, @PathVariable("nsr_uuid") String nsr_uuid) {
+    public ResponseEntity removeKnowledgebase(@RequestBody String SLMObject, @PathVariable("nsr_uuid") String nsr_uuid) {
         rulesEngineService.removeKnowledgebase(nsr_uuid);
-        return new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DEACTIVATED, Optional.empty());
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+        Gson gson = new Gson();
+        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DEACTIVATED, Optional.empty());
+        String responseAsString = gson.toJson(response);
+        responseHeaders.set("Content-Length", String.valueOf(responseAsString.length()));
+        ResponseEntity responseEntity = new ResponseEntity(responseAsString, responseHeaders, HttpStatus.OK);
+        return responseEntity;
+    }
+
+    ResponseEntity buildResponseEntity(PolicyRestResponse response) {
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+        Gson gson = new Gson();
+
+        String responseAsString = gson.toJson(response);
+        responseHeaders.set("Content-Length", String.valueOf(responseAsString.length()));
+        ResponseEntity responseEntity = new ResponseEntity(responseAsString, responseHeaders, HttpStatus.OK);
+        return responseEntity;
+
     }
 
     /**
