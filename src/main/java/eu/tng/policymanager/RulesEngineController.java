@@ -88,7 +88,7 @@ public class RulesEngineController {
             rulesEngineService.savePolicyDescriptor(tobject, policy_uuid);
 
         } catch (Exception e) {
-            //log.info(e.getMessage());
+            log.info(e.getMessage());
             PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
                     + ". Check if policy vendor or version are null");
             return buildResponseEntity(response);
