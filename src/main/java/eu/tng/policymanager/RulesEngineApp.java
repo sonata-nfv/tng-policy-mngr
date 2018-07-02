@@ -103,7 +103,10 @@ public class RulesEngineApp {
     @Qualifier("listenerAdapter1")
     @Bean
     MessageListenerAdapter listenerAdapter1(RuntimeActionsListener receiver) {
-        return new MessageListenerAdapter(receiver, "expertSystemMessageReceived");
+
+        MessageListenerAdapter msgadapter = new MessageListenerAdapter(receiver, "expertSystemMessageReceived");
+        msgadapter.setMessageConverter(jackson2JsonMessageConverter());
+        return msgadapter;
     }
 
     @Bean
@@ -121,12 +124,12 @@ public class RulesEngineApp {
     @Bean
     MessageListenerAdapter listenerAdapter2(MonitoringListener receiver) {
         MessageListenerAdapter msgadapter = new MessageListenerAdapter(receiver, "monitoringAlertReceived");
-        msgadapter.setMessageConverter(converter());
+        msgadapter.setMessageConverter(jackson2JsonMessageConverter());
         return msgadapter;
     }
 
     @Bean
-    public Jackson2JsonMessageConverter converter() {
+    public Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
 
