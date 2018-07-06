@@ -1,6 +1,7 @@
 package eu.tng.policymanager;
 
 import eu.tng.policymanager.GPolicy.GPolicy;
+import eu.tng.policymanager.Messaging.DeployedNSListener;
 import eu.tng.policymanager.Messaging.MonitoringListener;
 import eu.tng.policymanager.Messaging.RuntimeActionsListener;
 import eu.tng.policymanager.config.DroolsConfig;
@@ -56,6 +57,7 @@ public class RulesEngineApp {
 
     public static final String RUNTIME_ACTIONS_QUEUE = "eu.tng.policy.runtime.actions";
     final static String monitoringqueue = "son.monitoring.policy";
+    final static String NS_INSTATIATION_QUEUE = "service.instances.create";
 
     public static void main(String[] args) {
 
@@ -75,18 +77,33 @@ public class RulesEngineApp {
     }
 
     @Bean
-    public Queue runtimeActionsQueue() {
-        return new Queue(RUNTIME_ACTIONS_QUEUE);
-    }
-
-    @Bean
     TopicExchange exchange() {
         return new TopicExchange("spring-boot-exchange");
     }
 
     @Bean
+    public Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
+        return new Jackson2JsonMessageConverter();
+    }
+
+    // Configure connection with rabbit mq for NS runtime Actions Queue
+    @Bean
+    public Queue runtimeActionsQueue() {
+        return new Queue(RUNTIME_ACTIONS_QUEUE);
+    }
+
+    @Bean
     Binding binding1(TopicExchange exchange) {
         return BindingBuilder.bind(runtimeActionsQueue()).to(exchange).with(runtimeActionsQueue().getName());
+    }
+
+    @Qualifier("listenerAdapter1")
+    @Bean
+    MessageListenerAdapter listenerAdapter1(RuntimeActionsListener receiver) {
+
+        MessageListenerAdapter msgadapter = new MessageListenerAdapter(receiver, "expertSystemMessageReceived");
+        msgadapter.setMessageConverter(jackson2JsonMessageConverter());
+        return msgadapter;
     }
 
     @Qualifier("container1")
@@ -100,15 +117,7 @@ public class RulesEngineApp {
         return container;
     }
 
-    @Qualifier("listenerAdapter1")
-    @Bean
-    MessageListenerAdapter listenerAdapter1(RuntimeActionsListener receiver) {
-
-        MessageListenerAdapter msgadapter = new MessageListenerAdapter(receiver, "expertSystemMessageReceived");
-        msgadapter.setMessageConverter(jackson2JsonMessageConverter());
-        return msgadapter;
-    }
-
+    // Configure connection with rabbit mq for prometheus alerts Queue
     @Bean
     public Queue monitoringAlerts() {
         return new Queue("son.monitoring.policy", false);
@@ -128,11 +137,6 @@ public class RulesEngineApp {
         return msgadapter;
     }
 
-    @Bean
-    public Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
-        return new Jackson2JsonMessageConverter();
-    }
-
     @Qualifier("container2")
     @Bean
     SimpleMessageListenerContainer container2(ConnectionFactory connectionFactory,
@@ -140,6 +144,36 @@ public class RulesEngineApp {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         container.setQueueNames(monitoringAlerts().getName());
+        container.setMessageListener(listenerAdapter);
+        return container;
+    }
+
+    // Configure connection with rabbit mq for NS instantiatin Queue
+    @Bean
+    public Queue nsInstantiationQueue() {
+        return new Queue(NS_INSTATIATION_QUEUE,false);
+    }
+
+    @Bean
+    Binding bindingNSInstantiationQueue(TopicExchange exchange) {
+        return BindingBuilder.bind(nsInstantiationQueue()).to(exchange).with(nsInstantiationQueue().getName());
+    }
+
+    @Qualifier("nsInstantiationlistenerAdapter")
+    @Bean
+    MessageListenerAdapter nsInstantiationlistenerAdapter(DeployedNSListener receiver) {
+        MessageListenerAdapter msgadapter = new MessageListenerAdapter(receiver, "deployedNSMessageReceived");
+        msgadapter.setMessageConverter(jackson2JsonMessageConverter());
+        return msgadapter;
+    }
+
+    @Qualifier("nsInstantiationcontainer")
+    @Bean
+    SimpleMessageListenerContainer nsInstantiationcontainer(ConnectionFactory connectionFactory,
+            @Qualifier("nsInstantiationlistenerAdapter") MessageListenerAdapter listenerAdapter) {
+        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        container.setQueueNames(nsInstantiationQueue().getName());
         container.setMessageListener(listenerAdapter);
         return container;
     }

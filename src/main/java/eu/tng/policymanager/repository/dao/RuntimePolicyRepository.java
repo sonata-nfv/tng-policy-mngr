@@ -14,7 +14,11 @@ import org.springframework.data.mongodb.repository.MongoRepository;
  * @author Eleni Fotopoulou <efotopoulou@ubitech.eu>
  */
 public interface RuntimePolicyRepository extends MongoRepository<RuntimePolicy, String> {
+
+    Optional<RuntimePolicy> findByPolicyid(String policyid);
+
+    Optional<RuntimePolicy> findByNsridAndDefaultPolicyTrue(String nsid);
     
-     Optional<RuntimePolicy> findByPolicyid(String policyid);
+      Optional<RuntimePolicy> findBySlaid(String slaid);
 
 }
