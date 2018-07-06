@@ -219,6 +219,7 @@ public class RulesEngineController {
     //This REST API should be replaced by asyncronous interaction within son-broker
     @RequestMapping(value = "/{nsr_uuid}/deactivation/", method = RequestMethod.POST)
     public ResponseEntity removeKnowledgebase(@RequestBody String SLMObject, @PathVariable("nsr_uuid") String nsr_uuid) {
+        log.info("Deactivation of policy for NS" +  nsr_uuid);
         rulesEngineService.removeKnowledgebase(nsr_uuid);
 
         HttpHeaders responseHeaders = new HttpHeaders();
