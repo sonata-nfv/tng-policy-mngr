@@ -209,7 +209,7 @@ public class RulesEngineController {
     ) {
         JSONObject SLMJsonObject = new JSONObject(SLMObject);
         log.info("Rest create addKnowledgebase" + SLMJsonObject.toString());
-        rulesEngineService.addNewKnowledgebase(nsr_uuid.replaceAll("-", ""), SLMJsonObject.getString("policy_uuid"));
+        rulesEngineService.addNewKnowledgebase("s"+nsr_uuid.replaceAll("-", ""), SLMJsonObject.getString("policy_uuid"));
 
         PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ACTIVATED, Optional.empty());
         return buildResponseEntity(response);
