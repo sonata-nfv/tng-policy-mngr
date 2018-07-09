@@ -43,7 +43,7 @@ public class DeployedNSListener {
                 logger.log(Level.INFO, "Check for policy  binded with SLA " + sla_id);
                 runtimepolicy = runtimePolicyRepository.findBySlaid(sla_id);
             }
-
+            
             if (runtimepolicy.isPresent()) {
                 logger.log(Level.INFO, "Activate policy for NSR " + nsr_id);
                 rulesEngineService.addNewKnowledgebase(nsr_id.replaceAll("-", ""), runtimepolicy.get().getPolicyid());
