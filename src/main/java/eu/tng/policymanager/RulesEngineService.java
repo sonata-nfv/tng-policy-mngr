@@ -470,7 +470,7 @@ public class RulesEngineService {
 
         PackageDescrBuilder packageDescrBuilder = DescrFactory.newPackage();
         packageDescrBuilder
-                .name(rulesPackage + "." + gnsid)
+                .name(rulesPackage + ".s" + gnsid)
                 .newImport().target("eu.tng.policymanager.facts.*").end()
                 .newImport().target("eu.tng.policymanager.facts.action.*").end()
                 .newImport().target("eu.tng.policymanager.facts.enums.*").end()
