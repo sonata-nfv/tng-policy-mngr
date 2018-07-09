@@ -46,7 +46,7 @@ public class DeployedNSListener {
 
             if (runtimepolicy.isPresent()) {
                 logger.log(Level.INFO, "Activate policy for NSR " + nsr_id);
-                rulesEngineService.addNewKnowledgebase(nsr_id.replaceAll("-", ""), runtimepolicy.get().getId());
+                rulesEngineService.addNewKnowledgebase(nsr_id.replaceAll("-", ""), runtimepolicy.get().getPolicyid());
             } else {
                 logger.log(Level.INFO, "NSR " + nsr_id + " is deployed withoun any policy");
 
