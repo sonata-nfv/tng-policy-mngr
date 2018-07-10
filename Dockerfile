@@ -15,5 +15,5 @@ WORKDIR /app
 ENV MONGO_DB son-mongo
 ENV HOST_BROKER son-broker
 ENV CATALOGUE tng-cat:4011
-#ENV CATALOGUE pre-int-sp-ath.5gtango.eu:4011
+##ENV CATALOGUE pre-int-sp-ath.5gtango.eu:4011
 CMD ["java","-jar","tng-policy-mngr-1.5.0.jar"]
