@@ -28,12 +28,15 @@ public class PolicyYamlFile {
 
     @JsonProperty
     private String vendor;
-    
+
     @JsonProperty
     private String version;
 
     @JsonProperty
     private NetworkService network_service;
+
+    @JsonProperty
+    private List<MonitoringRule> monitoring_rules;
 
     @JsonProperty
     private List<PolicyRule> policyRules;
@@ -97,6 +100,13 @@ public class PolicyYamlFile {
     public void setVersion(String version) {
         this.version = version;
     }
-    
+
+    public List<MonitoringRule> getMonitoring_rules() {
+        return monitoring_rules;
+    }
+
+    public void setMonitoring_rules(List<MonitoringRule> monitoring_rules) {
+        this.monitoring_rules = monitoring_rules;
+    }
 
 }

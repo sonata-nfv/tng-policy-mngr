@@ -14,6 +14,7 @@ import eu.tng.policymanager.facts.action.Action;
 import eu.tng.policymanager.facts.action.ComponentResourceAllocationAction;
 import eu.tng.policymanager.facts.LogMetric;
 import eu.tng.policymanager.facts.MonitoredComponent;
+import eu.tng.policymanager.facts.action.ElasticityAction;
 import eu.tng.policymanager.facts.action.NetworkManagementAction;
 import eu.tng.policymanager.facts.enums.Status;
 import eu.tng.policymanager.repository.PolicyRule;
@@ -51,7 +52,6 @@ import org.kie.api.KieBase;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
-import org.kie.api.builder.KieScanner;
 import org.kie.api.builder.Message.Level;
 import org.kie.api.builder.model.KieBaseModel;
 import org.kie.api.builder.model.KieModuleModel;
@@ -140,6 +140,12 @@ public class RulesEngineService {
 
                     if (doaction instanceof NetworkManagementAction) {
                         NetworkManagementAction doactionsubclass = (NetworkManagementAction) doaction;
+                        template.convertAndSend(queue.getName(), doactionsubclass.toString());
+                        System.out.println(" [x] Sent '" + doactionsubclass.toString() + "'");
+                    }
+                    
+                    if (doaction instanceof ElasticityAction) {
+                        ElasticityAction doactionsubclass = (ElasticityAction) doaction;
                         template.convertAndSend(queue.getName(), doactionsubclass.toString());
                         System.out.println(" [x] Sent '" + doactionsubclass.toString() + "'");
                     }

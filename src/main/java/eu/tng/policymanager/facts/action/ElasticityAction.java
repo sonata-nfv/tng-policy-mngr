@@ -5,7 +5,7 @@
  */
 package eu.tng.policymanager.facts.action;
 
-import eu.tng.policymanager.facts.enums.InfrastructureType;
+import eu.tng.policymanager.facts.enums.OrchestrationType;
 import eu.tng.policymanager.facts.enums.Status;
 
 /**
@@ -15,12 +15,12 @@ import eu.tng.policymanager.facts.enums.Status;
 public class ElasticityAction extends Action {
 
     String componentid;
-    InfrastructureType resourceAllocationType;
+    OrchestrationType orchestrationType;
 
-    public ElasticityAction(String gnsid, String componentid, InfrastructureType resourceAllocationType, String value, Status status) {
+    public ElasticityAction(String gnsid, String componentid, OrchestrationType orchestrationType, String value, Status status) {
         this.gnsid = gnsid;
         this.componentid = componentid;
-        this.resourceAllocationType = resourceAllocationType;
+        this.orchestrationType = orchestrationType;
         this.value = value;
         this.status = status;
     }
@@ -33,20 +33,21 @@ public class ElasticityAction extends Action {
         this.componentid = componentid;
     }
 
-    public InfrastructureType getResourceAllocationType() {
-        return resourceAllocationType;
+    public OrchestrationType getOrchestrationType() {
+        return orchestrationType;
     }
 
-    public void setResourceAllocationType(InfrastructureType resourceAllocationType) {
-        this.resourceAllocationType = resourceAllocationType;
+    public void setOrchestrationType(OrchestrationType orchestrationType) {
+        this.orchestrationType = orchestrationType;
     }
+
 
     @Override
     public String toString() {
         return "ComponentResourceAllocationAction: { componentid=\"" + componentid + "\""
                 + ", value=" + value
                 + ", gnsid=" + gnsid
-                + ",resourceAllocationType=\"" + resourceAllocationType + "\"}";
+                + ",orchestrationType=\"" + orchestrationType + "\"}";
     }
 
     @Override
@@ -58,19 +59,17 @@ public class ElasticityAction extends Action {
             return false;
         }
         ElasticityAction that = (ElasticityAction) o;
-        return this.value == that.value && this.gnsid.equals(that.gnsid) 
-                && this.componentid.equals(that.componentid) 
-                && this.resourceAllocationType.equals(that.resourceAllocationType)
+        return this.value == that.value && this.gnsid.equals(that.gnsid)
+                && this.componentid.equals(that.componentid)
+                && this.orchestrationType.equals(that.orchestrationType)
                 && this.status.equals(that.status);
     }
 
     @Override
     public int hashCode() {
-        int result = resourceAllocationType.hashCode();
+        int result = orchestrationType.hashCode();
         result = (int) (31 * result + componentid.hashCode() + gnsid.hashCode());
         return result;
     }
 
 }
-
-

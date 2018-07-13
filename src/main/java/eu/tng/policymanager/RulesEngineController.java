@@ -1,8 +1,10 @@
 package eu.tng.policymanager;
 
 import com.google.gson.Gson;
+import eu.tng.policymanager.repository.dao.RuntimePolicyRecordRepository;
 import eu.tng.policymanager.repository.dao.RuntimePolicyRepository;
 import eu.tng.policymanager.repository.domain.RuntimePolicy;
+import eu.tng.policymanager.repository.domain.RuntimePolicyRecord;
 import eu.tng.policymanager.response.BasicResponseCode;
 import eu.tng.policymanager.response.PolicyRestResponse;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
@@ -44,6 +46,7 @@ public class RulesEngineController {
 
     @Autowired
     RuntimePolicyRepository runtimePolicyRepository;
+
 
     @RequestMapping(value = "/newMonitoringMessage", method = RequestMethod.POST)
     public boolean newMonitoringMessage(@RequestBody MonitoringMessageTO tobject) {
@@ -194,8 +197,8 @@ public class RulesEngineController {
         if (tobject.isDefaultPolicy() == true) {
             rp.setDefaultPolicy(tobject.isDefaultPolicy());
         }
-        if (tobject.getNsrid() != null) {
-            rp.setNsrid(tobject.getNsrid());
+        if (tobject.getNsid() != null) {
+            rp.setNsid(tobject.getNsid());
         }
         runtimePolicyRepository.save(rp);
 
@@ -209,7 +212,7 @@ public class RulesEngineController {
     ) {
         JSONObject SLMJsonObject = new JSONObject(SLMObject);
         log.info("Rest create addKnowledgebase" + SLMJsonObject.toString());
-        rulesEngineService.addNewKnowledgebase("s"+nsr_uuid.replaceAll("-", ""), SLMJsonObject.getString("policy_uuid"));
+        rulesEngineService.addNewKnowledgebase("s" + nsr_uuid.replaceAll("-", ""), SLMJsonObject.getString("policy_uuid"));
 
         PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ACTIVATED, Optional.empty());
         return buildResponseEntity(response);
@@ -219,7 +222,7 @@ public class RulesEngineController {
     //This REST API should be replaced by asyncronous interaction within son-broker
     @RequestMapping(value = "/{nsr_uuid}/deactivation/", method = RequestMethod.POST)
     public ResponseEntity removeKnowledgebase(@RequestBody String SLMObject, @PathVariable("nsr_uuid") String nsr_uuid) {
-        log.info("Deactivation of policy for NS" +  nsr_uuid);
+        log.info("Deactivation of policy for NS" + nsr_uuid);
         rulesEngineService.removeKnowledgebase(nsr_uuid);
 
         HttpHeaders responseHeaders = new HttpHeaders();

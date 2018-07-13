@@ -1,0 +1,34 @@
+network_service: {vendor: eu.5gtango, name: NS-squid-haproxy, version: '0.1'}
+monitoring_rules:
+- duration: 60
+  notification:
+  - {name: mon_rule_squid_cpu_util, type: rabbitmq_message}
+  condition: vdu01:cpu_util > 70
+  name: mon_rule_squid_cpu_util
+  description: Trigger events if CPU load of squid is above 70 percent.
+  duration_unit: s
+- duration: 60
+  notification:
+  - {name: mon_rule_haproxy_frontend_scur, type: rabbitmq_message}
+  condition: haproxy_frontend_scur > 30
+  name: mon_rule_haproxy_frontend_scur
+  description: Trigger events if haproxy frontend session are 30.
+  duration_unit: s
+vendor: eu.5gtango
+name: NS-squid-haproxy-Elasticity-Policy-BestEffort12
+descriptor_schema: https://raw.githubusercontent.com/sonata-nfv/tng-schema/master/policy-descriptor/policy-schema.yml
+policyRules:
+- salience: 1
+  inertia: {value: 30, duration_unit: m}
+  name: actionUponAlert
+  conditions:
+    condition: AND
+    rules:
+    - {input: text, field: squid.LogMetric, id: squid.LogMetric, type: string, value: mon_rule_squid_cpu_util,
+      operator: equal}
+    - {input: text, field: haproxy.LogMetric, id: haproxy.LogMetric, type: string,
+      value: mon_rule_haproxy_frontend_scur, operator: equal}
+  actions:
+  - {action_type: OrchestrationType, name: Spawn, value: '1', action_object: ElasticityAction,
+    target: vnf_squid}
+version: '0.1'
