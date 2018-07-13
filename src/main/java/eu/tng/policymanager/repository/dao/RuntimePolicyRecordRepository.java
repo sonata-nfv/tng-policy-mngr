@@ -5,7 +5,7 @@
  */
 package eu.tng.policymanager.repository.dao;
 
-import eu.tng.policymanager.repository.domain.RuntimePolicy;
+import eu.tng.policymanager.repository.domain.RuntimePolicyRecord;
 import java.util.Optional;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
@@ -13,12 +13,10 @@ import org.springframework.data.mongodb.repository.MongoRepository;
  *
  * @author Eleni Fotopoulou <efotopoulou@ubitech.eu>
  */
-public interface RuntimePolicyRepository extends MongoRepository<RuntimePolicy, String> {
+public interface RuntimePolicyRecordRepository extends MongoRepository<RuntimePolicyRecord, String> {
 
-    Optional<RuntimePolicy> findByPolicyid(String policyid);
+    Optional<RuntimePolicyRecord> findByPolicyid(String policyid);
 
-    Optional<RuntimePolicy> findByNsidAndDefaultPolicyTrue(String nsid);
-    
-      Optional<RuntimePolicy> findBySlaid(String slaid);
+    Optional<RuntimePolicyRecord> findByNsrid(String nsid);
 
 }

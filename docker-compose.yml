@@ -15,9 +15,4 @@ services:
     depends_on:
       - son-mongo
     restart: always
-    
-networks:
-  default:
-    external:
-      name: sonata
 

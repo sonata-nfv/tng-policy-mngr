@@ -27,8 +27,9 @@ public class MonitoringListener {
         if (message.containsKey("alertname")) {
 
             String gnsid = message.get("serviceID").toString();
+            String vnf_name = message.get("vnf_name").toString();
 
-            LogMetric logMetric = new LogMetric("s"+gnsid.replaceAll("-", ""), "vnf1", message.get("alertname").toString());
+            LogMetric logMetric = new LogMetric("s"+gnsid.replaceAll("-", ""), vnf_name, message.get("alertname").toString());
             rulesEngineService.createLogFact(logMetric);
         }
 

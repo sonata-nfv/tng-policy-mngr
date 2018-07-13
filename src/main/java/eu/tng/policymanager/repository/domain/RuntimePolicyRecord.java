@@ -13,18 +13,15 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * @author Eleni Fotopoulou <efotopoulou@ubitech.eu>
  */
 @Document(collection = "RuntimePolicy")
-public class RuntimePolicy {
+public class RuntimePolicyRecord {
 
     @Id
     private String id;
 
     private String policyid;
     
-    private String nsid;
+    private String nsrid;
 
-    private String slaid;
-    
-    private boolean defaultPolicy;
 
     public String getId() {
         return id;
@@ -34,14 +31,7 @@ public class RuntimePolicy {
         this.id = id;
     }
 
-    public boolean isDefaultPolicy() {
-        return defaultPolicy;
-    }
-
-    public void setDefaultPolicy(boolean defaultPolicy) {
-        this.defaultPolicy = defaultPolicy;
-    }
-
+  
     public String getPolicyid() {
         return policyid;
     }
@@ -50,20 +40,12 @@ public class RuntimePolicy {
         this.policyid = policyid;
     }
 
-    public void setNsid(String nsid) {
-        this.nsid = nsid;
+    public String getNsrid() {
+        return nsrid;
     }
 
-    public String getNsid() {
-        return nsid;
-    }
-
-    public String getSlaid() {
-        return slaid;
-    }
-
-    public void setSlaid(String slaid) {
-        this.slaid = slaid;
+    public void setNsrid(String nsrid) {
+        this.nsrid = nsrid;
     }
 
 }
