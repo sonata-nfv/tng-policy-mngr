@@ -18,7 +18,9 @@ public interface RuntimePolicyRepository extends MongoRepository<RuntimePolicy, 
     Optional<RuntimePolicy> findByPolicyid(String policyid);
 
     Optional<RuntimePolicy> findByNsidAndDefaultPolicyTrue(String nsid);
-    
-      Optional<RuntimePolicy> findBySlaid(String slaid);
+
+    Optional<RuntimePolicy> findBySlaid(String slaid);
+
+    Optional<RuntimePolicy> findBySlaidAndNsid(String slaid, String nsid);
 
 }

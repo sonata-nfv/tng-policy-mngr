@@ -12,7 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
  *
  * @author Eleni Fotopoulou <efotopoulou@ubitech.eu>
  */
-@Document(collection = "RuntimePolicy")
+@Document(collection = "RuntimePolicyRecord")
 public class RuntimePolicyRecord {
 
     @Id
