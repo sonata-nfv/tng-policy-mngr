@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
-
 /**
  *
  * @author Eleni Fotopoulou <efotopoulou@ubitech.eu>
@@ -28,8 +27,11 @@ public class MonitoringRule {
     @JsonProperty
     private String duration_unit;
 
-    @JsonIgnore
+    @JsonProperty
     private String condition;
+
+    @JsonProperty
+    private String threshold;
 
     public String getName() {
         return name;
@@ -70,5 +72,12 @@ public class MonitoringRule {
     public void setCondition(String condition) {
         this.condition = condition;
     }
-    
+
+    public String getThreshold() {
+        return threshold;
+    }
+
+    public void setThreshold(String threshold) {
+        this.threshold = threshold;
+    }
 }

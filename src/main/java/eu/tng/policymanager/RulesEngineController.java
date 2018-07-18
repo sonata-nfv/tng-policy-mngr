@@ -1,10 +1,8 @@
 package eu.tng.policymanager;
 
 import com.google.gson.Gson;
-import eu.tng.policymanager.repository.dao.RuntimePolicyRecordRepository;
 import eu.tng.policymanager.repository.dao.RuntimePolicyRepository;
 import eu.tng.policymanager.repository.domain.RuntimePolicy;
-import eu.tng.policymanager.repository.domain.RuntimePolicyRecord;
 import eu.tng.policymanager.response.BasicResponseCode;
 import eu.tng.policymanager.response.PolicyRestResponse;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
@@ -206,33 +204,33 @@ public class RulesEngineController {
         return buildResponseEntity(response);
     }
 
-    //This REST API should be replaced by asyncronous interaction within son-broker
-    @RequestMapping(value = "/{nsr_uuid}/activation", method = RequestMethod.POST)
-    public ResponseEntity addKnowledgebase(@RequestBody String SLMObject, @PathVariable("nsr_uuid") String nsr_uuid
-    ) {
-        JSONObject SLMJsonObject = new JSONObject(SLMObject);
-        log.info("Rest create addKnowledgebase" + SLMJsonObject.toString());
-        rulesEngineService.addNewKnowledgebase("s" + nsr_uuid.replaceAll("-", ""), SLMJsonObject.getString("policy_uuid"));
-
-        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ACTIVATED, Optional.empty());
-        return buildResponseEntity(response);
-
-    }
-
-    //This REST API should be replaced by asyncronous interaction within son-broker
-    @RequestMapping(value = "/{nsr_uuid}/deactivation/", method = RequestMethod.POST)
-    public ResponseEntity removeKnowledgebase(@RequestBody String SLMObject, @PathVariable("nsr_uuid") String nsr_uuid) {
-        log.info("Deactivation of policy for NS" + nsr_uuid);
-        rulesEngineService.removeKnowledgebase(nsr_uuid);
-
-        HttpHeaders responseHeaders = new HttpHeaders();
-        Gson gson = new Gson();
-        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DEACTIVATED, Optional.empty());
-        String responseAsString = gson.toJson(response);
-        responseHeaders.set("Content-Length", String.valueOf(responseAsString.length()));
-        ResponseEntity responseEntity = new ResponseEntity(responseAsString, responseHeaders, HttpStatus.OK);
-        return responseEntity;
-    }
+//    //This REST API should be replaced by asyncronous interaction within son-broker
+//    @RequestMapping(value = "/{nsr_uuid}/activation", method = RequestMethod.POST)
+//    public ResponseEntity addKnowledgebase(@RequestBody String SLMObject, @PathVariable("nsr_uuid") String nsr_uuid
+//    ) {
+//        JSONObject SLMJsonObject = new JSONObject(SLMObject);
+//        log.info("Rest create addKnowledgebase" + SLMJsonObject.toString());
+//        rulesEngineService.addNewKnowledgebase("s" + nsr_uuid.replaceAll("-", ""), SLMJsonObject.getString("policy_uuid"));
+//
+//        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ACTIVATED, Optional.empty());
+//        return buildResponseEntity(response);
+//
+//    }
+//
+//    //This REST API should be replaced by asyncronous interaction within son-broker
+//    @RequestMapping(value = "/{nsr_uuid}/deactivation/", method = RequestMethod.POST)
+//    public ResponseEntity removeKnowledgebase(@RequestBody String SLMObject, @PathVariable("nsr_uuid") String nsr_uuid) {
+//        log.info("Deactivation of policy for NS" + nsr_uuid);
+//        rulesEngineService.removeKnowledgebase(nsr_uuid);
+//
+//        HttpHeaders responseHeaders = new HttpHeaders();
+//        Gson gson = new Gson();
+//        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DEACTIVATED, Optional.empty());
+//        String responseAsString = gson.toJson(response);
+//        responseHeaders.set("Content-Length", String.valueOf(responseAsString.length()));
+//        ResponseEntity responseEntity = new ResponseEntity(responseAsString, responseHeaders, HttpStatus.OK);
+//        return responseEntity;
+//    }
 
     ResponseEntity buildResponseEntity(PolicyRestResponse response) {
 

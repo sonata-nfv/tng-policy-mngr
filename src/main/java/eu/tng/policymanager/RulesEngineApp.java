@@ -29,6 +29,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
@@ -64,6 +65,7 @@ public class RulesEngineApp {
         ApplicationContext ctx = SpringApplication.run(RulesEngineApp.class, args);
         String[] beanNames = ctx.getBeanDefinitionNames();
         Arrays.sort(beanNames);
+
     }
 
     @Bean
@@ -151,7 +153,7 @@ public class RulesEngineApp {
     // Configure connection with rabbit mq for NS instantiatin Queue
     @Bean
     public Queue nsInstantiationQueue() {
-        return new Queue(NS_INSTATIATION_QUEUE,false);
+        return new Queue(NS_INSTATIATION_QUEUE, false);
     }
 
     @Bean

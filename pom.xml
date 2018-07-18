@@ -24,7 +24,7 @@
         <junit>4.12</junit>               
     </properties> 
     <dependencies>
-<!--        <dependency>
+        <!--        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
             <version>4.4</version>
@@ -81,8 +81,15 @@
             <artifactId>json</artifactId>
             <version>20160212</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>3.11.0</version>
+        </dependency>
+
         
-<!--        <dependency>
+        <!--        <dependency>
             <groupId>org.apache.tomcat.embed</groupId>
             <artifactId>tomcat-embed-jasper</artifactId>
             <scope>provided</scope>
@@ -135,7 +142,7 @@
             <artifactId>spring-data-mongodb</artifactId>
             <version>${org.springframework.data}</version>
         </dependency>
-<!--        <dependency>
+        <!--        <dependency>
             <groupId>org.apache.tomcat</groupId>
             <artifactId>juli</artifactId>
             <version>6.0.53</version>
