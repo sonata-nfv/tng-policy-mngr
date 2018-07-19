@@ -15,33 +15,34 @@ import eu.tng.policymanager.facts.enums.UnitType;
  */
 public class LogMetric extends Metric {
 
-    String gnsid;
-    String componentid;
+    String nsrid;
+    String vnf_name;
 
-    public LogMetric(String gnsid, String componentid, String value) {
-        this.gnsid = gnsid;
-        this.componentid = componentid;
+    public LogMetric(String nsrid, String vnf_name, String value) {
+        this.nsrid = nsrid;
+        this.vnf_name = vnf_name;
         this.value = value;
         this.valueType = ValueType.String;
         this.valueUnit = UnitType.none;
         this.aggregationFunctionType = AggregationFunctionType.none;
     }
 
-    public String getGnsid() {
-        return gnsid;
+    public String getNsrid() {
+        return nsrid;
     }
 
-    public void setGnsid(String gnsid) {
-        this.gnsid = gnsid;
+    public void setNsrid(String nsrid) {
+        this.nsrid = nsrid;
     }
 
-    public String getComponentid() {
-        return componentid;
+    public String getVnf_name() {
+        return vnf_name;
     }
 
-    public void setComponentid(String componentid) {
-        this.componentid = componentid;
+    public void setVnf_name(String vnf_name) {
+        this.vnf_name = vnf_name;
     }
+
 
     public AggregationFunctionType getAggregationFunctionType() {
         return aggregationFunctionType;
@@ -53,9 +54,9 @@ public class LogMetric extends Metric {
 
     @Override
     public String toString() {
-        return "LogMetric: { componentid=\"" + componentid + "\""
+        return "LogMetric: { vnf_name=\"" + vnf_name + "\""
                 + ", value=\"" + value+ "\""
-                + ",gnsid=\"" + gnsid + "\"}";
+                + ",nsrid=\"" + nsrid + "\"}";
     }
 
     @Override
@@ -67,13 +68,13 @@ public class LogMetric extends Metric {
             return false;
         }
         LogMetric that = (LogMetric) o;
-        return this.value.equals(that.value) && this.gnsid.equals(that.gnsid) && this.componentid.equals(that.componentid);
+        return this.value.equals(that.value) && this.nsrid.equals(that.nsrid) && this.vnf_name.equals(that.vnf_name);
     }
 
     @Override
     public int hashCode() {
         int result = value.hashCode();
-        result = (int) (31 * result + componentid.hashCode() + gnsid.hashCode());
+        result = (int) (31 * result + vnf_name.hashCode() + nsrid.hashCode());
         return result;
     }
 

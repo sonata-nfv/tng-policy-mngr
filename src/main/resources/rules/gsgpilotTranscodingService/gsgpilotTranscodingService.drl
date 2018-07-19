@@ -11,7 +11,7 @@ end
 
 rule "actionUponAlert"
 when
-    LogMetric( gnsid=="pilotTranscodingService" && componentid=="vnf1" && value== "notification01" )
+    LogMetric( gnsid=="pilotTranscodingService" && vnf_name=="vnf1" && value== "notification01" )
 then
     insertLogical( new Action("pilotTranscodingService","vnf1",RuleActionType.Infrastructure,"3","ApplyFlavour")); 
 
