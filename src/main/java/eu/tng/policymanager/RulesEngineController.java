@@ -1,45 +1,51 @@
 /*
-* Copyright (c) 2015 SONATA-NFV, 2017 5GTANGO [, ANY ADDITIONAL AFFILIATION]
-* ALL RIGHTS RESERVED.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* Neither the name of the SONATA-NFV, 5GTANGO [, ANY ADDITIONAL AFFILIATION]
-* nor the names of its contributors may be used to endorse or promote
-* products derived from this software without specific prior written
-* permission.
-*
-* This work has been performed in the framework of the SONATA project,
-* funded by the European Commission under Grant number 671517 through
-* the Horizon 2020 and 5G-PPP programmes. The authors would like to
-* acknowledge the contributions of their colleagues of the SONATA
-* partner consortium (www.sonata-nfv.eu).
-*
-* This work has been performed in the framework of the 5GTANGO project,
-* funded by the European Commission under Grant number 761493 through
-* the Horizon 2020 and 5G-PPP programmes. The authors would like to
-* acknowledge the contributions of their colleagues of the 5GTANGO
-* partner consortium (www.5gtango.eu).
-*/
+ * Copyright (c) 2015 SONATA-NFV, 2017 5GTANGO [, ANY ADDITIONAL AFFILIATION]
+ * ALL RIGHTS RESERVED.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Neither the name of the SONATA-NFV, 5GTANGO [, ANY ADDITIONAL AFFILIATION]
+ * nor the names of its contributors may be used to endorse or promote
+ * products derived from this software without specific prior written
+ * permission.
+ *
+ * This work has been performed in the framework of the SONATA project,
+ * funded by the European Commission under Grant number 671517 through
+ * the Horizon 2020 and 5G-PPP programmes. The authors would like to
+ * acknowledge the contributions of their colleagues of the SONATA
+ * partner consortium (www.sonata-nfv.eu).
+ *
+ * This work has been performed in the framework of the 5GTANGO project,
+ * funded by the European Commission under Grant number 761493 through
+ * the Horizon 2020 and 5G-PPP programmes. The authors would like to
+ * acknowledge the contributions of their colleagues of the 5GTANGO
+ * partner consortium (www.5gtango.eu).
+ */
 package eu.tng.policymanager;
 
 import com.google.gson.Gson;
+import eu.tng.policymanager.repository.dao.PlacementPolicyRepository;
 import eu.tng.policymanager.repository.dao.RuntimePolicyRepository;
+import eu.tng.policymanager.repository.domain.PlacementPolicy;
 import eu.tng.policymanager.repository.domain.RuntimePolicy;
 import eu.tng.policymanager.response.BasicResponseCode;
 import eu.tng.policymanager.response.PolicyRestResponse;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import org.slf4j.Logger;
@@ -78,11 +84,20 @@ public class RulesEngineController {
     @Autowired
     RuntimePolicyRepository runtimePolicyRepository;
 
+    @Autowired
+    PlacementPolicyRepository placementPolicyRepository;
 
     @RequestMapping(value = "/newMonitoringMessage", method = RequestMethod.POST)
     public boolean newMonitoringMessage(@RequestBody MonitoringMessageTO tobject) {
         rulesEngineService.createFact(tobject);
         return true;
+    }
+
+    //GET healthcheck for runtime policies
+    @RequestMapping(value = "/pings", method = RequestMethod.GET)
+    public String pings() {
+        log.info("ping policy manager");
+        return "{ \"alive_now\": \"" + new Date() + "\"}";
     }
 
     //GET a list of all runtime policies
@@ -237,33 +252,58 @@ public class RulesEngineController {
         return buildResponseEntity(response);
     }
 
-//    //This REST API should be replaced by asyncronous interaction within son-broker
-//    @RequestMapping(value = "/{nsr_uuid}/activation", method = RequestMethod.POST)
-//    public ResponseEntity addKnowledgebase(@RequestBody String SLMObject, @PathVariable("nsr_uuid") String nsr_uuid
-//    ) {
-//        JSONObject SLMJsonObject = new JSONObject(SLMObject);
-//        log.info("Rest create addKnowledgebase" + SLMJsonObject.toString());
-//        rulesEngineService.addNewKnowledgebase("s" + nsr_uuid.replaceAll("-", ""), SLMJsonObject.getString("policy_uuid"));
-//
-//        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ACTIVATED, Optional.empty());
-//        return buildResponseEntity(response);
-//
-//    }
-//
-//    //This REST API should be replaced by asyncronous interaction within son-broker
-//    @RequestMapping(value = "/{nsr_uuid}/deactivation/", method = RequestMethod.POST)
-//    public ResponseEntity removeKnowledgebase(@RequestBody String SLMObject, @PathVariable("nsr_uuid") String nsr_uuid) {
-//        log.info("Deactivation of policy for NS" + nsr_uuid);
-//        rulesEngineService.removeKnowledgebase(nsr_uuid);
-//
-//        HttpHeaders responseHeaders = new HttpHeaders();
-//        Gson gson = new Gson();
-//        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DEACTIVATED, Optional.empty());
-//        String responseAsString = gson.toJson(response);
-//        responseHeaders.set("Content-Length", String.valueOf(responseAsString.length()));
-//        ResponseEntity responseEntity = new ResponseEntity(responseAsString, responseHeaders, HttpStatus.OK);
-//        return responseEntity;
-//    }
+
+    /*Create placement policy
+     {
+     "policy": "prioritise",
+     "datacenters": ["vim_city 1", "vim_city 2"]
+     }*/
+    @RequestMapping(value = "/placement", method = RequestMethod.POST)
+    public ResponseEntity createPlacementPolicy(@RequestBody String tobject) {
+        log.info("Create placement policy");
+        HttpHeaders responseHeaders = new HttpHeaders();
+        Gson gson = new Gson();
+        placementPolicyRepository.deleteAll();
+
+        JSONObject placementpolicy_object = new JSONObject(tobject);
+        PlacementPolicy placementpolicy_tosave = new PlacementPolicy();
+
+        String policy = placementpolicy_object.getString("policy");
+        placementpolicy_tosave.setPolicy(policy);
+
+        if (placementpolicy_object.has("datacenters")) {
+            JSONArray datacenters = placementpolicy_object.getJSONArray("datacenters");
+
+            String[] datacenters_tosave = new String[datacenters.length()];
+
+            for (int i = 0; i < datacenters.length(); i++) {
+                datacenters_tosave[i] = (String) datacenters.get(i);
+            }
+
+            placementpolicy_tosave.setDatacenters(datacenters_tosave);
+        }
+
+        PlacementPolicy placementpolicy = placementPolicyRepository.save(placementpolicy_tosave);
+        String responseAsString = gson.toJson(placementpolicy);
+        responseHeaders.set("Content-Length", String.valueOf(responseAsString.length()));
+        ResponseEntity responseEntity = new ResponseEntity(placementpolicy, responseHeaders, HttpStatus.OK);
+        return responseEntity;
+
+    }
+
+    //GET a list of all placement policies
+    @RequestMapping(value = "/placement", method = RequestMethod.GET)
+    public String listPlacementPolicies() {
+        log.info("Fetch placement policy");
+        List<PlacementPolicy> placementPolicies = placementPolicyRepository.findAll();
+
+        if (placementPolicies.size() > 0) {
+            Gson gson = new Gson();
+            return gson.toJson(placementPolicies.get(0));
+        } else {
+            return new JSONObject().toString();
+        }
+    }
 
     ResponseEntity buildResponseEntity(PolicyRestResponse response) {
 
