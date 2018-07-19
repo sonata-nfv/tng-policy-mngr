@@ -14,23 +14,23 @@ import eu.tng.policymanager.facts.enums.Status;
  */
 public class ElasticityAction extends Action {
 
-    String componentid;
+    String vnf_name;
     OrchestrationType orchestrationType;
 
-    public ElasticityAction(String gnsid, String componentid, OrchestrationType orchestrationType, String value, Status status) {
-        this.gnsid = gnsid;
-        this.componentid = componentid;
+    public ElasticityAction(String nsrid, String vnf_name, OrchestrationType orchestrationType, String value, Status status) {
+        this.nsrid = nsrid;
+        this.vnf_name = vnf_name;
         this.orchestrationType = orchestrationType;
         this.value = value;
         this.status = status;
     }
 
-    public String getComponentid() {
-        return componentid;
+    public String getVnf_name() {
+        return vnf_name;
     }
 
-    public void setComponentid(String componentid) {
-        this.componentid = componentid;
+    public void setVnf_name(String vnf_name) {
+        this.vnf_name = vnf_name;
     }
 
     public OrchestrationType getOrchestrationType() {
@@ -44,9 +44,9 @@ public class ElasticityAction extends Action {
 
     @Override
     public String toString() {
-        return "ComponentResourceAllocationAction: { componentid=\"" + componentid + "\""
+        return "ElasticityAction: { vnf_name=\"" + vnf_name + "\""
                 + ", value=" + value
-                + ", gnsid=" + gnsid
+                + ", nsrid=" + nsrid
                 + ",orchestrationType=\"" + orchestrationType + "\"}";
     }
 
@@ -59,8 +59,8 @@ public class ElasticityAction extends Action {
             return false;
         }
         ElasticityAction that = (ElasticityAction) o;
-        return this.value == that.value && this.gnsid.equals(that.gnsid)
-                && this.componentid.equals(that.componentid)
+        return this.value == that.value && this.nsrid.equals(that.nsrid)
+                && this.vnf_name.equals(that.vnf_name)
                 && this.orchestrationType.equals(that.orchestrationType)
                 && this.status.equals(that.status);
     }
@@ -68,7 +68,7 @@ public class ElasticityAction extends Action {
     @Override
     public int hashCode() {
         int result = orchestrationType.hashCode();
-        result = (int) (31 * result + componentid.hashCode() + gnsid.hashCode());
+        result = (int) (31 * result + vnf_name.hashCode() + nsrid.hashCode());
         return result;
     }
 

@@ -19,7 +19,7 @@ end
 
 rule "actionUponAlert"
 when
-    LogMetric(componentid=="vnf1" && value== "mon_rule_vm_cpu_perc" )
+    LogMetric(vnf_name=="vnf1" && value== "mon_rule_vm_cpu_perc" )
 then
     insertLogical( new ComponentResourceAllocationAction("pilotTranscodingService","vnf1",InfrastructureType.ApplyFlavour,"3",Status.not_send)); 
 

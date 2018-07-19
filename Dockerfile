@@ -19,4 +19,6 @@ ENV HOST_BROKER pre-int-sp-ath.5gtango.eu
 ENV CATALOGUE pre-int-sp-ath.5gtango.eu:4011
 #ENV MONITORING_MANAGER son-monitor
 ENV MONITORING_MANAGER pre-int-sp-ath.5gtango.eu:8000
+#ENV REPO tng-rep:4012
+ENV REPO qual-sp-bcn.5gtango.eu:4012
 CMD ["java","-jar","tng-policy-mngr-1.5.0.jar"]

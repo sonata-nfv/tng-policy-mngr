@@ -9,13 +9,16 @@ Following table shows the API endpoints of the Policy Manager.
 
 | Action | HTTP Method | Endpoint |
 | --------------- | ------- | -------------------------------------------- |
-| GET a list of all runtime policies | `GET` |`/api/v1`|
-| Create a Policy | `POST` |`/api/v1`|
-| GET a policy | `GET` |`/api/v1/{policy_uuid}`|
-| Update a Policy | `PUT` |`/api/v1`|
-| Delete a Policy | `DELETE` |`/api/v1/{policy_uuid}`|
-| Bind a Policy to an SLA | `PATCH` |`/api/v1/{policy_uuid}`|
-| Define a Policy as default | `PATCH` |`/api/v1/{policy_uuid}`|
+| GET a list of all Runtime policies | `GET` |`/api/v1`|
+| Create a Runtime Policy | `POST` |`/api/v1`|
+| GET a Runtime policy | `GET` |`/api/v1/{policy_uuid}`|
+| Update a Runtime Policy | `PUT` |`/api/v1`|
+| Delete a Runtime Policy | `DELETE` |`/api/v1/{policy_uuid}`|
+| Bind a Runtime Policy to an SLA | `PATCH` |`/api/v1/{policy_uuid}`|
+| Define a Runtime Policy as default | `PATCH` |`/api/v1/{policy_uuid}`|
+| Create the Placement Policy | `POST` |`/api/v1/placement`|
+| GET the Placement policy | `GET` |`/api/v1/placement`|
+| Pings to policy manager | `GET` |`/api/v1/pings`|
 
 ## Development
 

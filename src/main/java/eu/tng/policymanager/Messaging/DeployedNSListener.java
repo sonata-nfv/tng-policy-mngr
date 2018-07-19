@@ -1,36 +1,36 @@
 /*
-* Copyright (c) 2015 SONATA-NFV, 2017 5GTANGO [, ANY ADDITIONAL AFFILIATION]
-* ALL RIGHTS RESERVED.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* Neither the name of the SONATA-NFV, 5GTANGO [, ANY ADDITIONAL AFFILIATION]
-* nor the names of its contributors may be used to endorse or promote
-* products derived from this software without specific prior written
-* permission.
-*
-* This work has been performed in the framework of the SONATA project,
-* funded by the European Commission under Grant number 671517 through
-* the Horizon 2020 and 5G-PPP programmes. The authors would like to
-* acknowledge the contributions of their colleagues of the SONATA
-* partner consortium (www.sonata-nfv.eu).
-*
-* This work has been performed in the framework of the 5GTANGO project,
-* funded by the European Commission under Grant number 761493 through
-* the Horizon 2020 and 5G-PPP programmes. The authors would like to
-* acknowledge the contributions of their colleagues of the 5GTANGO
-* partner consortium (www.5gtango.eu).
-*/
+ * Copyright (c) 2015 SONATA-NFV, 2017 5GTANGO [, ANY ADDITIONAL AFFILIATION]
+ * ALL RIGHTS RESERVED.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Neither the name of the SONATA-NFV, 5GTANGO [, ANY ADDITIONAL AFFILIATION]
+ * nor the names of its contributors may be used to endorse or promote
+ * products derived from this software without specific prior written
+ * permission.
+ *
+ * This work has been performed in the framework of the SONATA project,
+ * funded by the European Commission under Grant number 671517 through
+ * the Horizon 2020 and 5G-PPP programmes. The authors would like to
+ * acknowledge the contributions of their colleagues of the SONATA
+ * partner consortium (www.sonata-nfv.eu).
+ *
+ * This work has been performed in the framework of the 5GTANGO project,
+ * funded by the European Commission under Grant number 761493 through
+ * the Horizon 2020 and 5G-PPP programmes. The authors would like to
+ * acknowledge the contributions of their colleagues of the 5GTANGO
+ * partner consortium (www.5gtango.eu).
+ */
 package eu.tng.policymanager.Messaging;
 
 import eu.tng.policymanager.RulesEngineService;
@@ -58,7 +58,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-
 
 @Component
 public class DeployedNSListener {
@@ -169,18 +168,15 @@ public class DeployedNSListener {
 
                                     JSONObject prometheus_rule = new JSONObject();
 
-                                    prometheus_rule.put("name", monitoringRule.getName());
+                                    prometheus_rule.put("name", monitoringRule.getName().replace(":", "_").replace("-", "_"));
                                     prometheus_rule.put("duration", monitoringRule.getDuration() + monitoringRule.getDuration_unit());
                                     prometheus_rule.put("description", monitoringRule.getDescription());
                                     prometheus_rule.put("summary", "");
-                                    prometheus_rule.put("notification_type", new JSONObject("{\"id\": 1,\"type\":\"rabbitmq\"}"));
+                                    prometheus_rule.put("notification_type", new JSONObject("{\"id\": 2,\"type\":\"rabbitmq\"}"));
                                     logger.info("monitoringRule condition " + monitoringRule.getCondition());
-                                    if (monitoringRule.getCondition().contains(":")) {
-                                        prometheus_rule.put("condition", monitoringRule.getName().split(":")[5] + "{resource_id=\"" + vc_id + "\"}" + monitoringRule.getThreshold());
-                                    } else {
-                                        prometheus_rule.put("condition", monitoringRule.getName().split(":")[5] + monitoringRule.getThreshold());
+                                    
+                                    prometheus_rule.put("condition", monitoringRule.getCondition() + "{resource_id=\"" + vc_id + "\"}" + monitoringRule.getThreshold());
 
-                                    }
                                     prometheus_rules.put(prometheus_rule);
                                 }
                             }
@@ -219,7 +215,7 @@ public class DeployedNSListener {
 
     }
 
-    private String dopostcall(String url, JSONObject prometheous_rules) throws IOException  {
+    private String dopostcall(String url, JSONObject prometheous_rules) throws IOException {
 
         OkHttpClient client = new OkHttpClient();
 
@@ -232,7 +228,7 @@ public class DeployedNSListener {
                 .build();
 
         Response response = client.newCall(request).execute();
-        
-        return response.body().string() +" with message "+ response.message();
+
+        return response.body().string() + " with message " + response.message();
     }
 }

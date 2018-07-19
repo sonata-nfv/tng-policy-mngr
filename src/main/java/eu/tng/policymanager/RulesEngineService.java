@@ -1,36 +1,36 @@
 /*
-* Copyright (c) 2015 SONATA-NFV, 2017 5GTANGO [, ANY ADDITIONAL AFFILIATION]
-* ALL RIGHTS RESERVED.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* Neither the name of the SONATA-NFV, 5GTANGO [, ANY ADDITIONAL AFFILIATION]
-* nor the names of its contributors may be used to endorse or promote
-* products derived from this software without specific prior written
-* permission.
-*
-* This work has been performed in the framework of the SONATA project,
-* funded by the European Commission under Grant number 671517 through
-* the Horizon 2020 and 5G-PPP programmes. The authors would like to
-* acknowledge the contributions of their colleagues of the SONATA
-* partner consortium (www.sonata-nfv.eu).
-*
-* This work has been performed in the framework of the 5GTANGO project,
-* funded by the European Commission under Grant number 761493 through
-* the Horizon 2020 and 5G-PPP programmes. The authors would like to
-* acknowledge the contributions of their colleagues of the 5GTANGO
-* partner consortium (www.5gtango.eu).
-*/
+ * Copyright (c) 2015 SONATA-NFV, 2017 5GTANGO [, ANY ADDITIONAL AFFILIATION]
+ * ALL RIGHTS RESERVED.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Neither the name of the SONATA-NFV, 5GTANGO [, ANY ADDITIONAL AFFILIATION]
+ * nor the names of its contributors may be used to endorse or promote
+ * products derived from this software without specific prior written
+ * permission.
+ *
+ * This work has been performed in the framework of the SONATA project,
+ * funded by the European Commission under Grant number 671517 through
+ * the Horizon 2020 and 5G-PPP programmes. The authors would like to
+ * acknowledge the contributions of their colleagues of the SONATA
+ * partner consortium (www.sonata-nfv.eu).
+ *
+ * This work has been performed in the framework of the 5GTANGO project,
+ * funded by the European Commission under Grant number 761493 through
+ * the Horizon 2020 and 5G-PPP programmes. The authors would like to
+ * acknowledge the contributions of their colleagues of the 5GTANGO
+ * partner consortium (www.5gtango.eu).
+ */
 package eu.tng.policymanager;
 
 import com.google.gson.Gson;
@@ -151,13 +151,13 @@ public class RulesEngineService {
             List<Action> doactions = findAction(kieSession);
 
             if (doactions.size() > 0) {
+                Gson gson = new Gson();
 
                 for (Action doaction : doactions) {
 
                     if (doaction instanceof ComponentResourceAllocationAction) {
                         ComponentResourceAllocationAction doactionsubclass = (ComponentResourceAllocationAction) doaction;
-                        Gson gson = new Gson();
-                        
+
                         template.convertAndSend(queue.getName(), gson.toJson(doactionsubclass));
                         System.out.println(" [x] Sent '" + gson.toJson(doactionsubclass) + "'");
                     }
@@ -165,13 +165,17 @@ public class RulesEngineService {
                     if (doaction instanceof NetworkManagementAction) {
                         NetworkManagementAction doactionsubclass = (NetworkManagementAction) doaction;
                         template.convertAndSend(queue.getName(), doactionsubclass.toString());
-                        System.out.println(" [x] Sent '" + doactionsubclass.toString() + "'");
+                        System.out.println(" [x] Sent '" + gson.toJson(doactionsubclass) + "'");
                     }
-                    
+
                     if (doaction instanceof ElasticityAction) {
                         ElasticityAction doactionsubclass = (ElasticityAction) doaction;
                         template.convertAndSend(queue.getName(), doactionsubclass.toString());
-                        System.out.println(" [x] Sent '" + doactionsubclass.toString() + "'");
+                        
+                        String nsrid = doactionsubclass.getNsrid().substring(1);
+                        doactionsubclass.setNsrid(nsrid);
+
+                        System.out.println(" [x] Sent '" + gson.toJson(doactionsubclass) + "'");
                     }
 
                 }
@@ -258,7 +262,7 @@ public class RulesEngineService {
 
     public void createLogFact(LogMetric logMetric) {
 
-        String factKnowledgebase = "GSGKnowledgeBase_gsg" + logMetric.getGnsid();
+        String factKnowledgebase = "GSGKnowledgeBase_gsg" + logMetric.getNsrid();
 
         Collection<String> kiebases = kieContainer.getKieBaseNames();
 
@@ -267,7 +271,7 @@ public class RulesEngineService {
             return;
         }
 
-        String factSessionName = "RulesEngineSession_gsg" + logMetric.getGnsid();
+        String factSessionName = "RulesEngineSession_gsg" + logMetric.getNsrid();
         KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
 
         System.out.println("Ιnsert logmetric fact: " + logMetric.toString());
@@ -485,12 +489,12 @@ public class RulesEngineService {
 
     }
 
-    private static String createPolicyRules(String gnsid, String policyname) {
+    private static String createPolicyRules(String nsrid, String policyname) {
 
         //TODO convert yml to drools
         //1. Fech yml file
         File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
-        logger.info("get file from - "+current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
+        logger.info("get file from - " + current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
         PolicyYamlFile policyyml = PolicyYamlFile.readYaml(policydescriptor);
 
         //logger.info("get mi first policy rule name" + policyyml.getPolicyRules().get(0).getName());
@@ -500,7 +504,7 @@ public class RulesEngineService {
 
         PackageDescrBuilder packageDescrBuilder = DescrFactory.newPackage();
         packageDescrBuilder
-                .name(rulesPackage + ".s" + gnsid)
+                .name(rulesPackage + ".s" + nsrid)
                 .newImport().target("eu.tng.policymanager.facts.*").end()
                 .newImport().target("eu.tng.policymanager.facts.action.*").end()
                 .newImport().target("eu.tng.policymanager.facts.enums.*").end()
@@ -536,7 +540,7 @@ public class RulesEngineService {
             for (eu.tng.policymanager.repository.Action ruleaction : ruleactions) {
                 String action_object = ruleaction.getAction_object();
 
-                rhs_actions += "insertLogical( new " + action_object + "(\"" + gnsid + "\",\"" + ruleaction.getTarget() + "\","
+                rhs_actions += "insertLogical( new " + action_object + "(\"" + nsrid + "\",\"" + ruleaction.getTarget() + "\","
                         + ruleaction.getAction_type() + "." + ruleaction.getName() + ",\"" + ruleaction.getValue() + "\",Status.not_send)); \n";
 
             }
@@ -578,14 +582,14 @@ public class RulesEngineService {
         }
     }
 
-    public String savePolicyDescriptor(String policyDescriptor,String policy_uuid) {
+    public String savePolicyDescriptor(String policyDescriptor, String policy_uuid) {
         FileOutputStream out = null;
         String drlPath4deployment = null;
         try {
 
             JSONObject runtimedescriptor = new JSONObject(policyDescriptor);
             //String policyname = runtimedescriptor.getString("name");
-            String policyname =policy_uuid;
+            String policyname = policy_uuid;
 
             drlPath4deployment = "/descriptors/" + policyname + ".yml";
             out = new FileOutputStream(current_dir + "/" + drlPath4deployment);
@@ -621,8 +625,7 @@ public class RulesEngineService {
         }
         return true;
     }
-    
-    
+
     /*
      Remove a new knowledge base & session & corresponding rules so as to update kieModule
      */
@@ -667,10 +670,6 @@ public class RulesEngineService {
         }
 
     }
-
-    
-    
-    
 
     private String jsonToYaml(JSONObject jsonobject) {
         Yaml yaml = new Yaml();

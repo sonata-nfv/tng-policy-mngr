@@ -14,23 +14,23 @@ import eu.tng.policymanager.facts.enums.Status;
  */
 public class ComponentResourceAllocationAction extends Action {
 
-    String componentid;
+    String vnf_name;
     InfrastructureType resourceAllocationType;
 
-    public ComponentResourceAllocationAction(String gnsid, String componentid, InfrastructureType resourceAllocationType, String value, Status status) {
-        this.gnsid = gnsid;
-        this.componentid = componentid;
+    public ComponentResourceAllocationAction(String nsrid, String vnf_name, InfrastructureType resourceAllocationType, String value, Status status) {
+        this.nsrid = nsrid;
+        this.vnf_name = vnf_name;
         this.resourceAllocationType = resourceAllocationType;
         this.value = value;
         this.status = status;
     }
 
-    public String getComponentid() {
-        return componentid;
+    public String getVnf_name() {
+        return vnf_name;
     }
 
-    public void setComponentid(String componentid) {
-        this.componentid = componentid;
+    public void setVnf_name(String vnf_name) {
+        this.vnf_name = vnf_name;
     }
 
     public InfrastructureType getResourceAllocationType() {
@@ -43,9 +43,9 @@ public class ComponentResourceAllocationAction extends Action {
 
     @Override
     public String toString() {
-        return "ComponentResourceAllocationAction: { componentid=\"" + componentid + "\""
+        return "ComponentResourceAllocationAction: { vnf_name=\"" + vnf_name + "\""
                 + ", value=" + value
-                + ", gnsid=" + gnsid
+                + ", nsrid=" + nsrid
                 + ",resourceAllocationType=\"" + resourceAllocationType + "\"}";
     }
 
@@ -58,8 +58,8 @@ public class ComponentResourceAllocationAction extends Action {
             return false;
         }
         ComponentResourceAllocationAction that = (ComponentResourceAllocationAction) o;
-        return this.value == that.value && this.gnsid.equals(that.gnsid) 
-                && this.componentid.equals(that.componentid) 
+        return this.value == that.value && this.nsrid.equals(that.nsrid) 
+                && this.vnf_name.equals(that.vnf_name) 
                 && this.resourceAllocationType.equals(that.resourceAllocationType)
                 && this.status.equals(that.status);
     }
@@ -67,7 +67,7 @@ public class ComponentResourceAllocationAction extends Action {
     @Override
     public int hashCode() {
         int result = resourceAllocationType.hashCode();
-        result = (int) (31 * result + componentid.hashCode() + gnsid.hashCode());
+        result = (int) (31 * result + vnf_name.hashCode() + nsrid.hashCode());
         return result;
     }
 

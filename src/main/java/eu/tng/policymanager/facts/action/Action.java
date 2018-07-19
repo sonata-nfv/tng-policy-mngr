@@ -16,7 +16,7 @@ import eu.tng.policymanager.facts.enums.ValueType;
 public class Action {
 
     String nsid;
-    String gnsid;
+    String nsrid;
     String value;
     ValueType valueType;
     UnitType valueUnit;
@@ -30,12 +30,12 @@ public class Action {
         this.nsid = nsid;
     }
 
-    public String getGnsid() {
-        return gnsid;
+    public String getNsrid() {
+        return nsrid;
     }
 
-    public void setGnsid(String gnsid) {
-        this.gnsid = gnsid;
+    public void setNsrid(String nsrid) {
+        this.nsrid = nsrid;
     }
 
     public String getValue() {
@@ -74,7 +74,7 @@ public class Action {
     public String toString() {
         return "Action: { valueType=\"" + valueType + "\""
                 + ", nsid=" + nsid
-                + ", gnsid=" + gnsid
+                + ", nsrid=" + nsrid
                 + ", value=" + value
                 + ",valueUnit=\"" + valueUnit
                 + ", status=" + status + "\"}";
@@ -93,13 +93,13 @@ public class Action {
                 && this.valueType.equals(that.valueType)
                 && this.valueUnit.equals(that.valueUnit)
                 && this.nsid.equals(that.nsid)
-                && this.gnsid.equals(that.gnsid);
+                && this.nsrid.equals(that.nsrid);
     }
 
     @Override
     public int hashCode() {
         int result = value.hashCode();
-        result = (int) (31 * result + valueType.hashCode() + gnsid.hashCode() + nsid.hashCode());
+        result = (int) (31 * result + valueType.hashCode() + nsrid.hashCode() + nsid.hashCode());
         return result;
     }
 
