@@ -48,6 +48,9 @@ import eu.tng.policymanager.repository.PolicyRule;
 import eu.tng.policymanager.rules.generation.KieUtil;
 import eu.tng.policymanager.repository.PolicyYamlFile;
 import eu.tng.policymanager.repository.RuleCondition;
+import eu.tng.policymanager.repository.dao.RecommendedActionRepository;
+import eu.tng.policymanager.repository.dao.RuntimePolicyRecordRepository;
+import eu.tng.policymanager.repository.domain.RecommendedAction;
 import eu.tng.policymanager.rules.generation.RepositoryUtil;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
 import java.io.File;
@@ -129,6 +132,9 @@ public class RulesEngineService {
     PolicyYamlFile policyYamlFile;
 
     @Autowired
+    RecommendedActionRepository  recommendedActionRepository;
+
+    @Autowired
     public RulesEngineService(KieUtil kieUtil) {
         logger.info("Rule Engine Session initializing...");
         this.kieServices = KieServices.Factory.get();
@@ -171,11 +177,18 @@ public class RulesEngineService {
                     if (doaction instanceof ElasticityAction) {
                         ElasticityAction doactionsubclass = (ElasticityAction) doaction;
                         template.convertAndSend(queue.getName(), doactionsubclass.toString());
-                        
-                        String nsrid = doactionsubclass.getNsrid().substring(1);
-                        doactionsubclass.setNsrid(nsrid);
 
-                        System.out.println(" [x] Sent '" + gson.toJson(doactionsubclass) + "'");
+                        String nsrid = doactionsubclass.getNsr_id().substring(1);
+                        doactionsubclass.setNsr_id(nsrid);
+
+                        //save Recommended action to policy repository
+                        RecommendedAction   recommendedAction = new RecommendedAction();
+                        
+                        recommendedAction.setAction(doactionsubclass);
+                        
+                        RecommendedAction newRecommendedAction = recommendedActionRepository.save(recommendedAction);
+                        
+                        System.out.println(" [x] Sent to topic '" + gson.toJson(newRecommendedAction) + "'");
                     }
 
                 }
@@ -547,16 +560,22 @@ public class RulesEngineService {
             droolrule.rhs(rhs_actions);
             droolrule.end();
 
-            //2. convert yml to dsl
-            //String droolsRuleSTR = RepositoryUtil.constructDroolsRule(gnsid, policyrules);
-//            logger.info("------------------- " + policyyml.getPolicyRules().get(0).getName() + " drl rules" + "------------------- ");
-//            logger.info(droolsRuleSTR);
-            //3.convert dsl to drl
-            //gPolicy.validateGpolicyClasses(new File(current_dir + "/dsl/policy.txt"));
         }
 
         String created_rules = new DrlDumper().dump(packageDescrBuilder.getDescr());
         created_rules = created_rules.replace("|", "over");
+
+        created_rules += "\n"
+                + "rule \"ElasticityRuleHelper\"\n"
+                + "when\n"
+                + "   \n"
+                + " $m1 := LogMetric() from entry-point \"MonitoringStream\" \n"
+                + " $m2 := ElasticityAction (vnf_name==$m1.vnf_name)\n"
+                + " then\n"
+                + " $m2.setVnfd_id($m1.getVnfd_id());\n"
+                + " $m2.setVim_id($m1.getVim_id());\n"
+                + " update($m2);\n"
+                + "end";
         System.out.println(created_rules);
         return created_rules;
 

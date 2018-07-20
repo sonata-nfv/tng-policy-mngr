@@ -5,7 +5,7 @@
  */
 package eu.tng.policymanager.facts.action;
 
-import eu.tng.policymanager.facts.enums.OrchestrationType;
+import eu.tng.policymanager.facts.enums.ScalingType;
 import eu.tng.policymanager.facts.enums.Status;
 
 /**
@@ -15,12 +15,14 @@ import eu.tng.policymanager.facts.enums.Status;
 public class ElasticityAction extends Action {
 
     String vnf_name;
-    OrchestrationType orchestrationType;
+    String vnfd_id;
+    String vim_id;
+    ScalingType scaling_type;
 
-    public ElasticityAction(String nsrid, String vnf_name, OrchestrationType orchestrationType, String value, Status status) {
-        this.nsrid = nsrid;
+    public ElasticityAction(String nsr_id, String vnf_name, ScalingType scaling_type, String value, Status status) {
+        this.nsr_id = nsr_id;
         this.vnf_name = vnf_name;
-        this.orchestrationType = orchestrationType;
+        this.scaling_type = scaling_type;
         this.value = value;
         this.status = status;
     }
@@ -33,21 +35,38 @@ public class ElasticityAction extends Action {
         this.vnf_name = vnf_name;
     }
 
-    public OrchestrationType getOrchestrationType() {
-        return orchestrationType;
+    public ScalingType getScaling_type() {
+        return scaling_type;
     }
 
-    public void setOrchestrationType(OrchestrationType orchestrationType) {
-        this.orchestrationType = orchestrationType;
+    public void setScaling_type(ScalingType scaling_type) {
+        this.scaling_type = scaling_type;
     }
 
+    public String getVnfd_id() {
+        return vnfd_id;
+    }
+
+    public void setVnfd_id(String vnfd_id) {
+        this.vnfd_id = vnfd_id;
+    }
+
+    public String getVim_id() {
+        return vim_id;
+    }
+
+    public void setVim_id(String vim_id) {
+        this.vim_id = vim_id;
+    }
 
     @Override
     public String toString() {
         return "ElasticityAction: { vnf_name=\"" + vnf_name + "\""
                 + ", value=" + value
-                + ", nsrid=" + nsrid
-                + ",orchestrationType=\"" + orchestrationType + "\"}";
+                + ", nsr_id=" + nsr_id
+                + ", vnfd_id=" + vnfd_id
+                + ", vim_id=" + vim_id
+                + ", scaling_type=\"" + scaling_type + "\"}";
     }
 
     @Override
@@ -59,16 +78,19 @@ public class ElasticityAction extends Action {
             return false;
         }
         ElasticityAction that = (ElasticityAction) o;
-        return this.value == that.value && this.nsrid.equals(that.nsrid)
+        return this.value == that.value
+                && this.nsr_id.equals(that.nsr_id)
                 && this.vnf_name.equals(that.vnf_name)
-                && this.orchestrationType.equals(that.orchestrationType)
+                && this.vnfd_id.equals(that.vnfd_id)
+                && this.vim_id.equals(that.vim_id)
+                && this.scaling_type.equals(that.scaling_type)
                 && this.status.equals(that.status);
     }
 
     @Override
     public int hashCode() {
-        int result = orchestrationType.hashCode();
-        result = (int) (31 * result + vnf_name.hashCode() + nsrid.hashCode());
+        int result = scaling_type.hashCode();
+        result = (int) (31 * result + vnf_name.hashCode() + nsr_id.hashCode());
         return result;
     }
 

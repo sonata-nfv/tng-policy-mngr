@@ -35,8 +35,10 @@ package eu.tng.policymanager;
 
 import com.google.gson.Gson;
 import eu.tng.policymanager.repository.dao.PlacementPolicyRepository;
+import eu.tng.policymanager.repository.dao.RecommendedActionRepository;
 import eu.tng.policymanager.repository.dao.RuntimePolicyRepository;
 import eu.tng.policymanager.repository.domain.PlacementPolicy;
+import eu.tng.policymanager.repository.domain.RecommendedAction;
 import eu.tng.policymanager.repository.domain.RuntimePolicy;
 import eu.tng.policymanager.response.BasicResponseCode;
 import eu.tng.policymanager.response.PolicyRestResponse;
@@ -86,6 +88,9 @@ public class RulesEngineController {
 
     @Autowired
     PlacementPolicyRepository placementPolicyRepository;
+
+    @Autowired
+    RecommendedActionRepository recommendedActionRepository;
 
     @RequestMapping(value = "/newMonitoringMessage", method = RequestMethod.POST)
     public boolean newMonitoringMessage(@RequestBody MonitoringMessageTO tobject) {
@@ -303,6 +308,16 @@ public class RulesEngineController {
         } else {
             return new JSONObject().toString();
         }
+    }
+
+    //GET a list of all recommended actions
+    @RequestMapping(value = "/actions", method = RequestMethod.GET)
+    public String listActions() {
+        log.info("Fetch list of Actions");
+        List<RecommendedAction> recommendedActions = recommendedActionRepository.findAll();
+        Gson gson = new Gson();
+
+        return gson.toJson(recommendedActions);
     }
 
     ResponseEntity buildResponseEntity(PolicyRestResponse response) {

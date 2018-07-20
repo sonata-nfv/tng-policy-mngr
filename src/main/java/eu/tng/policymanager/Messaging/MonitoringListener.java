@@ -96,9 +96,16 @@ public class MonitoringListener {
 
             JSONObject vdu_ref = vnfr_info.getJSONArray("virtual_deployment_units").getJSONObject(0);
 
+            String vnfd_id = vnfr_info.getString("descriptor_reference");
+
             if (vdu_ref.has("vdu_reference")) {
                 String vnf_name = vdu_ref.getString("vdu_reference").split(":")[0];
-                LogMetric logMetric = new LogMetric("s" + gnsid.replaceAll("-", ""), vnf_name, alertname);
+
+                JSONObject vnfc_instance = vdu_ref.getJSONArray("vnfc_instance").getJSONObject(0);
+
+                String vim_id = vnfc_instance.getString("vim_id");
+
+                LogMetric logMetric = new LogMetric("s" + gnsid.replaceAll("-", ""), vnf_name, alertname, vnfd_id, vim_id);
 
                 logger.info("create log fact " + logMetric.toString());
                 rulesEngineService.createLogFact(logMetric);

@@ -88,7 +88,7 @@ public class RulesEngineApp {
 
     private static Logger log = LoggerFactory.getLogger(RulesEngineApp.class);
 
-    public static final String RUNTIME_ACTIONS_QUEUE = "eu.tng.policy.runtime.actions";
+    public static final String RUNTIME_ACTIONS_QUEUE = "service.instance.scale";
     final static String monitoringqueue = "son.monitoring.policy";
     final static String NS_INSTATIATION_QUEUE = "service.instances.create";
 

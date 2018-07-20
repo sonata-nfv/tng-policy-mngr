@@ -17,8 +17,8 @@ public class ComponentResourceAllocationAction extends Action {
     String vnf_name;
     InfrastructureType resourceAllocationType;
 
-    public ComponentResourceAllocationAction(String nsrid, String vnf_name, InfrastructureType resourceAllocationType, String value, Status status) {
-        this.nsrid = nsrid;
+    public ComponentResourceAllocationAction(String nsr_id, String vnf_name, InfrastructureType resourceAllocationType, String value, Status status) {
+        this.nsr_id = nsr_id;
         this.vnf_name = vnf_name;
         this.resourceAllocationType = resourceAllocationType;
         this.value = value;
@@ -45,7 +45,7 @@ public class ComponentResourceAllocationAction extends Action {
     public String toString() {
         return "ComponentResourceAllocationAction: { vnf_name=\"" + vnf_name + "\""
                 + ", value=" + value
-                + ", nsrid=" + nsrid
+                + ", nsr_id=" + nsr_id
                 + ",resourceAllocationType=\"" + resourceAllocationType + "\"}";
     }
 
@@ -58,7 +58,7 @@ public class ComponentResourceAllocationAction extends Action {
             return false;
         }
         ComponentResourceAllocationAction that = (ComponentResourceAllocationAction) o;
-        return this.value == that.value && this.nsrid.equals(that.nsrid) 
+        return this.value == that.value && this.nsr_id.equals(that.nsr_id) 
                 && this.vnf_name.equals(that.vnf_name) 
                 && this.resourceAllocationType.equals(that.resourceAllocationType)
                 && this.status.equals(that.status);
@@ -67,7 +67,7 @@ public class ComponentResourceAllocationAction extends Action {
     @Override
     public int hashCode() {
         int result = resourceAllocationType.hashCode();
-        result = (int) (31 * result + vnf_name.hashCode() + nsrid.hashCode());
+        result = (int) (31 * result + vnf_name.hashCode() + nsr_id.hashCode());
         return result;
     }
 

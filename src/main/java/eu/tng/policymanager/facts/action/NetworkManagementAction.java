@@ -17,8 +17,8 @@ public class NetworkManagementAction extends Action {
 
     NetworkMechanismType networkLinkFunction;
 
-    public NetworkManagementAction(String nsrid, String virtualLinkid, NetworkMechanismType networkLinkFunction, String value) {
-        this.nsrid = nsrid;
+    public NetworkManagementAction(String nsr_id, String virtualLinkid, NetworkMechanismType networkLinkFunction, String value) {
+        this.nsr_id = nsr_id;
         this.virtualLinkid = virtualLinkid;
         this.networkLinkFunction = networkLinkFunction;
         this.value = value;
@@ -43,7 +43,7 @@ public class NetworkManagementAction extends Action {
     @Override
     public String toString() {
         return "NetworkManagementAction: { virtualLinkid=\"" + virtualLinkid + "\""
-                + ", nsrid=" + nsrid
+                + ", nsr_id=" + nsr_id
                 + ", value=" + value
                 + ",networkLinkFunction=\"" + networkLinkFunction + "\"}";
     }
@@ -57,13 +57,13 @@ public class NetworkManagementAction extends Action {
             return false;
         }
         NetworkManagementAction that = (NetworkManagementAction) o;
-        return this.value == that.value && this.nsrid.equals(that.nsrid) && this.virtualLinkid.equals(that.virtualLinkid) && this.networkLinkFunction.equals(that.networkLinkFunction);
+        return this.value == that.value && this.nsr_id.equals(that.nsr_id) && this.virtualLinkid.equals(that.virtualLinkid) && this.networkLinkFunction.equals(that.networkLinkFunction);
     }
 
     @Override
     public int hashCode() {
         int result = networkLinkFunction.hashCode();
-        result = (int) (31 * result + virtualLinkid.hashCode() +nsrid.hashCode());
+        result = (int) (31 * result + virtualLinkid.hashCode() +nsr_id.hashCode());
         return result;
     }
 

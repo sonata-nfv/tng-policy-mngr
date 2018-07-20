@@ -15,27 +15,29 @@ import eu.tng.policymanager.facts.enums.ValueType;
  */
 public class Action {
 
-    String nsid;
-    String nsrid;
+    String ns_id;
+    String nsr_id;
     String value;
     ValueType valueType;
     UnitType valueUnit;
     Status status;
+    
+    String correlation_id;
 
-    public String getNsid() {
-        return nsid;
+    public String getNs_id() {
+        return ns_id;
     }
 
-    public void setNsid(String nsid) {
-        this.nsid = nsid;
+    public void setNs_id(String ns_id) {
+        this.ns_id = ns_id;
     }
 
-    public String getNsrid() {
-        return nsrid;
+    public String getNsr_id() {
+        return nsr_id;
     }
 
-    public void setNsrid(String nsrid) {
-        this.nsrid = nsrid;
+    public void setNsr_id(String nsr_id) {
+        this.nsr_id = nsr_id;
     }
 
     public String getValue() {
@@ -70,11 +72,19 @@ public class Action {
         this.status = status;
     }
 
+    public String getCorrelation_id() {
+        return correlation_id;
+    }
+
+    public void setCorrelation_id(String correlation_id) {
+        this.correlation_id = correlation_id;
+    }
+
     @Override
     public String toString() {
         return "Action: { valueType=\"" + valueType + "\""
-                + ", nsid=" + nsid
-                + ", nsrid=" + nsrid
+                + ", ns_id=" + ns_id
+                + ", nsr_id=" + nsr_id
                 + ", value=" + value
                 + ",valueUnit=\"" + valueUnit
                 + ", status=" + status + "\"}";
@@ -92,14 +102,14 @@ public class Action {
         return this.value == that.value
                 && this.valueType.equals(that.valueType)
                 && this.valueUnit.equals(that.valueUnit)
-                && this.nsid.equals(that.nsid)
-                && this.nsrid.equals(that.nsrid);
+                && this.ns_id.equals(that.ns_id)
+                && this.nsr_id.equals(that.nsr_id);
     }
 
     @Override
     public int hashCode() {
         int result = value.hashCode();
-        result = (int) (31 * result + valueType.hashCode() + nsrid.hashCode() + nsid.hashCode());
+        result = (int) (31 * result + valueType.hashCode() + nsr_id.hashCode() + ns_id.hashCode());
         return result;
     }
 

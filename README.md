@@ -16,6 +16,7 @@ Following table shows the API endpoints of the Policy Manager.
 | Delete a Runtime Policy | `DELETE` |`/api/v1/{policy_uuid}`|
 | Bind a Runtime Policy to an SLA | `PATCH` |`/api/v1/{policy_uuid}`|
 | Define a Runtime Policy as default | `PATCH` |`/api/v1/{policy_uuid}`|
+| GET a list of all Recommended Actions | `GET` |`/api/v1/actions`|
 | Create the Placement Policy | `POST` |`/api/v1/placement`|
 | GET the Placement policy | `GET` |`/api/v1/placement`|
 | Pings to policy manager | `GET` |`/api/v1/pings`|
