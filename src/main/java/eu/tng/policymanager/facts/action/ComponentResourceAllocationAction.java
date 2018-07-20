@@ -17,8 +17,8 @@ public class ComponentResourceAllocationAction extends Action {
     String vnf_name;
     InfrastructureType resourceAllocationType;
 
-    public ComponentResourceAllocationAction(String nsr_id, String vnf_name, InfrastructureType resourceAllocationType, String value, Status status) {
-        this.nsr_id = nsr_id;
+    public ComponentResourceAllocationAction(String service_instance_id, String vnf_name, InfrastructureType resourceAllocationType, String value, Status status) {
+        this.service_instance_id = service_instance_id;
         this.vnf_name = vnf_name;
         this.resourceAllocationType = resourceAllocationType;
         this.value = value;
@@ -45,7 +45,7 @@ public class ComponentResourceAllocationAction extends Action {
     public String toString() {
         return "ComponentResourceAllocationAction: { vnf_name=\"" + vnf_name + "\""
                 + ", value=" + value
-                + ", nsr_id=" + nsr_id
+                + ", service_instance_id=" + service_instance_id
                 + ",resourceAllocationType=\"" + resourceAllocationType + "\"}";
     }
 
@@ -58,7 +58,7 @@ public class ComponentResourceAllocationAction extends Action {
             return false;
         }
         ComponentResourceAllocationAction that = (ComponentResourceAllocationAction) o;
-        return this.value == that.value && this.nsr_id.equals(that.nsr_id) 
+        return this.value == that.value && this.service_instance_id.equals(that.service_instance_id) 
                 && this.vnf_name.equals(that.vnf_name) 
                 && this.resourceAllocationType.equals(that.resourceAllocationType)
                 && this.status.equals(that.status);
@@ -67,7 +67,7 @@ public class ComponentResourceAllocationAction extends Action {
     @Override
     public int hashCode() {
         int result = resourceAllocationType.hashCode();
-        result = (int) (31 * result + vnf_name.hashCode() + nsr_id.hashCode());
+        result = (int) (31 * result + vnf_name.hashCode() + service_instance_id.hashCode());
         return result;
     }
 

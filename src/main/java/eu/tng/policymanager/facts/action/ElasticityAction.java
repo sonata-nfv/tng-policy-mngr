@@ -19,8 +19,8 @@ public class ElasticityAction extends Action {
     String vim_id;
     ScalingType scaling_type;
 
-    public ElasticityAction(String nsr_id, String vnf_name, ScalingType scaling_type, String value, Status status) {
-        this.nsr_id = nsr_id;
+    public ElasticityAction(String service_instance_id, String vnf_name, ScalingType scaling_type, String value, Status status) {
+        this.service_instance_id = service_instance_id;
         this.vnf_name = vnf_name;
         this.scaling_type = scaling_type;
         this.value = value;
@@ -63,7 +63,7 @@ public class ElasticityAction extends Action {
     public String toString() {
         return "ElasticityAction: { vnf_name=\"" + vnf_name + "\""
                 + ", value=" + value
-                + ", nsr_id=" + nsr_id
+                + ", service_instance_id=" + service_instance_id
                 + ", vnfd_id=" + vnfd_id
                 + ", vim_id=" + vim_id
                 + ", scaling_type=\"" + scaling_type + "\"}";
@@ -79,7 +79,7 @@ public class ElasticityAction extends Action {
         }
         ElasticityAction that = (ElasticityAction) o;
         return this.value == that.value
-                && this.nsr_id.equals(that.nsr_id)
+                && this.service_instance_id.equals(that.service_instance_id)
                 && this.vnf_name.equals(that.vnf_name)
                 && this.vnfd_id.equals(that.vnfd_id)
                 && this.vim_id.equals(that.vim_id)
@@ -90,7 +90,7 @@ public class ElasticityAction extends Action {
     @Override
     public int hashCode() {
         int result = scaling_type.hashCode();
-        result = (int) (31 * result + vnf_name.hashCode() + nsr_id.hashCode());
+        result = (int) (31 * result + vnf_name.hashCode() + service_instance_id.hashCode());
         return result;
     }
 

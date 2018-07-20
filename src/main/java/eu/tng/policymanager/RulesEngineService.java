@@ -77,6 +77,7 @@ import org.drools.compiler.lang.api.DescrFactory;
 import org.drools.compiler.lang.api.PackageDescrBuilder;
 import org.drools.compiler.lang.api.RuleDescrBuilder;
 import org.drools.compiler.lang.descr.AndDescr;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.kie.api.KieBase;
 import org.kie.api.KieServices;
@@ -132,7 +133,7 @@ public class RulesEngineService {
     PolicyYamlFile policyYamlFile;
 
     @Autowired
-    RecommendedActionRepository  recommendedActionRepository;
+    RecommendedActionRepository recommendedActionRepository;
 
     @Autowired
     public RulesEngineService(KieUtil kieUtil) {
@@ -178,17 +179,36 @@ public class RulesEngineService {
                         ElasticityAction doactionsubclass = (ElasticityAction) doaction;
                         template.convertAndSend(queue.getName(), doactionsubclass.toString());
 
-                        String nsrid = doactionsubclass.getNsr_id().substring(1);
-                        doactionsubclass.setNsr_id(nsrid);
+                        String nsrid = doactionsubclass.getService_instance_id().substring(1);
+                        doactionsubclass.setService_instance_id(nsrid);
 
                         //save Recommended action to policy repository
-                        RecommendedAction   recommendedAction = new RecommendedAction();
-                        
+                        RecommendedAction recommendedAction = new RecommendedAction();
+
                         recommendedAction.setAction(doactionsubclass);
-                        
+
                         RecommendedAction newRecommendedAction = recommendedActionRepository.save(recommendedAction);
+
+                        doactionsubclass.setCorrelation_id(newRecommendedAction.getCorrelation_id());
+
+                        JSONObject elasticity_action_msg = new JSONObject();
+
+                        elasticity_action_msg.put("vnf_name", doactionsubclass.getVnf_name());
+                        elasticity_action_msg.put("vnfd_id", doactionsubclass.getVnfd_id());
+                        elasticity_action_msg.put("scaling_type", doactionsubclass.getScaling_type());
+                        elasticity_action_msg.put("service_instance_id", doactionsubclass.getService_instance_id());
+                        elasticity_action_msg.put("correlation_id", doactionsubclass.getCorrelation_id());
+                        elasticity_action_msg.put("value", doactionsubclass.getValue());
                         
-                        System.out.println(" [x] Sent to topic '" + gson.toJson(newRecommendedAction) + "'");
+
+                        JSONArray constraints = new JSONArray();
+                        JSONObject constraint = new JSONObject();
+                        constraint.put("vim_id", doactionsubclass.getVim_id());
+                        constraints.put(constraint);
+
+                        elasticity_action_msg.put("constraints", constraints);
+
+                        System.out.println(" [x] Sent to topic '" + elasticity_action_msg + "'");
                     }
 
                 }
