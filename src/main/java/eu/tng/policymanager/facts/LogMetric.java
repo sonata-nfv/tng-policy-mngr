@@ -17,10 +17,14 @@ public class LogMetric extends Metric {
 
     String nsrid;
     String vnf_name;
+    String vnfd_id;
+    String vim_id;
 
-    public LogMetric(String nsrid, String vnf_name, String value) {
+    public LogMetric(String nsrid, String vnf_name, String value, String vnfd_id, String vim_id) {
         this.nsrid = nsrid;
         this.vnf_name = vnf_name;
+        this.vnfd_id = vnfd_id;
+        this.vim_id = vim_id;
         this.value = value;
         this.valueType = ValueType.String;
         this.valueUnit = UnitType.none;
@@ -43,7 +47,6 @@ public class LogMetric extends Metric {
         this.vnf_name = vnf_name;
     }
 
-
     public AggregationFunctionType getAggregationFunctionType() {
         return aggregationFunctionType;
     }
@@ -52,10 +55,29 @@ public class LogMetric extends Metric {
         this.aggregationFunctionType = aggregationFunctionType;
     }
 
+    public String getVnfd_id() {
+        return vnfd_id;
+    }
+
+    public void setVnfd_id(String vnfd_id) {
+        this.vnfd_id = vnfd_id;
+    }
+
+    public String getVim_id() {
+        return vim_id;
+    }
+
+    public void setVim_id(String vim_id) {
+        this.vim_id = vim_id;
+    }
+    
+
     @Override
     public String toString() {
         return "LogMetric: { vnf_name=\"" + vnf_name + "\""
-                + ", value=\"" + value+ "\""
+                + ", value=\"" + value + "\""
+                + ", vnfd_id=\"" + vnfd_id + "\""
+                + ", vim_id=\"" + vim_id + "\""
                 + ",nsrid=\"" + nsrid + "\"}";
     }
 
@@ -68,13 +90,17 @@ public class LogMetric extends Metric {
             return false;
         }
         LogMetric that = (LogMetric) o;
-        return this.value.equals(that.value) && this.nsrid.equals(that.nsrid) && this.vnf_name.equals(that.vnf_name);
+        return this.value.equals(that.value) 
+                && this.nsrid.equals(that.nsrid) 
+                && this.vnf_name.equals(that.vnf_name)
+                && this.vnfd_id.equals(that.vnfd_id)
+                && this.vim_id.equals(that.vim_id);
     }
 
     @Override
     public int hashCode() {
         int result = value.hashCode();
-        result = (int) (31 * result + vnf_name.hashCode() + nsrid.hashCode());
+        result = (int) (31 * result + vnf_name.hashCode() + nsrid.hashCode()+ vnfd_id.hashCode()+ vim_id.hashCode());
         return result;
     }
 

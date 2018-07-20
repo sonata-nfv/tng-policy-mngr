@@ -9,7 +9,7 @@ package eu.tng.policymanager.facts.enums;
  *
  * @author Eleni Fotopoulou <efotopoulou@ubitech.eu>
  */
-public enum OrchestrationType {
-    Spawn,
-    Deprovision
+public enum ScalingType {
+    addvnf,
+    removevnf
 }

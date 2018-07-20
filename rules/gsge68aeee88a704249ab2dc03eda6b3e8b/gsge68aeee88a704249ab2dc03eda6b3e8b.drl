@@ -39,7 +39,11 @@ when
 then
 insertLogical( new ComponentResourceAllocationAction("e68aeee88a704249ab2dc03eda6b3e8b","vnf1",InfrastructureType.ApplyFlavour,"3",Status.not_send)); 
 
-
 end
+
+
+
+
+
 
 
