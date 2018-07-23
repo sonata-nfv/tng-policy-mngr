@@ -16,12 +16,11 @@ import eu.tng.policymanager.facts.enums.ValueType;
 public class Action {
 
     String ns_id;
-    String nsr_id;
+    String service_instance_id;
     String value;
     ValueType valueType;
     UnitType valueUnit;
     Status status;
-    
     String correlation_id;
 
     public String getNs_id() {
@@ -32,12 +31,12 @@ public class Action {
         this.ns_id = ns_id;
     }
 
-    public String getNsr_id() {
-        return nsr_id;
+    public String getService_instance_id() {
+        return service_instance_id;
     }
 
-    public void setNsr_id(String nsr_id) {
-        this.nsr_id = nsr_id;
+    public void setService_instance_id(String service_instance_id) {
+        this.service_instance_id = service_instance_id;
     }
 
     public String getValue() {
@@ -84,7 +83,7 @@ public class Action {
     public String toString() {
         return "Action: { valueType=\"" + valueType + "\""
                 + ", ns_id=" + ns_id
-                + ", nsr_id=" + nsr_id
+                + ", service_instance_id=" + service_instance_id
                 + ", value=" + value
                 + ",valueUnit=\"" + valueUnit
                 + ", status=" + status + "\"}";
@@ -103,13 +102,13 @@ public class Action {
                 && this.valueType.equals(that.valueType)
                 && this.valueUnit.equals(that.valueUnit)
                 && this.ns_id.equals(that.ns_id)
-                && this.nsr_id.equals(that.nsr_id);
+                && this.service_instance_id.equals(that.service_instance_id);
     }
 
     @Override
     public int hashCode() {
         int result = value.hashCode();
-        result = (int) (31 * result + valueType.hashCode() + nsr_id.hashCode() + ns_id.hashCode());
+        result = (int) (31 * result + valueType.hashCode() + service_instance_id.hashCode() + ns_id.hashCode());
         return result;
     }
 

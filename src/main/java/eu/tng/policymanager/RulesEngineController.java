@@ -36,14 +36,15 @@ package eu.tng.policymanager;
 import com.google.gson.Gson;
 import eu.tng.policymanager.repository.dao.PlacementPolicyRepository;
 import eu.tng.policymanager.repository.dao.RecommendedActionRepository;
+import eu.tng.policymanager.repository.dao.RuntimePolicyRecordRepository;
 import eu.tng.policymanager.repository.dao.RuntimePolicyRepository;
 import eu.tng.policymanager.repository.domain.PlacementPolicy;
 import eu.tng.policymanager.repository.domain.RecommendedAction;
 import eu.tng.policymanager.repository.domain.RuntimePolicy;
+import eu.tng.policymanager.repository.domain.RuntimePolicyRecord;
 import eu.tng.policymanager.response.BasicResponseCode;
 import eu.tng.policymanager.response.PolicyRestResponse;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -65,6 +66,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -87,11 +89,20 @@ public class RulesEngineController {
     RuntimePolicyRepository runtimePolicyRepository;
 
     @Autowired
+    RuntimePolicyRecordRepository runtimePolicyRecordRepository;
+
+    @Autowired
     PlacementPolicyRepository placementPolicyRepository;
 
     @Autowired
     RecommendedActionRepository recommendedActionRepository;
 
+//    @Autowired
+//    private RabbitTemplate template;
+//
+//    @Qualifier("runtimeActionsQueue")
+//    @Autowired
+//    private Queue queue;
     @RequestMapping(value = "/newMonitoringMessage", method = RequestMethod.POST)
     public boolean newMonitoringMessage(@RequestBody MonitoringMessageTO tobject) {
         rulesEngineService.createFact(tobject);
@@ -162,9 +173,34 @@ public class RulesEngineController {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(policies_url + "/" + policy_uuid, HttpMethod.GET, entity, String.class);
+        ResponseEntity<String> response;
+        try {
+            response = restTemplate.exchange(policies_url + "/" + policy_uuid, HttpMethod.GET, entity, String.class);
+            if (response.getStatusCode().is2xxSuccessful()) {
 
-        return response.getBody();
+                JSONObject policy_descriptor = new JSONObject(response.getBody());
+                Optional<RuntimePolicy> runtimepolicy = runtimePolicyRepository.findByPolicyid(policy_uuid);
+                policy_descriptor.put("default_policy", runtimepolicy.get().isDefaultPolicy());
+
+                Optional<RuntimePolicyRecord> runtimepolicyrecord = runtimePolicyRecordRepository.findByPolicyid(policy_uuid);
+
+                if (runtimepolicyrecord.isPresent()) {
+                    policy_descriptor.put("enforced", true);
+                } else {
+                    policy_descriptor.put("enforced", false);
+                }
+
+                Gson gson = new Gson();
+                return policy_descriptor.toString();
+
+            }
+        } catch (HttpClientErrorException e) {
+            return "{\"error\": \"The PLD ID " + policy_uuid + " does not exist at catalogues. Message : "
+                    + e.getMessage() + "\"}";
+        }
+
+        return "{\"warning\": \"The PLD ID " + policy_uuid + " does not exist at catalogues.\"}";
+
     }
 
     //Update a Policy -TO BE CHECKED

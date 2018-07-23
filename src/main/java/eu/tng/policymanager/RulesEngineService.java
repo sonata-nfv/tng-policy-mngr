@@ -34,6 +34,7 @@
 package eu.tng.policymanager;
 
 import com.google.gson.Gson;
+import com.rabbitmq.client.AMQP.BasicProperties;
 import eu.tng.policymanager.facts.RuleActionType;
 import static eu.tng.policymanager.config.DroolsConfig.POLICY_DESCRIPTORS_PACKAGE;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
@@ -77,6 +78,7 @@ import org.drools.compiler.lang.api.DescrFactory;
 import org.drools.compiler.lang.api.PackageDescrBuilder;
 import org.drools.compiler.lang.api.RuleDescrBuilder;
 import org.drools.compiler.lang.descr.AndDescr;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.kie.api.KieBase;
 import org.kie.api.KieServices;
@@ -96,8 +98,12 @@ import org.kie.api.conf.EventProcessingOption;
 import org.kie.api.runtime.conf.ClockTypeOption;
 import org.kie.api.runtime.rule.EntryPoint;
 import org.kie.internal.io.ResourceFactory;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageBuilder;
+import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.yaml.snakeyaml.Yaml;
@@ -109,7 +115,7 @@ public class RulesEngineService {
     private static final String rulesPackage = "rules";
     private static final String current_dir = System.getProperty("user.dir");
     ReleaseId releaseId = KieServices.Factory.get().newReleaseId("eu.tng", "policymanager", "1.0");
-    private static final String FACTS_EXPIRATION = "5m";
+    private static final String FACTS_EXPIRATION = "2m";
 
     private final KieServices kieServices;
     private final KieFileSystem kieFileSystem;
@@ -132,7 +138,7 @@ public class RulesEngineService {
     PolicyYamlFile policyYamlFile;
 
     @Autowired
-    RecommendedActionRepository  recommendedActionRepository;
+    RecommendedActionRepository recommendedActionRepository;
 
     @Autowired
     public RulesEngineService(KieUtil kieUtil) {
@@ -176,19 +182,43 @@ public class RulesEngineService {
 
                     if (doaction instanceof ElasticityAction) {
                         ElasticityAction doactionsubclass = (ElasticityAction) doaction;
-                        template.convertAndSend(queue.getName(), doactionsubclass.toString());
 
-                        String nsrid = doactionsubclass.getNsr_id().substring(1);
-                        doactionsubclass.setNsr_id(nsrid);
+                        String nsrid = doactionsubclass.getService_instance_id().substring(1);
+                        doactionsubclass.setService_instance_id(nsrid);
 
                         //save Recommended action to policy repository
-                        RecommendedAction   recommendedAction = new RecommendedAction();
-                        
+                        RecommendedAction recommendedAction = new RecommendedAction();
+
                         recommendedAction.setAction(doactionsubclass);
-                        
+
                         RecommendedAction newRecommendedAction = recommendedActionRepository.save(recommendedAction);
+
+                        doactionsubclass.setCorrelation_id(newRecommendedAction.getCorrelation_id());
+
+                        JSONObject elasticity_action_msg = new JSONObject();
                         
-                        System.out.println(" [x] Sent to topic '" + gson.toJson(newRecommendedAction) + "'");
+                        String correlation_id = doactionsubclass.getCorrelation_id();
+
+                        elasticity_action_msg.put("vnf_name", doactionsubclass.getVnf_name());
+                        elasticity_action_msg.put("vnfd_id", doactionsubclass.getVnfd_id());
+                        elasticity_action_msg.put("scaling_type", doactionsubclass.getScaling_type());
+                        elasticity_action_msg.put("service_instance_id", doactionsubclass.getService_instance_id());
+                        //elasticity_action_msg.put("correlation_id", correlation_id);
+                        elasticity_action_msg.put("value", doactionsubclass.getValue());
+
+                        JSONArray constraints = new JSONArray();
+                        JSONObject constraint = new JSONObject();
+                        constraint.put("vim_id", doactionsubclass.getVim_id());
+                        constraints.put(constraint);
+
+                        elasticity_action_msg.put("constraints", constraints);
+                        //template.convertAndSend(queue.getName(), elasticity_action_msg);
+                        
+                        CorrelationData cd =  new CorrelationData();
+                        cd.setId(correlation_id);
+                        template.convertAndSend(queue.getName(), elasticity_action_msg.toString().getBytes(),cd);
+                       
+                        System.out.println(" [x] Sent to topic '" + elasticity_action_msg + "'");
                     }
 
                 }
@@ -569,7 +599,7 @@ public class RulesEngineService {
                 + "rule \"ElasticityRuleHelper\"\n"
                 + "when\n"
                 + "   \n"
-                + " $m1 := LogMetric() from entry-point \"MonitoringStream\" \n"
+                + " $m1 := LogMetric(vnfd_id !=null) from entry-point \"MonitoringStream\"  \n"
                 + " $m2 := ElasticityAction (vnf_name==$m1.vnf_name)\n"
                 + " then\n"
                 + " $m2.setVnfd_id($m1.getVnfd_id());\n"
