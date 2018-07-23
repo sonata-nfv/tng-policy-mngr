@@ -112,7 +112,7 @@ public class RulesEngineApp {
     }
 
     @Bean
-    public Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
+    public Jackson2JsonMessageConverter jackson2JsonMessageConverter() {   
         return new Jackson2JsonMessageConverter();
     }
 
