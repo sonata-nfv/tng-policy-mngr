@@ -186,6 +186,8 @@ public class RulesEngineController {
 
                 if (runtimepolicyrecord.isPresent()) {
                     policy_descriptor.put("enforced", true);
+                } else {
+                    policy_descriptor.put("enforced", false);
                 }
 
                 Gson gson = new Gson();
