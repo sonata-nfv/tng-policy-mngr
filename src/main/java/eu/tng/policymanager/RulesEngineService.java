@@ -599,7 +599,7 @@ public class RulesEngineService {
                 + "rule \"ElasticityRuleHelper\"\n"
                 + "when\n"
                 + "   \n"
-                + " $m1 := LogMetric() from entry-point \"MonitoringStream\" \n"
+                + " $m1 := LogMetric(vnfd_id !=null) from entry-point \"MonitoringStream\"  \n"
                 + " $m2 := ElasticityAction (vnf_name==$m1.vnf_name)\n"
                 + " then\n"
                 + " $m2.setVnfd_id($m1.getVnfd_id());\n"
