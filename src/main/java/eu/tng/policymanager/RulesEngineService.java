@@ -713,19 +713,19 @@ public class RulesEngineService {
     /*
      Remove a new knowledge base & session & corresponding rules so as to update kieModule
      */
-    public void removeKnowledgebase(String gnsid) {
+    public void removeKnowledgebase(String nsr_id) {
         try {
 
             Collection<String> kiebases = kieContainer.getKieBaseNames();
 
-            String factKnowledgebase = "GSGKnowledgeBase_gsg" + gnsid;
+            String factKnowledgebase = "GSGKnowledgeBase_gsg" + nsr_id;
 
             if (!kiebases.contains(factKnowledgebase)) {
                 logger.log(java.util.logging.Level.WARNING, "Knowledge base {0} already removed", factKnowledgebase);
                 return;
             }
 
-            String knowledgebasename = "gsg" + gnsid;
+            String knowledgebasename = "gsg" + nsr_id;
             kieModuleModel.removeKieBaseModel("GSGKnowledgeBase_" + knowledgebasename);
             kieFileSystem.writeKModuleXML(kieModuleModel.toXML());
             logger.log(java.util.logging.Level.INFO, "kieModuleModel--ToXML\n{0}", kieModuleModel.toXML());
@@ -734,7 +734,7 @@ public class RulesEngineService {
             String current_dir = System.getProperty("user.dir");
             FileUtils.deleteDirectory(new File(current_dir + "/rules" + "/" + knowledgebasename));
             //delete session
-            String factSessionName = "RulesEngineSession_gsg" + gnsid;
+            String factSessionName = "RulesEngineSession_gsg" + nsr_id;
             kieUtil.haltKieSession(factSessionName);
 
             Double newversion = Double.parseDouble(releaseId.getVersion()) + 0.1;
