@@ -180,7 +180,12 @@ public class RulesEngineController {
 
                 JSONObject policy_descriptor = new JSONObject(response.getBody());
                 Optional<RuntimePolicy> runtimepolicy = runtimePolicyRepository.findByPolicyid(policy_uuid);
-                policy_descriptor.put("default_policy", runtimepolicy.get().isDefaultPolicy());
+                if (runtimepolicy.isPresent()) {
+                    policy_descriptor.put("default_policy", runtimepolicy.get().isDefaultPolicy());
+                } else {
+                    policy_descriptor.put("default_policy", false);
+
+                }
 
                 Optional<RuntimePolicyRecord> runtimepolicyrecord = runtimePolicyRecordRepository.findByPolicyid(policy_uuid);
 
@@ -203,15 +208,13 @@ public class RulesEngineController {
 
     }
 
-    
-     @RequestMapping(value = "/lala", method = RequestMethod.GET)
+    @RequestMapping(value = "/lala", method = RequestMethod.GET)
     public String lala() {
-    
+
         rulesEngineService.lala();
-        return"lala";
+        return "lala";
     }
-    
-    
+
     //Update a Policy -TO BE CHECKED
     @RequestMapping(value = "", method = RequestMethod.PUT)
     public ResponseEntity updatePolicyDescriptor(@RequestBody String tobject) {
