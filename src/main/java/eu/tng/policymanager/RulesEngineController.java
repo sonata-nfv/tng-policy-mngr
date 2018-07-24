@@ -241,7 +241,7 @@ public class RulesEngineController {
     @RequestMapping(value = "/{policy_uuid}", method = RequestMethod.DELETE)
     public ResponseEntity deletePolicyDescriptor(@PathVariable("policy_uuid") String policy_uuid) {
 
-        log.info("i call catalogues with spring rest template so as to delete the policy descriptor");
+        log.info("Delete the policy descriptor");
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.set("Content-Type", "application/json");
@@ -250,9 +250,21 @@ public class RulesEngineController {
 
         HttpHeaders responseHeaders = new HttpHeaders();
 
+        Optional<RuntimePolicyRecord> runtimePolicyRecord = runtimePolicyRecordRepository.findByPolicyid(policy_uuid);
+
+        if (runtimePolicyRecord.isPresent()) {
+            log.info(Message.POLICY_DELETED_FORBIDEN);
+            PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DELETED_FORBIDEN, policy_uuid);
+            return buildResponseEntity(response);
+        }
+
         try {
             restTemplate.delete(policies_url + "/" + policy_uuid);
             rulesEngineService.deletePolicyDescriptor(policy_uuid);
+            Optional<RuntimePolicy> runtimePolicy = runtimePolicyRepository.findByPolicyid(policy_uuid);
+            if (runtimePolicy.isPresent()) {
+                runtimePolicyRepository.delete(runtimePolicy.get());
+            }
 
         } catch (Exception e) {
             PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DELETED_FAILURE, e.getMessage());
@@ -403,6 +415,8 @@ public class RulesEngineController {
         final static String POLICY_DELETED = "Policy is succesfully deleted";
         final static String POLICY_CREATED_FAILURE = "Policy failed to be created at catalogues";
         final static String POLICY_DELETED_FAILURE = "Policy failed to be deleted at catalogues";
+        final static String POLICY_DELETED_FORBIDEN = "Policy can not be deleted because is enforced";
+        final static String POLICY_DELETION = "Policy failed to be deleted at catalogues";
         final static String POLICY_METADATA_UPDATED = "Policy metadata are sucesfully updated";
         final static String POLICY_DEFAULT = "Policy is set as default";
         final static String POLICY_NOT_EXISTS = "Policy does not exist";
