@@ -36,7 +36,7 @@ package eu.tng.policymanager.Messaging;
 import java.io.Serializable;
 
 
-public class ExpertSystemMessage implements Serializable {
+public class ExpertSystemMessage2 implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
