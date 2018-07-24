@@ -108,7 +108,7 @@ public class RulesEngineApp {
 
     @Bean
     TopicExchange exchange() {
-        return new TopicExchange("son-kernel");
+        return new TopicExchange("son-kernel",false,false);
     }
 
     @Bean
