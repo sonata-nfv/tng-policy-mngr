@@ -97,12 +97,6 @@ public class RulesEngineController {
     @Autowired
     RecommendedActionRepository recommendedActionRepository;
 
-//    @Autowired
-//    private RabbitTemplate template;
-//
-//    @Qualifier("runtimeActionsQueue")
-//    @Autowired
-//    private Queue queue;
     @RequestMapping(value = "/newMonitoringMessage", method = RequestMethod.POST)
     public boolean newMonitoringMessage(@RequestBody MonitoringMessageTO tobject) {
         rulesEngineService.createFact(tobject);
@@ -366,6 +360,20 @@ public class RulesEngineController {
         Gson gson = new Gson();
 
         return gson.toJson(recommendedActions);
+    }
+
+    //deactivate an enforced policy
+    @RequestMapping(value = "/deactivate/{nsr_id}", method = RequestMethod.GET)
+    public ResponseEntity deactivate(@PathVariable("nsr_id") String nsr_id) {
+        log.info("remove knowledgebase");
+        rulesEngineService.removeKnowledgebase("s" + nsr_id.replaceAll("-", ""));
+
+        Optional<RuntimePolicyRecord> runtimePolicyRecord = runtimePolicyRecordRepository.findByNsrid(nsr_id);
+
+        runtimePolicyRecordRepository.delete(runtimePolicyRecord.get());
+
+        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DEACTIVATED, true);
+        return buildResponseEntity(response);
     }
 
     ResponseEntity buildResponseEntity(PolicyRestResponse response) {
