@@ -89,7 +89,9 @@ public class RulesEngineApp {
 
     public static final String RUNTIME_ACTIONS_QUEUE = "service.instance.scale";
     final static String monitoringqueue = "son.monitoring.policy";
-    final static String NS_INSTATIATION_QUEUE = "service.instances.create";
+    
+    final static String NS_INSTATIATION_QUEUE = "policies.service.instances.create";
+    final static String NS_INSTATIATION_TOPIC = "service.instances.create";
 
     public static void main(String[] args) {
 
@@ -106,7 +108,7 @@ public class RulesEngineApp {
 
     @Bean
     TopicExchange exchange() {
-        return new TopicExchange("spring-boot-exchange");
+        return new TopicExchange("son-kernel");
     }
 
     @Bean
@@ -184,7 +186,7 @@ public class RulesEngineApp {
 
     @Bean
     Binding bindingNSInstantiationQueue(TopicExchange exchange) {
-        return BindingBuilder.bind(nsInstantiationQueue()).to(exchange).with(nsInstantiationQueue().getName());
+        return BindingBuilder.bind(nsInstantiationQueue()).to(exchange).with(NS_INSTATIATION_TOPIC);
     }
 
     @Qualifier("nsInstantiationlistenerAdapter")
