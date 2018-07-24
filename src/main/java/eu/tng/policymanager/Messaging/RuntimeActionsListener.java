@@ -37,6 +37,7 @@ import java.util.logging.Level;
 import org.springframework.stereotype.Component;
 import java.util.logging.Logger;
 
+
 @Component
 public class RuntimeActionsListener {
 
@@ -46,9 +47,6 @@ public class RuntimeActionsListener {
     public void expertSystemMessageReceived(String message) {
 
         logger.log(Level.INFO, "Received Action is like this {0}", message);
-        
-        
-        //save generated action at 
 
     }
 

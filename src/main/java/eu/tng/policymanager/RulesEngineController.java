@@ -203,6 +203,15 @@ public class RulesEngineController {
 
     }
 
+    
+     @RequestMapping(value = "/lala", method = RequestMethod.GET)
+    public String lala() {
+    
+        rulesEngineService.lala();
+        return"lala";
+    }
+    
+    
     //Update a Policy -TO BE CHECKED
     @RequestMapping(value = "", method = RequestMethod.PUT)
     public ResponseEntity updatePolicyDescriptor(@RequestBody String tobject) {

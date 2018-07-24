@@ -34,7 +34,6 @@
 package eu.tng.policymanager;
 
 import com.google.gson.Gson;
-import com.rabbitmq.client.AMQP.BasicProperties;
 import eu.tng.policymanager.facts.RuleActionType;
 import static eu.tng.policymanager.config.DroolsConfig.POLICY_DESCRIPTORS_PACKAGE;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
@@ -44,13 +43,13 @@ import eu.tng.policymanager.facts.LogMetric;
 import eu.tng.policymanager.facts.MonitoredComponent;
 import eu.tng.policymanager.facts.action.ElasticityAction;
 import eu.tng.policymanager.facts.action.NetworkManagementAction;
+import eu.tng.policymanager.facts.enums.ScalingType;
 import eu.tng.policymanager.facts.enums.Status;
 import eu.tng.policymanager.repository.PolicyRule;
 import eu.tng.policymanager.rules.generation.KieUtil;
 import eu.tng.policymanager.repository.PolicyYamlFile;
 import eu.tng.policymanager.repository.RuleCondition;
 import eu.tng.policymanager.repository.dao.RecommendedActionRepository;
-import eu.tng.policymanager.repository.dao.RuntimePolicyRecordRepository;
 import eu.tng.policymanager.repository.domain.RecommendedAction;
 import eu.tng.policymanager.rules.generation.RepositoryUtil;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
@@ -66,6 +65,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -94,14 +94,16 @@ import org.kie.api.runtime.rule.FactHandle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.kie.api.builder.ReleaseId;
+import org.kie.api.conf.EqualityBehaviorOption;
 import org.kie.api.conf.EventProcessingOption;
 import org.kie.api.runtime.conf.ClockTypeOption;
 import org.kie.api.runtime.rule.EntryPoint;
 import org.kie.internal.io.ResourceFactory;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageBuilder;
-import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -135,6 +137,9 @@ public class RulesEngineService {
     private Queue queue;
 
     @Autowired
+    private TopicExchange exchange;
+
+    @Autowired
     PolicyYamlFile policyYamlFile;
 
     @Autowired
@@ -155,11 +160,15 @@ public class RulesEngineService {
     public void searchForGeneratedActions() {
 
         logger.info("Search for actions");
+
         ConcurrentHashMap map = kieUtil.seeThreadMap();
         for (Object key : map.keySet()) {
             System.out.println("factSessionName " + key.toString());
             String factSessionName = key.toString();
             KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
+
+            printFactsMessage(kieSession);
+
             List<Action> doactions = findAction(kieSession);
 
             if (doactions.size() > 0) {
@@ -196,7 +205,7 @@ public class RulesEngineService {
                         doactionsubclass.setCorrelation_id(newRecommendedAction.getCorrelation_id());
 
                         JSONObject elasticity_action_msg = new JSONObject();
-                        
+
                         String correlation_id = doactionsubclass.getCorrelation_id();
 
                         elasticity_action_msg.put("vnf_name", doactionsubclass.getVnf_name());
@@ -213,11 +222,12 @@ public class RulesEngineService {
 
                         elasticity_action_msg.put("constraints", constraints);
                         //template.convertAndSend(queue.getName(), elasticity_action_msg);
-                        
-                        CorrelationData cd =  new CorrelationData();
+
+                        CorrelationData cd = new CorrelationData();
                         cd.setId(correlation_id);
-                        template.convertAndSend(queue.getName(), elasticity_action_msg.toString().getBytes(),cd);
-                       
+                        // template.convertAndSend(queue.getName(), elasticity_action_msg, cd);
+                        template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg.toString(), cd);
+
                         System.out.println(" [x] Sent to topic '" + elasticity_action_msg + "'");
                     }
 
@@ -225,6 +235,26 @@ public class RulesEngineService {
 
             }
         }
+
+    }
+
+    public void lala() {
+        CorrelationData cd = new CorrelationData();
+        cd.setId("232939289320838");
+        JSONObject elasticity_action_msg = new JSONObject();
+        elasticity_action_msg.put("vnf_name", "ddd");
+        elasticity_action_msg.put("vnfd_id", "ddd");
+        elasticity_action_msg.put("scaling_type", ScalingType.addvnf);
+        elasticity_action_msg.put("service_instance_id", "ddd");
+        elasticity_action_msg.put("value", 22);
+//        //template.convertAndSend(queue.getName(),"test", cd);
+//
+//        String correlationId = "corr-data-test-1";
+        Message message = MessageBuilder.withBody("valid message".getBytes()).build();
+
+        //template.convertAndSend(exchange.getName(), queue.getName(), message, new CorrelationData(correlationId));
+        Gson gson = new Gson();
+        template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg.toString(), cd);
 
     }
 
@@ -498,7 +528,8 @@ public class RulesEngineService {
         String knowledgebasename = "gsg" + gnsid;
 
         System.out.println("knowledgebasename" + knowledgebasename);
-        KieBaseModel kieBaseModel1 = kieModuleModel.newKieBaseModel("GSGKnowledgeBase_" + knowledgebasename).setDefault(true).setEventProcessingMode(EventProcessingOption.STREAM);
+        KieBaseModel kieBaseModel1 = kieModuleModel.newKieBaseModel("GSGKnowledgeBase_" + knowledgebasename)
+                .setDefault(true).setEventProcessingMode(EventProcessingOption.STREAM).setEqualsBehavior(EqualityBehaviorOption.EQUALITY);
 
         kieBaseModel1.addPackage(rulesPackage + "." + knowledgebasename);
 
@@ -554,6 +585,10 @@ public class RulesEngineService {
                 .newDeclare().type().name("MonitoredComponent").newAnnotation("role").value("event").end()
                 .newAnnotation("expires").value(FACTS_EXPIRATION).end().end()
                 .newDeclare().type().name("ComponentResourceAllocationAction").newAnnotation("role").value("event").end()
+                .newAnnotation("expires").value(FACTS_EXPIRATION).end().end()
+                .newDeclare().type().name("ElasticityAction").newAnnotation("role").value("event").end()
+                .newAnnotation("expires").value(FACTS_EXPIRATION).end().end()
+                .newDeclare().type().name("LogMetric").newAnnotation("role").value("event").end()
                 .newAnnotation("expires").value(FACTS_EXPIRATION).end().end();
 
         for (PolicyRule policyrule : policyrules) {
