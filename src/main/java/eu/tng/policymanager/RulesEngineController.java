@@ -85,6 +85,9 @@ public class RulesEngineController {
     @Value("${tng.cat.policies}")
     private String policies_url;
 
+    @Value("${tng.cat.network.services}")
+    private String services_url;
+
     @Autowired
     RuntimePolicyRepository runtimePolicyRepository;
 
@@ -189,7 +192,27 @@ public class RulesEngineController {
                     policy_descriptor.put("enforced", false);
                 }
 
-                Gson gson = new Gson();
+                //fetch ns_uuid
+                log.info("Fetch ns_uuid for current policy");
+
+                JSONObject network_service = policy_descriptor.getJSONObject("pld").getJSONObject("network_service");
+                
+                String services_url_complete = services_url
+                        + "?name=" + network_service.getString("name")
+                        + "&version=" + network_service.getString("version")
+                        + "&vendor=" + network_service.getString("vendor");
+
+                ResponseEntity<String> response1 = restTemplate.exchange(services_url_complete, HttpMethod.GET, entity, String.class);
+                
+                log.info("invoke the " + services_url_complete);
+
+                JSONArray network_services = new JSONArray(response1.getBody());
+
+                if (network_services.length() > 0) {
+                    String ns_uuid = network_services.getJSONObject(0).getString("uuid");
+                    policy_descriptor.put("ns_uuid", ns_uuid);
+                }
+
                 return policy_descriptor.toString();
 
             }
