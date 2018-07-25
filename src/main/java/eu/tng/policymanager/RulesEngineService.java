@@ -179,13 +179,13 @@ public class RulesEngineService {
                     if (doaction instanceof ComponentResourceAllocationAction) {
                         ComponentResourceAllocationAction doactionsubclass = (ComponentResourceAllocationAction) doaction;
 
-                        template.convertAndSend(queue.getName(), gson.toJson(doactionsubclass));
+                        //template.convertAndSend(queue.getName(), gson.toJson(doactionsubclass));
                         System.out.println(" [x] Sent '" + gson.toJson(doactionsubclass) + "'");
                     }
 
                     if (doaction instanceof NetworkManagementAction) {
                         NetworkManagementAction doactionsubclass = (NetworkManagementAction) doaction;
-                        template.convertAndSend(queue.getName(), doactionsubclass.toString());
+                        //template.convertAndSend(queue.getName(), doactionsubclass.toString());
                         System.out.println(" [x] Sent '" + gson.toJson(doactionsubclass) + "'");
                     }
 
@@ -226,7 +226,7 @@ public class RulesEngineService {
                         CorrelationData cd = new CorrelationData();
                         cd.setId(correlation_id);
                         // template.convertAndSend(queue.getName(), elasticity_action_msg, cd);
-                        template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg.toString(), cd);
+                        //template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg.toString(), cd);
 
                         System.out.println(" [x] Sent to topic '" + elasticity_action_msg + "'");
                     }
@@ -254,7 +254,7 @@ public class RulesEngineService {
 
         //template.convertAndSend(exchange.getName(), queue.getName(), message, new CorrelationData(correlationId));
         Gson gson = new Gson();
-        template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg.toString(), cd);
+        //template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg.toString(), cd);
 
     }
 
