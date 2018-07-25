@@ -95,11 +95,11 @@ public class DeployedNSListener {
         String jsonobject = convertYamlToJson(deployedNSasYaml);
         JSONObject newDeployedGraph = new JSONObject(jsonobject);
 
-        if (newDeployedGraph.has("status") && newDeployedGraph.has("nsr")) {
+        if (newDeployedGraph.has("status")) {
 
             String status = newDeployedGraph.get("status").toString();
             String ns_id = newDeployedGraph.getJSONObject("nsr").getString("descriptor_reference");
-            
+
             logger.log(Level.INFO, "status {0} for nsr_id {1}", new Object[]{status, ns_id});
 
             if (status.equalsIgnoreCase("READY")) {
@@ -111,10 +111,16 @@ public class DeployedNSListener {
 
                 if (newDeployedGraph.has("sla_id")) {
 
-                    String sla_id = newDeployedGraph.getString("sla_id");
-                    if (sla_id != null || !sla_id.equalsIgnoreCase("null")) {
-                        logger.log(Level.INFO, "Check for policy  binded with SLA {0} and NS {1}", new Object[]{sla_id, ns_id});
-                        runtimepolicy = runtimePolicyRepository.findBySlaidAndNsid(sla_id, ns_id);
+                    Object sla_id = newDeployedGraph.get("sla_id");
+
+                    if (!sla_id.equals(null)) {
+
+                        logger.log(Level.INFO, "Check for policy  binded with SLA {0} and NS {1}", new Object[]{sla_id.toString(), ns_id});
+                        runtimepolicy = runtimePolicyRepository.findBySlaidAndNsid(sla_id.toString(), ns_id);
+                    } else {
+
+                        logger.log(Level.INFO, "Check for default policy for ns {0}", ns_id);
+                        runtimepolicy = runtimePolicyRepository.findByNsidAndDefaultPolicyTrue(ns_id);
                     }
 
                 } else {
