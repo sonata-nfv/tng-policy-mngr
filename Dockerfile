@@ -23,6 +23,6 @@ ENV HOST_BROKER son-broker
 ENV CATALOGUE tng-cat:4011
 ENV MONITORING_MANAGER son-monitor
 ENV REPO tng-rep:4012
-#docker exec son-broker rabbitmq-plugins enable rabbitmq_management
+
 
 CMD ["java","-jar","tng-policy-mngr-1.5.0.jar"]
