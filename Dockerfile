@@ -24,4 +24,5 @@ ENV CATALOGUE tng-cat:4011
 ENV MONITORING_MANAGER son-monitor
 ENV REPO tng-rep:4012
 
+
 CMD ["java","-jar","tng-policy-mngr-1.5.0.jar"]
