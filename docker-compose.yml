@@ -5,7 +5,13 @@ services:
     container_name: son-mongo
     ports:
         - 27017:27017
-
+  son-broker:
+    image: rabbitmq:3
+    ports:
+     - "5672:5672"
+     - "15672:15672"
+    container_name: son-broker
+    restart: always
   tng-policy-mngr:
     build:
      context: .
