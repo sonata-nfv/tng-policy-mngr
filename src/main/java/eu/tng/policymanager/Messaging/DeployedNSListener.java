@@ -87,35 +87,43 @@ public class DeployedNSListener {
     @RabbitListener(queues = RulesEngineApp.NS_INSTATIATION_QUEUE)
     public void deployedNSMessageReceived(byte[] message) {
 
+        logger.log(Level.INFO, "A new message has been received");
+
         String deployedNSasYaml = new String(message, StandardCharsets.UTF_8);
         //String deployedNSasYaml = message;
-
-        logger.log(Level.INFO, "A new service is Deployed: {0}", deployedNSasYaml);
 
         String jsonobject = convertYamlToJson(deployedNSasYaml);
         JSONObject newDeployedGraph = new JSONObject(jsonobject);
 
-        if (newDeployedGraph.has("status")) {
+        if (newDeployedGraph.has("status") && newDeployedGraph.has("nsr")) {
+
             String status = newDeployedGraph.get("status").toString();
-            logger.log(Level.INFO, "status " + status);
+            String ns_id = newDeployedGraph.getJSONObject("nsr").getString("descriptor_reference");
+            
+            logger.log(Level.INFO, "status {0} for nsr_id {1}", new Object[]{status, ns_id});
 
             if (status.equalsIgnoreCase("READY")) {
 
-                String nsr_id = newDeployedGraph.getJSONObject("nsr").getString("id");
-                String sla_id = newDeployedGraph.getString("sla_id");
-                String ns_id = newDeployedGraph.getJSONObject("nsr").getString("descriptor_reference");
+                logger.log(Level.INFO, "A new service is Deployed: {0}", deployedNSasYaml);
 
-                Optional<RuntimePolicy> runtimepolicy;
-                if (sla_id == null || sla_id.equalsIgnoreCase("null")) {
-                    logger.log(Level.INFO, "Check for default policy for ns " + ns_id);
-                    runtimepolicy = runtimePolicyRepository.findByNsidAndDefaultPolicyTrue(ns_id);
+                String nsr_id = newDeployedGraph.getJSONObject("nsr").getString("id");
+                Optional<RuntimePolicy> runtimepolicy = null;
+
+                if (newDeployedGraph.has("sla_id")) {
+
+                    String sla_id = newDeployedGraph.getString("sla_id");
+                    if (sla_id != null || !sla_id.equalsIgnoreCase("null")) {
+                        logger.log(Level.INFO, "Check for policy  binded with SLA {0} and NS {1}", new Object[]{sla_id, ns_id});
+                        runtimepolicy = runtimePolicyRepository.findBySlaidAndNsid(sla_id, ns_id);
+                    }
+
                 } else {
-                    logger.log(Level.INFO, "Check for policy  binded with SLA " + sla_id + " and NS " + ns_id);
-                    runtimepolicy = runtimePolicyRepository.findBySlaidAndNsid(sla_id, ns_id);
+                    logger.log(Level.INFO, "Check for default policy for ns {0}", ns_id);
+                    runtimepolicy = runtimePolicyRepository.findByNsidAndDefaultPolicyTrue(ns_id);
                 }
 
-                if (runtimepolicy.isPresent()) {
-                    logger.log(Level.INFO, "Activate policy for NSR " + nsr_id);
+                if (runtimepolicy != null && runtimepolicy.isPresent()) {
+                    logger.log(Level.INFO, "Activate policy for NSR {0}", nsr_id);
                     rulesEngineService.addNewKnowledgebase("s" + nsr_id.replaceAll("-", ""), runtimepolicy.get().getPolicyid());
 
                     // update dbpolicy mongo repo
@@ -124,7 +132,7 @@ public class DeployedNSListener {
                     policyrecord.setPolicyid(runtimepolicy.get().getPolicyid());
                     runtimePolicyRecordRepository.save(policyrecord);
 
-                //submit monitoring-rules to son-broker
+                    //submit monitoring-rules to son-broker
                     //fecth monitoring rules from policy
                     //1. Fech yml file
                     File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + runtimepolicy.get().getPolicyid() + ".yml");
