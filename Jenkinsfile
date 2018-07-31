@@ -10,7 +10,7 @@ pipeline {
         }
         stage('Building tng-policy-mngr') {
           steps {
-            sh 'docker build -t registry.sonata-nfv.eu:5000/tng-policy-mngr .'
+            sh 'docker build -t registry.sonata-nfv.eu:5000/tng-policy-mngr:v4.0 .'
           }
         }
       }
@@ -24,7 +24,7 @@ pipeline {
         }
         stage('Publishing tng-policy-mngr') {
           steps {
-            sh 'docker push registry.sonata-nfv.eu:5000/tng-policy-mngr'
+            sh 'docker push registry.sonata-nfv.eu:5000/tng-policy-mngr:v4.0'
           }
         }
       }
@@ -41,7 +41,7 @@ pipeline {
             sh 'rm -rf tng-devops || true'
             sh 'git clone https://github.com/sonata-nfv/tng-devops.git'
             dir(path: 'tng-devops') {
-              sh 'ansible-playbook roles/sp.yml -i environments -e "target=int-sp component=policy-manager"'
+              sh 'ansible-playbook roles/sp.yml -i environments -e "target=sta-sp-v4.0  component=policy-manager"'
             }
             
           }
@@ -60,8 +60,8 @@ pipeline {
         }
         stage('tng-policy-mngr') {
           steps {
-            sh 'docker tag registry.sonata-nfv.eu:5000/tng-policy-mngr:latest registry.sonata-nfv.eu:5000/tng-policy-mngr:int'
-            sh 'docker push  registry.sonata-nfv.eu:5000/tng-policy-mngr:int'
+            sh 'docker tag registry.sonata-nfv.eu:5000/tng-policy-mngr:v4.0 registry.sonata-nfv.eu:5000/tng-policy-mngr:v4.0'
+            sh 'docker push  registry.sonata-nfv.eu:5000/tng-policy-mngr:v4.0'
             sh 'rm -rf tng-devops || true'
             sh 'git clone https://github.com/sonata-nfv/tng-devops.git'
             dir(path: 'tng-devops') {sh 'ansible-playbook roles/sp.yml -i environments -e "target=int-sp component=policy-manager"'}
