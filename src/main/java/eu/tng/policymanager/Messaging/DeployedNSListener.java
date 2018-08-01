@@ -47,7 +47,6 @@ import eu.tng.policymanager.repository.domain.RuntimePolicyRecord;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -60,7 +59,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -141,7 +139,7 @@ public class DeployedNSListener {
                         policyrecord.setPolicyid(runtimepolicy.get().getPolicyid());
                         runtimePolicyRecordRepository.save(policyrecord);
 
-                    //submit monitoring-rules to son-broker
+                        //submit monitoring-rules to son-broker
                         //fecth monitoring rules from policy
                         //1. Fech yml file
                         File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + runtimepolicy.get().getPolicyid() + ".yml");
@@ -166,6 +164,8 @@ public class DeployedNSListener {
 
                             JSONObject vnfr_object = vnfrs.getJSONObject(i);
 
+                            logger.info("vnfr_object--> " + vnfr_object);
+
                             String vnfr_id = vnfr_object.getString("id"); //or descriptor_reference to ask
                             prometheus_vnf.put("nvfid", vnfr_id);
 
@@ -176,6 +176,8 @@ public class DeployedNSListener {
 
                                 JSONObject virtual_deployment_unit = virtual_deployment_units.getJSONObject(j);
 
+                                logger.info("virtual_deployment_unit--> " + virtual_deployment_unit);
+
                                 String vdu_reference = virtual_deployment_unit.getString("vdu_reference");
                                 JSONArray vnfc_instances = virtual_deployment_unit.getJSONArray("vnfc_instance");
 
@@ -183,6 +185,9 @@ public class DeployedNSListener {
                                 for (int k = 0; k < vnfc_instances.length(); k++) {
 
                                     JSONObject vnfc_instance = vnfc_instances.getJSONObject(k);
+
+                                    logger.info("vnfc_instance--> " + vnfc_instance);
+
                                     JSONObject prometheus_vdu = new JSONObject();
                                     String vc_id = vnfc_instance.getString("vc_id");
                                     prometheus_vdu.put("vdu_id", vc_id);
@@ -192,13 +197,24 @@ public class DeployedNSListener {
 
                                     for (MonitoringRule monitoringRule : monitoringRules) {
 
-                                        String policy_vdu_reference = monitoringRule.getName().split(":")[2] + ":" + monitoringRule.getName().split(":")[4];
+                                        logger.info("MonitoringRule--> " + monitoringRule.toString());
 
-                                        if (policy_vdu_reference.equalsIgnoreCase(vdu_reference)) {
+                                        //Formatted like this : <vnf_name>:<vdu_id>-<record_id>
+                                        String policy_vdu_reference = monitoringRule.getName().split(":")[2] 
+                                                + ":" + monitoringRule.getName().split(":")[4] 
+                                                + "-"+ vnfr_id;
+
+                                        logger.info("policy_vdu_reference--> " + policy_vdu_reference);
+                                        logger.info("vdu_reference--> " + vdu_reference);
+
+                                        if (vdu_reference.equals(policy_vdu_reference)) {
 
                                             JSONObject prometheus_rule = new JSONObject();
 
                                             prometheus_rule.put("name", monitoringRule.getName().replace(":", "_").replace("-", "_"));
+
+                                            logger.info("rule nameeeeeeeeeeeee-->" + monitoringRule.getName().replace(":", "_").replace("-", "_"));
+
                                             prometheus_rule.put("duration", monitoringRule.getDuration() + monitoringRule.getDuration_unit());
                                             prometheus_rule.put("description", monitoringRule.getDescription());
                                             prometheus_rule.put("summary", "");
