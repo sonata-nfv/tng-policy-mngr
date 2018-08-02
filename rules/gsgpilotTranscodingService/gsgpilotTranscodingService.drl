@@ -5,13 +5,13 @@ import eu.tng.policymanager.facts.action.*
 import eu.tng.policymanager.facts.enums.*
 
 declare  MonitoredComponent 
-    @expires( 5m )
+    @expires( 2m )
     @role( event )
 
 end
 
 declare  LogMetric 
-    @expires( 5m )
+    @expires( 2m )
     @role( event )
 
 end
