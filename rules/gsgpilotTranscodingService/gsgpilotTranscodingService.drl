@@ -5,13 +5,13 @@ import eu.tng.policymanager.facts.action.*
 import eu.tng.policymanager.facts.enums.*
 
 declare  MonitoredComponent 
-    @expires( 5m )
+    @expires( 2m )
     @role( event )
 
 end
 
 declare  LogMetric 
-    @expires( 5m )
+    @expires( 2m )
     @role( event )
 
 end
@@ -22,7 +22,7 @@ when
     $m0 := MonitoredComponent( name== "squid-vnf" && metric== "cpu_util" ) from entry-point "MonitoringStream" 
 then
      insertLogical( new ElasticityAction($m0.getNsrid(),"squid-vnf",ScalingType.addvnf,"1",Status.not_send));
-     System.out.println("Hellooooooooooooooooooooo");
+     System.out.println("insert test elasticity action");
 end
 
 rule "actionUponAlert"
@@ -87,6 +87,6 @@ when
  $m2.setVnfd_id($m1.getVnfd_id());
  $m2.setVim_id($m1.getVim_id());
  update($m2);
- System.out.println("Hello agaiiiiiin");
+ System.out.println("enrich elasticity action");
 end
 

@@ -774,7 +774,7 @@ public class RulesEngineService {
         Map<String, Object> map = (Map<String, Object>) yaml.load(prettyJSONString);
         // convert to yaml string (yaml formatted string)
         String output = yaml.dump(map);
-        logger.info(output);
+        //logger.info(output);
         return output;
     }
 
