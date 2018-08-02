@@ -177,10 +177,10 @@ public class RepositoryUtil {
         String[] fields = jsonObject.getString("field").split("\\.");
 
         String component = fields[0];
-        System.out.println("component name" + component);
+        //System.out.println("component name" + component);
 
         String metric = fields[1];
-        System.out.println("metric " + metric);
+        //System.out.println("metric " + metric);
 
         String operator = null;
         String conditionoperator = jsonObject.getString("operator");
