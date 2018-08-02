@@ -16,10 +16,13 @@ public class MonitoredComponent {
     private double value;
     private String groundedGraphid;
 
-    public MonitoredComponent(String name, String metric, double value, String groundedGraphid) {
+    private String nsrid;
+
+    public MonitoredComponent(String name, String metric, double value, String groundedGraphid, String nsrid) {
         this.name = name;
         this.metric = metric;
         this.value = value;
+        this.nsrid = nsrid;
         this.groundedGraphid = groundedGraphid;
     }
 
@@ -55,12 +58,20 @@ public class MonitoredComponent {
         this.groundedGraphid = groundedGraphid;
     }
 
+    public String getNsrid() {
+        return nsrid;
+    }
+
+    public void setNsrid(String nsrid) {
+        this.nsrid = nsrid;
+    }
 
     @Override
     public String toString() {
         return "MonitoredComponent: { name=\"" + name + "\""
                 + ",metric=\"" + metric + "\""
                 + ", value=" + value
+                + ", nsrid==\"" + nsrid + "\""
                 + ",groundedGraphid=\"" + groundedGraphid + "\"}";
     }
 
@@ -73,7 +84,10 @@ public class MonitoredComponent {
             return false;
         }
         MonitoredComponent that = (MonitoredComponent) o;
-        return this.value == that.value && this.name.equals(that.name) && this.groundedGraphid.equals(that.groundedGraphid);
+        return this.value == that.value
+                && this.name.equals(that.name)
+                && this.nsrid.equals(that.nsrid)
+                && this.groundedGraphid.equals(that.groundedGraphid);
     }
 
     @Override
