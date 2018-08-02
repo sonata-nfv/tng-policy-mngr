@@ -9,6 +9,15 @@ declare  MonitoredComponent
 end
 
 
+rule "scaleOutAlert"
+when
+    $tot0 := java.lang.Double( $tot0 >=50 ) from accumulate(     
+    $m0 := MonitoredComponent( name== "squid-vnf" && metric== "cpu_util" ) over window:time(10m)from entry-point "MonitoringStream" ,
+        average( $m0.getValue() )  )
+then
+    insertLogical( new ElasticityAction($m0.groundedGraphid,$m0.name,ScalingType.addvnf,"1",Status.not_send)); 
+end
+
 rule "actionUponAlert"
 when
     LogMetric( gnsid=="pilotTranscodingService" && vnf_name=="vnf1" && value== "notification01" )

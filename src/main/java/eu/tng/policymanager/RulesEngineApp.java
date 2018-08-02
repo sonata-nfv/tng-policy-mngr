@@ -33,7 +33,6 @@
  */
 package eu.tng.policymanager;
 
-import com.mongodb.MongoClient;
 import eu.tng.policymanager.Messaging.DeployedNSListener;
 import eu.tng.policymanager.Messaging.MonitoringListener;
 import eu.tng.policymanager.Messaging.RuntimeActionsListener;
@@ -48,9 +47,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Exchange;
-import org.springframework.amqp.core.ExchangeBuilder;
-import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
@@ -61,16 +57,11 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.SimpleMessageConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
-import org.springframework.data.mongodb.MongoDbFactory;
-import org.springframework.data.mongodb.core.SimpleMongoDbFactory;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 /**
@@ -138,25 +129,25 @@ public class RulesEngineApp {
         return BindingBuilder.bind(runtimeActionsQueue()).to(exchange).with(runtimeActionsQueue().getName());
     }
 
-    @Qualifier("listenerAdapter1")
-    @Bean
-    MessageListenerAdapter listenerAdapter1(RuntimeActionsListener receiver) {
-
-        MessageListenerAdapter msgadapter = new MessageListenerAdapter(receiver, "expertSystemMessageReceived");
-        msgadapter.setMessageConverter(jackson2JsonMessageConverter());
-        return msgadapter;
-    }
-
-    @Qualifier("container1")
-    @Bean
-    SimpleMessageListenerContainer container1(ConnectionFactory connectionFactory,
-            @Qualifier("listenerAdapter1") MessageListenerAdapter listenerAdapter) {
-        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
-        container.setConnectionFactory(connectionFactory);
-        container.setQueueNames(RUNTIME_ACTIONS_QUEUE);
-        container.setMessageListener(listenerAdapter);
-        return container;
-    }
+//    @Qualifier("listenerAdapter1")
+//    @Bean
+//    MessageListenerAdapter listenerAdapter1(RuntimeActionsListener receiver) {
+//
+//        MessageListenerAdapter msgadapter = new MessageListenerAdapter(receiver, "expertSystemMessageReceived");
+//        msgadapter.setMessageConverter(jackson2JsonMessageConverter());
+//        return msgadapter;
+//    }
+//
+//    @Qualifier("container1")
+//    @Bean
+//    SimpleMessageListenerContainer container1(ConnectionFactory connectionFactory,
+//            @Qualifier("listenerAdapter1") MessageListenerAdapter listenerAdapter) {
+//        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
+//        container.setConnectionFactory(connectionFactory);
+//        container.setQueueNames(RUNTIME_ACTIONS_QUEUE);
+//        container.setMessageListener(listenerAdapter);
+//        return container;
+//    }
 
     // Configure connection with rabbit mq for prometheus alerts Queue
 

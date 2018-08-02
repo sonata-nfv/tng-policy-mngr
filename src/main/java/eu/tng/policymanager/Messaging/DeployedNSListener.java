@@ -131,125 +131,129 @@ public class DeployedNSListener {
 
                     if (runtimepolicy != null && runtimepolicy.isPresent()) {
                         logger.log(Level.INFO, "Activate policy for NSR {0}", nsr_id);
-                        rulesEngineService.addNewKnowledgebase("s" + nsr_id.replaceAll("-", ""), runtimepolicy.get().getPolicyid());
+                        boolean is_enforcement_succesfull = rulesEngineService.addNewKnowledgebase("s" + nsr_id.replaceAll("-", ""), runtimepolicy.get().getPolicyid());
 
-                        // update dbpolicy mongo repo
-                        RuntimePolicyRecord policyrecord = new RuntimePolicyRecord();
-                        policyrecord.setNsrid(nsr_id);
-                        policyrecord.setPolicyid(runtimepolicy.get().getPolicyid());
-                        runtimePolicyRecordRepository.save(policyrecord);
+                        if (is_enforcement_succesfull) {
+
+                            // update dbpolicy mongo repo
+                            RuntimePolicyRecord policyrecord = new RuntimePolicyRecord();
+                            policyrecord.setNsrid(nsr_id);
+                            policyrecord.setPolicyid(runtimepolicy.get().getPolicyid());
+                            runtimePolicyRecordRepository.save(policyrecord);
 
                         //submit monitoring-rules to son-broker
-                        //fecth monitoring rules from policy
-                        //1. Fech yml file
-                        File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + runtimepolicy.get().getPolicyid() + ".yml");
-                        logger.info("get file from - " + current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + runtimepolicy.get().getPolicyid() + ".yml");
-                        PolicyYamlFile policyyml = PolicyYamlFile.readYaml(policydescriptor);
+                            //fecth monitoring rules from policy
+                            //1. Fech yml file
+                            File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + runtimepolicy.get().getPolicyid() + ".yml");
+                            logger.info("get file from - " + current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + runtimepolicy.get().getPolicyid() + ".yml");
+                            PolicyYamlFile policyyml = PolicyYamlFile.readYaml(policydescriptor);
 
-                        //2. create hashmap with monitoring rules
-                        List<MonitoringRule> monitoringRules = policyyml.getMonitoring_rules();
+                            //2. create hashmap with monitoring rules
+                            List<MonitoringRule> monitoringRules = policyyml.getMonitoring_rules();
 
-                        //3. construct prometheus rules
-                        JSONObject prometheous_rules = new JSONObject();
-                        prometheous_rules.put("plc_cnt", nsr_id);
+                            //3. construct prometheus rules
+                            JSONObject prometheous_rules = new JSONObject();
+                            prometheous_rules.put("plc_cnt", nsr_id);
 
-                        JSONArray prometheous_vnfs = new JSONArray();
+                            JSONArray prometheous_vnfs = new JSONArray();
 
-                        //parse newDeployedGraph
-                        JSONArray vnfrs = newDeployedGraph.getJSONArray("vnfrs");
+                            //parse newDeployedGraph
+                            JSONArray vnfrs = newDeployedGraph.getJSONArray("vnfrs");
 
-                        for (int i = 0; i < vnfrs.length(); i++) {
+                            for (int i = 0; i < vnfrs.length(); i++) {
 
-                            JSONObject prometheus_vnf = new JSONObject();
+                                JSONObject prometheus_vnf = new JSONObject();
 
-                            JSONObject vnfr_object = vnfrs.getJSONObject(i);
+                                JSONObject vnfr_object = vnfrs.getJSONObject(i);
 
-                            logger.info("vnfr_object--> " + vnfr_object);
+                                logger.info("vnfr_object--> " + vnfr_object);
 
-                            String vnfr_id = vnfr_object.getString("id"); //or descriptor_reference to ask
-                            prometheus_vnf.put("nvfid", vnfr_id);
+                                String vnfr_id = vnfr_object.getString("id"); //or descriptor_reference to ask
+                                prometheus_vnf.put("nvfid", vnfr_id);
 
-                            JSONArray prometheus_vdus = new JSONArray();
-                            JSONArray virtual_deployment_units = vnfr_object.getJSONArray("virtual_deployment_units");
+                                JSONArray prometheus_vdus = new JSONArray();
+                                JSONArray virtual_deployment_units = vnfr_object.getJSONArray("virtual_deployment_units");
 
-                            for (int j = 0; j < virtual_deployment_units.length(); j++) {
+                                for (int j = 0; j < virtual_deployment_units.length(); j++) {
 
-                                JSONObject virtual_deployment_unit = virtual_deployment_units.getJSONObject(j);
+                                    JSONObject virtual_deployment_unit = virtual_deployment_units.getJSONObject(j);
 
-                                logger.info("virtual_deployment_unit--> " + virtual_deployment_unit);
+                                    logger.info("virtual_deployment_unit--> " + virtual_deployment_unit);
 
-                                String vdu_reference = virtual_deployment_unit.getString("vdu_reference");
-                                JSONArray vnfc_instances = virtual_deployment_unit.getJSONArray("vnfc_instance");
+                                    String vdu_reference = virtual_deployment_unit.getString("vdu_reference");
+                                    JSONArray vnfc_instances = virtual_deployment_unit.getJSONArray("vnfc_instance");
 
-                                //MonitoringRule monitoringRule = (MonitoringRule) monitoring_rules_hashmap.get(vdu_reference);
-                                for (int k = 0; k < vnfc_instances.length(); k++) {
+                                    //MonitoringRule monitoringRule = (MonitoringRule) monitoring_rules_hashmap.get(vdu_reference);
+                                    for (int k = 0; k < vnfc_instances.length(); k++) {
 
-                                    JSONObject vnfc_instance = vnfc_instances.getJSONObject(k);
+                                        JSONObject vnfc_instance = vnfc_instances.getJSONObject(k);
 
-                                    logger.info("vnfc_instance--> " + vnfc_instance);
+                                        logger.info("vnfc_instance--> " + vnfc_instance);
 
-                                    JSONObject prometheus_vdu = new JSONObject();
-                                    String vc_id = vnfc_instance.getString("vc_id");
-                                    prometheus_vdu.put("vdu_id", vc_id);
+                                        JSONObject prometheus_vdu = new JSONObject();
+                                        String vc_id = vnfc_instance.getString("vc_id");
+                                        prometheus_vdu.put("vdu_id", vc_id);
 
-                                    //add prometheus rules
-                                    JSONArray prometheus_rules = new JSONArray();
+                                        //add prometheus rules
+                                        JSONArray prometheus_rules = new JSONArray();
 
-                                    for (MonitoringRule monitoringRule : monitoringRules) {
+                                        for (MonitoringRule monitoringRule : monitoringRules) {
 
-                                        logger.info("MonitoringRule--> " + monitoringRule.toString());
+                                            logger.info("MonitoringRule--> " + monitoringRule.toString());
 
-                                        //Formatted like this : <vnf_name>:<vdu_id>-<record_id>
-                                        String policy_vdu_reference = monitoringRule.getName().split(":")[2] 
-                                                + ":" + monitoringRule.getName().split(":")[4] 
-                                                + "-"+ vnfr_id;
+                                            //Formatted like this : <vnf_name>:<vdu_id>-<record_id>
+                                            String policy_vdu_reference = monitoringRule.getName().split(":")[2]
+                                                    + ":" + monitoringRule.getName().split(":")[4]
+                                                    + "-" + vnfr_id;
 
-                                        logger.info("policy_vdu_reference--> " + policy_vdu_reference);
-                                        logger.info("vdu_reference--> " + vdu_reference);
+                                            logger.info("policy_vdu_reference--> " + policy_vdu_reference);
+                                            logger.info("vdu_reference--> " + vdu_reference);
 
-                                        if (vdu_reference.equals(policy_vdu_reference)) {
+                                            if (vdu_reference.equals(policy_vdu_reference)) {
 
-                                            JSONObject prometheus_rule = new JSONObject();
+                                                JSONObject prometheus_rule = new JSONObject();
 
-                                            prometheus_rule.put("name", monitoringRule.getName().replace(":", "_").replace("-", "_"));
+                                                prometheus_rule.put("name", monitoringRule.getName().replace(":", "_").replace("-", "_"));
 
-                                            logger.info("rule nameeeeeeeeeeeee-->" + monitoringRule.getName().replace(":", "_").replace("-", "_"));
+                                                logger.info("rule nameeeeeeeeeeeee-->" + monitoringRule.getName().replace(":", "_").replace("-", "_"));
 
-                                            prometheus_rule.put("duration", monitoringRule.getDuration() + monitoringRule.getDuration_unit());
-                                            prometheus_rule.put("description", monitoringRule.getDescription());
-                                            prometheus_rule.put("summary", "");
-                                            prometheus_rule.put("notification_type", new JSONObject("{\"id\": 2,\"type\":\"rabbitmq\"}"));
-                                            logger.info("monitoringRule condition " + monitoringRule.getCondition());
+                                                prometheus_rule.put("duration", monitoringRule.getDuration() + monitoringRule.getDuration_unit());
+                                                prometheus_rule.put("description", monitoringRule.getDescription());
+                                                prometheus_rule.put("summary", "");
+                                                prometheus_rule.put("notification_type", new JSONObject("{\"id\": 2,\"type\":\"rabbitmq\"}"));
+                                                logger.info("monitoringRule condition " + monitoringRule.getCondition());
 
-                                            prometheus_rule.put("condition", monitoringRule.getCondition() + "{resource_id=\"" + vc_id + "\"}" + monitoringRule.getThreshold());
+                                                prometheus_rule.put("condition", monitoringRule.getCondition() + "{resource_id=\"" + vc_id + "\"}" + monitoringRule.getThreshold());
 
-                                            prometheus_rules.put(prometheus_rule);
+                                                prometheus_rules.put(prometheus_rule);
+                                            }
                                         }
+
+                                        prometheus_vdu.put("rules", prometheus_rules);
+                                        prometheus_vdus.put(prometheus_vdu);
+
                                     }
 
-                                    prometheus_vdu.put("rules", prometheus_rules);
-                                    prometheus_vdus.put(prometheus_vdu);
-
                                 }
+                                prometheus_vnf.put("vdus", prometheus_vdus);
+                                prometheous_vnfs.put(prometheus_vnf);
 
                             }
-                            prometheus_vnf.put("vdus", prometheus_vdus);
-                            prometheous_vnfs.put(prometheus_vnf);
 
-                        }
+                            prometheous_rules.put("vnfs", prometheous_vnfs);
 
-                        prometheous_rules.put("vnfs", prometheous_vnfs);
+                            logger.info("prometheous_rules " + prometheous_rules);
 
-                        logger.info("prometheous_rules " + prometheous_rules);
+                            // Create PLC rules to son-monitor
+                            String monitoring_url = "http://" + monitoring_manager + "/api/v1/policymng/rules/service/" + nsr_id + "/configuration";
+                            logger.info("monitoring_manager " + monitoring_url);
+                            try {
+                                String monitoring_response = dopostcall(monitoring_url, prometheous_rules);
+                                logger.info("monitoring_response " + monitoring_response);
+                            } catch (IOException ex) {
+                                Logger.getLogger(DeployedNSListener.class.getName()).log(Level.SEVERE, null, ex);
+                            }
 
-                        // Create PLC rules to son-monitor
-                        String monitoring_url = "http://" + monitoring_manager + "/api/v1/policymng/rules/service/" + nsr_id + "/configuration";
-                        logger.info("monitoring_manager " + monitoring_url);
-                        try {
-                            String monitoring_response = dopostcall(monitoring_url, prometheous_rules);
-                            logger.info("monitoring_response " + monitoring_response);
-                        } catch (IOException ex) {
-                            Logger.getLogger(DeployedNSListener.class.getName()).log(Level.SEVERE, null, ex);
                         }
 
                     } else {

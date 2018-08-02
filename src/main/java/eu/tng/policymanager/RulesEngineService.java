@@ -225,10 +225,12 @@ public class RulesEngineService {
 
                         CorrelationData cd = new CorrelationData();
                         cd.setId(correlation_id);
-                        // template.convertAndSend(queue.getName(), elasticity_action_msg, cd);
-                        //template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg.toString(), cd);
 
-                        System.out.println(" [x] Sent to topic '" + elasticity_action_msg + "'");
+                        // template.convertAndSend(queue.getName(), elasticity_action_msg, cd);
+                        String elasticity_action_msg_as_yml = jsonToYaml(elasticity_action_msg);
+                        template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg_as_yml, cd);
+
+                        System.out.println(" [x] Sent to topic '" + elasticity_action_msg_as_yml + "'");
                     }
 
                 }
@@ -317,19 +319,25 @@ public class RulesEngineService {
         String factSessionName = "RulesEngineSession_gsg" + monitoringMessageTO.getGsgid();
         KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
 
-        logger.info("FactCount " + kieSession.getFactCount());
+        logger.info("FactCount " + kieSession.getFactCount() + " to session " + factSessionName);
 
         EntryPoint monitoringStream = kieSession.getEntryPoint("MonitoringStream");
 
         MonitoredComponent monitoredComponent = new MonitoredComponent(monitoringMessageTO.getNodeid(),
                 monitoringMessageTO.getMetricName(),
                 Double.valueOf(monitoringMessageTO.getMetricValue()),
-                monitoringMessageTO.getGsgid());
+                monitoringMessageTO.getGsgid(),
+                monitoringMessageTO.getNsrid(),
+                monitoringMessageTO.getVnf_id(),
+                monitoringMessageTO.getVnfd_id(),
+                monitoringMessageTO.getVim_id());
 
         System.out.println("Ιnsert monitoredComponent to session  " + monitoredComponent.toString());
         logger.info(monitoringStream.getEntryPointId() + "  -------  " + monitoringStream.getFactCount());
 
         monitoringStream.insert(monitoredComponent);
+
+        this.searchForGeneratedActions();
 
     }
 
@@ -504,25 +512,25 @@ public class RulesEngineService {
     /*
      Add a new knowledge base & session & corresponding rules so as to update kieModule
      */
-    public void addNewKnowledgebase(String gnsid, String policyname) {
+    public boolean addNewKnowledgebase(String gnsid, String policyname) {
 
         Collection<String> kiebases = kieContainer.getKieBaseNames();
         String factKnowledgebase = "GSGKnowledgeBase_gsg" + gnsid;
 
         if ("null".equals(policyname) || policyname == null) {
             logger.log(java.util.logging.Level.WARNING, "Grounded Service graph is deploed with none policy assigned");
-            return;
+            return true;
         }
 
         if (kiebases.contains(factKnowledgebase)) {
             logger.log(java.util.logging.Level.WARNING, "Knowledge base {0} already added", factKnowledgebase);
             //updateToVersion();
-            return;
+            return true;
         }
         File f = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
         if (!f.exists() && !f.isDirectory()) {
             logger.log(java.util.logging.Level.WARNING, "Policy with name {0} does not exist at Catalogues", policyname);
-            return;
+            return false;
         }
 
         String knowledgebasename = "gsg" + gnsid;
@@ -560,6 +568,8 @@ public class RulesEngineService {
 
         KieSession kieSession = kieContainer.newKieSession(factSessionName);
         kieUtil.fireKieSession(kieSession, factSessionName);
+
+        return true;
 
     }
 
@@ -764,7 +774,7 @@ public class RulesEngineService {
         Map<String, Object> map = (Map<String, Object>) yaml.load(prettyJSONString);
         // convert to yaml string (yaml formatted string)
         String output = yaml.dump(map);
-        //logger.info(output);
+        logger.info(output);
         return output;
     }
 

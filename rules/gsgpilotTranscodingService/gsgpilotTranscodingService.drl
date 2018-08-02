@@ -17,6 +17,14 @@ declare  LogMetric
 end
 
 
+rule "scaleOutAlert"
+when
+    $m0 := MonitoredComponent( name== "squid-vnf" && metric== "cpu_util" ) from entry-point "MonitoringStream" 
+then
+     insertLogical( new ElasticityAction($m0.getNsrid(),"squid-vnf",ScalingType.addvnf,"1",Status.not_send));
+     System.out.println("Hellooooooooooooooooooooo");
+end
+
 rule "actionUponAlert"
 when
     LogMetric(vnf_name=="vnf1" && value== "mon_rule_vm_cpu_perc" )
@@ -68,5 +76,17 @@ when
  $m2.setVnfd_id($m1.getVnfd_id());
  $m2.setVim_id($m1.getVim_id());
  update($m2);
+end
+
+rule "ElasticityRuleHelperTest"
+when
+   
+ $m1 := MonitoredComponent(vnfd_id !=null) from entry-point "MonitoringStream" 
+ $m2 := ElasticityAction (vnf_name==$m1.name)
+ then
+ $m2.setVnfd_id($m1.getVnfd_id());
+ $m2.setVim_id($m1.getVim_id());
+ update($m2);
+ System.out.println("Hello agaiiiiiin");
 end
 

@@ -21,7 +21,7 @@ ENV MONGO_DB son-mongo
 
 ENV HOST_BROKER son-broker
 ENV CATALOGUE tng-cat:4011
-ENV MONITORING_MANAGER son-monitor-manager
+ENV MONITORING_MANAGER son-monitor-manager:8000
 ENV REPO tng-rep:4012
 
 
