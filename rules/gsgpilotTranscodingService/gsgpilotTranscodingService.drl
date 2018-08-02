@@ -16,6 +16,12 @@ declare  LogMetric
 
 end
 
+declare  ElasticityAction 
+    @expires( 2m )
+    @role( event )
+
+end
+
 
 rule "scaleOutAlert"
 when
