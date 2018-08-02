@@ -33,18 +33,15 @@
  */
 package eu.tng.policymanager.Messaging;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import eu.tng.policymanager.RulesEngineApp;
 import eu.tng.policymanager.RulesEngineService;
-import static eu.tng.policymanager.config.DroolsConfig.POLICY_DESCRIPTORS_PACKAGE;
 import eu.tng.policymanager.repository.MonitoringRule;
 import eu.tng.policymanager.repository.PolicyYamlFile;
 import eu.tng.policymanager.repository.dao.RuntimePolicyRecordRepository;
 import eu.tng.policymanager.repository.dao.RuntimePolicyRepository;
 import eu.tng.policymanager.repository.domain.RuntimePolicy;
 import eu.tng.policymanager.repository.domain.RuntimePolicyRecord;
-import java.io.File;
+import eu.tng.policymanager.rules.generation.Util;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -62,6 +59,12 @@ import org.json.JSONObject;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
 @Component
 public class DeployedNSListener {
@@ -80,8 +83,10 @@ public class DeployedNSListener {
     @Value("${monitoring.manager}")
     private String monitoring_manager;
 
-    private static final String current_dir = System.getProperty("user.dir");
+    @Value("${tng.cat.policies}")
+    private String policies_url;
 
+    //private static final String current_dir = System.getProperty("user.dir");
     @RabbitListener(queues = RulesEngineApp.NS_INSTATIATION_QUEUE)
     public void deployedNSMessageReceived(byte[] message) {
 
@@ -90,7 +95,30 @@ public class DeployedNSListener {
         String deployedNSasYaml = new String(message, StandardCharsets.UTF_8);
         //String deployedNSasYaml = message;
 
-        String jsonobject = convertYamlToJson(deployedNSasYaml);
+        enforceRuntimePolicy(deployedNSasYaml);
+
+    }
+
+    private String dopostcall(String url, JSONObject prometheous_rules) throws IOException {
+
+        OkHttpClient client = new OkHttpClient();
+
+        MediaType mediaType = MediaType.parse("application/json");
+        RequestBody body = RequestBody.create(mediaType, prometheous_rules.toString());
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .addHeader("content-type", "application/json")
+                .build();
+
+        Response response = client.newCall(request).execute();
+
+        return response.body().string() + " with message " + response.message();
+    }
+
+    private void enforceRuntimePolicy(String deployedNSasYaml) {
+
+        String jsonobject = Util.convertYamlToJson(deployedNSasYaml);
         JSONObject newDeployedGraph = new JSONObject(jsonobject);
 
         if (newDeployedGraph.has("status")) {
@@ -130,23 +158,47 @@ public class DeployedNSListener {
                     }
 
                     if (runtimepolicy != null && runtimepolicy.isPresent()) {
+
+                        String runtimepolicy_id = runtimepolicy.get().getPolicyid();
+
+                        //1. Fech yml file from catalogues
+                        RestTemplate restTemplate = new RestTemplate();
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+                        HttpEntity<String> entity = new HttpEntity<>(headers);
+                        ResponseEntity<String> response;
+                        try {
+                            response = restTemplate.exchange(policies_url + "/" + runtimepolicy_id, HttpMethod.GET, entity, String.class);
+                        } catch (HttpClientErrorException e) {
+                            logger.warning("{\"error\": \"The PLD ID " + runtimepolicy_id + " does not exist at catalogues. Message : "
+                                    + e.getMessage() + "\"}");
+                            return;
+                        }
+
+                        //File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + runtimepolicy.get().getPolicyid() + ".yml");
+                        //logger.info("get file from - " + current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + runtimepolicy.get().getPolicyid() + ".yml");
+                        
+                        JSONObject policydescriptorRaw = new JSONObject(response.getBody());
+                        logger.info("responsee22222222222222"+policydescriptorRaw.toString());
+                        
+                        JSONObject pld = policydescriptorRaw.getJSONObject("pld");
+
+                        String policyAsYaml = Util.jsonToYaml(pld);
+
                         logger.log(Level.INFO, "Activate policy for NSR {0}", nsr_id);
-                        boolean is_enforcement_succesfull = rulesEngineService.addNewKnowledgebase("s" + nsr_id.replaceAll("-", ""), runtimepolicy.get().getPolicyid());
+                        boolean is_enforcement_succesfull = rulesEngineService.addNewKnowledgebase("s" + nsr_id.replaceAll("-", ""), runtimepolicy.get().getPolicyid(), policyAsYaml);
 
                         if (is_enforcement_succesfull) {
 
+                            //submit monitoring-rules to son-broker
+                            //fecth monitoring rules from policy
                             // update dbpolicy mongo repo
                             RuntimePolicyRecord policyrecord = new RuntimePolicyRecord();
                             policyrecord.setNsrid(nsr_id);
-                            policyrecord.setPolicyid(runtimepolicy.get().getPolicyid());
+                            policyrecord.setPolicyid(runtimepolicy_id);
                             runtimePolicyRecordRepository.save(policyrecord);
 
-                        //submit monitoring-rules to son-broker
-                            //fecth monitoring rules from policy
-                            //1. Fech yml file
-                            File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + runtimepolicy.get().getPolicyid() + ".yml");
-                            logger.info("get file from - " + current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + runtimepolicy.get().getPolicyid() + ".yml");
-                            PolicyYamlFile policyyml = PolicyYamlFile.readYaml(policydescriptor);
+                            PolicyYamlFile policyyml = PolicyYamlFile.readYaml(Util.jsonToYaml(pld));
 
                             //2. create hashmap with monitoring rules
                             List<MonitoringRule> monitoringRules = policyyml.getMonitoring_rules();
@@ -266,36 +318,6 @@ public class DeployedNSListener {
             }
 
         }
-
     }
 
-    private String dopostcall(String url, JSONObject prometheous_rules) throws IOException {
-
-        OkHttpClient client = new OkHttpClient();
-
-        MediaType mediaType = MediaType.parse("application/json");
-        RequestBody body = RequestBody.create(mediaType, prometheous_rules.toString());
-        Request request = new Request.Builder()
-                .url(url)
-                .post(body)
-                .addHeader("content-type", "application/json")
-                .build();
-
-        Response response = client.newCall(request).execute();
-
-        return response.body().string() + " with message " + response.message();
-    }
-
-    String convertYamlToJson(String yaml) {
-        try {
-            ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
-            Object obj = yamlReader.readValue(yaml, Object.class);
-
-            ObjectMapper jsonWriter = new ObjectMapper();
-            return jsonWriter.writeValueAsString(obj);
-        } catch (IOException ex) {
-            Logger.getLogger(DeployedNSListener.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return "";
-    }
 }

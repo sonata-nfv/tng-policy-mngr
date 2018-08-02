@@ -52,6 +52,7 @@ import eu.tng.policymanager.repository.RuleCondition;
 import eu.tng.policymanager.repository.dao.RecommendedActionRepository;
 import eu.tng.policymanager.repository.domain.RecommendedAction;
 import eu.tng.policymanager.rules.generation.RepositoryUtil;
+import eu.tng.policymanager.rules.generation.Util;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
 import java.io.File;
 import java.io.FileInputStream;
@@ -227,7 +228,7 @@ public class RulesEngineService {
                         cd.setId(correlation_id);
 
                         // template.convertAndSend(queue.getName(), elasticity_action_msg, cd);
-                        String elasticity_action_msg_as_yml = jsonToYaml(elasticity_action_msg);
+                        String elasticity_action_msg_as_yml = Util.jsonToYaml(elasticity_action_msg);
                         template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg_as_yml, cd);
 
                         System.out.println(" [x] Sent to topic '" + elasticity_action_msg_as_yml + "'");
@@ -512,7 +513,7 @@ public class RulesEngineService {
     /*
      Add a new knowledge base & session & corresponding rules so as to update kieModule
      */
-    public boolean addNewKnowledgebase(String gnsid, String policyname) {
+    public boolean addNewKnowledgebase(String gnsid, String policyname, String policyfile) {
 
         Collection<String> kiebases = kieContainer.getKieBaseNames();
         String factKnowledgebase = "GSGKnowledgeBase_gsg" + gnsid;
@@ -527,11 +528,11 @@ public class RulesEngineService {
             //updateToVersion();
             return true;
         }
-        File f = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
-        if (!f.exists() && !f.isDirectory()) {
-            logger.log(java.util.logging.Level.WARNING, "Policy with name {0} does not exist at Catalogues", policyname);
-            return false;
-        }
+//        File f = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
+//        if (!f.exists() && !f.isDirectory()) {
+//            logger.log(java.util.logging.Level.WARNING, "Policy with name {0} does not exist at Catalogues", policyname);
+//            return false;
+//        }
 
         String knowledgebasename = "gsg" + gnsid;
 
@@ -555,7 +556,7 @@ public class RulesEngineService {
         kieFileSystem.writeKModuleXML(kieModuleModel.toXML());
         logger.log(java.util.logging.Level.INFO, "kieModuleModel--ToXML\n{0}", kieModuleModel.toXML());
 
-        addPolicyRules(gnsid, policyname);
+        addPolicyRules(gnsid, policyname, policyfile);
 
         kieBuilder.buildAll();
 
@@ -573,13 +574,15 @@ public class RulesEngineService {
 
     }
 
-    private static String createPolicyRules(String nsrid, String policyname) {
+    private static String createPolicyRules(String nsrid, String policyname,String policyfile) {
 
         //TODO convert yml to drools
         //1. Fech yml file
-        File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
-        logger.info("get file from - " + current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
-        PolicyYamlFile policyyml = PolicyYamlFile.readYaml(policydescriptor);
+        //File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
+        //logger.info("get file from - " + current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
+        //PolicyYamlFile policyyml = PolicyYamlFile.readYamlFile(policydescriptor);
+        
+        PolicyYamlFile policyyml = PolicyYamlFile.readYaml(policyfile);
 
         //logger.info("get mi first policy rule name" + policyyml.getPolicyRules().get(0).getName());
         List<PolicyRule> policyrules = policyyml.getPolicyRules();
@@ -656,9 +659,9 @@ public class RulesEngineService {
 
     }
 
-    public void addPolicyRules(String gnsid, String policyname) {
+    public void addPolicyRules(String gnsid, String policyname, String policyfile) {
 
-        String created_rules = createPolicyRules(gnsid, policyname);
+        String created_rules = createPolicyRules(gnsid, policyname, policyfile);
         try {
             String knowledgebasename = "gsg" + gnsid;
 
@@ -687,7 +690,7 @@ public class RulesEngineService {
 
             drlPath4deployment = "/descriptors/" + policyname + ".yml";
             out = new FileOutputStream(current_dir + "/" + drlPath4deployment);
-            out.write(jsonToYaml(runtimedescriptor).getBytes());
+            out.write(Util.jsonToYaml(runtimedescriptor).getBytes());
             out.close();
 
         } catch (FileNotFoundException ex) {
@@ -765,17 +768,6 @@ public class RulesEngineService {
 
     }
 
-    private String jsonToYaml(JSONObject jsonobject) {
-        Yaml yaml = new Yaml();
 
-        // get json string
-        String prettyJSONString = jsonobject.toString(4);
-        // mapping
-        Map<String, Object> map = (Map<String, Object>) yaml.load(prettyJSONString);
-        // convert to yaml string (yaml formatted string)
-        String output = yaml.dump(map);
-        //logger.info(output);
-        return output;
-    }
 
 }//EoC

@@ -196,14 +196,14 @@ public class RulesEngineController {
                 log.info("Fetch ns_uuid for current policy");
 
                 JSONObject network_service = policy_descriptor.getJSONObject("pld").getJSONObject("network_service");
-                
+
                 String services_url_complete = services_url
                         + "?name=" + network_service.getString("name")
                         + "&version=" + network_service.getString("version")
                         + "&vendor=" + network_service.getString("vendor");
 
                 ResponseEntity<String> response1 = restTemplate.exchange(services_url_complete, HttpMethod.GET, entity, String.class);
-                
+
                 log.info("invoke the " + services_url_complete);
 
                 JSONArray network_services = new JSONArray(response1.getBody());
@@ -328,9 +328,18 @@ public class RulesEngineController {
         if (tobject.getNsid() != null) {
             rp.setNsid(tobject.getNsid());
         }
-        runtimePolicyRepository.save(rp);
 
-        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_METADATA_UPDATED, runtimepolicy);
+        Optional<RuntimePolicy> existing_runtimepolicy = runtimePolicyRepository.findBySlaidAndNsid(tobject.getSlaid(), tobject.getNsid());
+        PolicyRestResponse response;
+        if (existing_runtimepolicy.isPresent()) {
+            response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ALREADY_BINDED, "");
+            log.info(Message.POLICY_ALREADY_BINDED);
+        } else {
+            runtimePolicyRepository.save(rp);
+            response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_METADATA_UPDATED, runtimepolicy);
+            log.info(Message.POLICY_METADATA_UPDATED);
+        }
+
         return buildResponseEntity(response);
     }
 
@@ -441,6 +450,7 @@ public class RulesEngineController {
         final static String POLICY_DELETED_FORBIDEN = "Policy can not be deleted because is enforced";
         final static String POLICY_DELETION = "Policy failed to be deleted at catalogues";
         final static String POLICY_METADATA_UPDATED = "Policy metadata are sucesfully updated";
+        final static String POLICY_ALREADY_BINDED = "Already exists a policy binded with the requested sla and nsid";
         final static String POLICY_DEFAULT = "Policy is set as default";
         final static String POLICY_NOT_EXISTS = "Policy does not exist";
         final static String POLICY_UPDATED = "Policy is succesfully updated";
