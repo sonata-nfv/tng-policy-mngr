@@ -338,8 +338,6 @@ public class RulesEngineService {
 
         monitoringStream.insert(monitoredComponent);
 
-        this.searchForGeneratedActions();
-
     }
 
     public void createLogFact(LogMetric logMetric) {

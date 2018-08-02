@@ -63,6 +63,7 @@ import org.springframework.amqp.support.converter.SimpleMessageConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * The main class, which Spring Boot uses to bootstrap the application.
@@ -81,7 +82,7 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @Import({DroolsConfig.class})
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
 @EnableMongoRepositories("eu.tng.policymanager.repository.dao")
-//@EnableScheduling
+@EnableScheduling
 //@SpringBootApplication
 //@EnableJms
 public class RulesEngineApp {
