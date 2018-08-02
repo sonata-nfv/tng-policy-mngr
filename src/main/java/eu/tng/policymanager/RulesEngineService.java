@@ -225,10 +225,12 @@ public class RulesEngineService {
 
                         CorrelationData cd = new CorrelationData();
                         cd.setId(correlation_id);
-                        // template.convertAndSend(queue.getName(), elasticity_action_msg, cd);
-                        template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg.toString(), cd);
 
-                        System.out.println(" [x] Sent to topic '" + elasticity_action_msg + "'");
+                        // template.convertAndSend(queue.getName(), elasticity_action_msg, cd);
+                        String elasticity_action_msg_as_yml = jsonToYaml(elasticity_action_msg);
+                        template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg_as_yml, cd);
+
+                        System.out.println(" [x] Sent to topic '" + elasticity_action_msg_as_yml + "'");
                     }
 
                 }
@@ -317,7 +319,7 @@ public class RulesEngineService {
         String factSessionName = "RulesEngineSession_gsg" + monitoringMessageTO.getGsgid();
         KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
 
-        logger.info("FactCount " + kieSession.getFactCount() +" to session "+ factSessionName);
+        logger.info("FactCount " + kieSession.getFactCount() + " to session " + factSessionName);
 
         EntryPoint monitoringStream = kieSession.getEntryPoint("MonitoringStream");
 
@@ -325,13 +327,16 @@ public class RulesEngineService {
                 monitoringMessageTO.getMetricName(),
                 Double.valueOf(monitoringMessageTO.getMetricValue()),
                 monitoringMessageTO.getGsgid(),
-                monitoringMessageTO.getNsrid());
+                monitoringMessageTO.getNsrid(),
+                monitoringMessageTO.getVnf_id(),
+                monitoringMessageTO.getVnfd_id(),
+                monitoringMessageTO.getVim_id());
 
         System.out.println("Ιnsert monitoredComponent to session  " + monitoredComponent.toString());
         logger.info(monitoringStream.getEntryPointId() + "  -------  " + monitoringStream.getFactCount());
 
         monitoringStream.insert(monitoredComponent);
-        
+
         this.searchForGeneratedActions();
 
     }
@@ -769,7 +774,7 @@ public class RulesEngineService {
         Map<String, Object> map = (Map<String, Object>) yaml.load(prettyJSONString);
         // convert to yaml string (yaml formatted string)
         String output = yaml.dump(map);
-        //logger.info(output);
+        logger.info(output);
         return output;
     }
 

@@ -78,3 +78,15 @@ when
  update($m2);
 end
 
+rule "ElasticityRuleHelperTest"
+when
+   
+ $m1 := MonitoredComponent(vnfd_id !=null) from entry-point "MonitoringStream" 
+ $m2 := ElasticityAction (vnf_name==$m1.name)
+ then
+ $m2.setVnfd_id($m1.getVnfd_id());
+ $m2.setVim_id($m1.getVim_id());
+ update($m2);
+ System.out.println("Hello agaiiiiiin");
+end
+

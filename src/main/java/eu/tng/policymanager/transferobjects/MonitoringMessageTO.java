@@ -34,6 +34,9 @@ public class MonitoringMessageTO implements Serializable {
     private String gsgid;
 
     private String nsrid;
+    private String vnf_id;
+    private String vnfd_id;
+    private String vim_id;
 
     //Grounded Component ID (id of neo4j entity)
     private Long gcid;
@@ -154,7 +157,30 @@ public class MonitoringMessageTO implements Serializable {
     public void setNsrid(String nsrid) {
         this.nsrid = nsrid;
     }
-    
+
+    public String getVnf_id() {
+        return vnf_id;
+    }
+
+    public void setVnf_id(String vnf_id) {
+        this.vnf_id = vnf_id;
+    }
+
+    public String getVnfd_id() {
+        return vnfd_id;
+    }
+
+    public void setVnfd_id(String vnfd_id) {
+        this.vnfd_id = vnfd_id;
+    }
+
+    public String getVim_id() {
+        return vim_id;
+    }
+
+    public void setVim_id(String vim_id) {
+        this.vim_id = vim_id;
+    }
 
     @Override
     public String toString() {
@@ -166,6 +192,9 @@ public class MonitoringMessageTO implements Serializable {
                 + ", unixtimestamp=" + unixtimestamp
                 + ", gsgid='" + gsgid + '\''
                 + ", nsrid='" + nsrid + '\''
+                + ", vnf_id='" + vnf_id + '\''
+                + ", vnfd_id='" + vnfd_id + '\''
+                + ", vim_id='" + vim_id + '\''
                 + ", gcid=" + gcid
                 + ", cnid='" + cnid + '\''
                 + ", privateIP='" + privateIP + '\''
