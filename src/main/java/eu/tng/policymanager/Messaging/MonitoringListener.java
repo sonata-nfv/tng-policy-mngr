@@ -36,6 +36,7 @@ package eu.tng.policymanager.Messaging;
 import eu.tng.policymanager.RulesEngineService;
 import eu.tng.policymanager.facts.LogMetric;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.logging.Level;
 
@@ -64,20 +65,24 @@ public class MonitoringListener {
     @Value("${tng.rep}")
     private String tng_rep;
 
-    public void monitoringAlertReceived(LinkedHashMap message) {
+    public void monitoringAlertReceived(byte[] message) {
 
         logger.log(Level.INFO, "A new monitoring alert has been received");
+        String messageasstring = new String(message, StandardCharsets.UTF_8);
+
         try {
 
-            logger.log(Level.INFO, "monitoring alert   is like this " + message.toString());
-            logger.log(Level.INFO, "alert name: " + message.get("alertname"));
+            //logger.log(Level.INFO, "alert name: " + message.get("alertname"));
+            JSONObject monitoring_message = new JSONObject(messageasstring);
+
+            logger.log(Level.INFO, "monitoring alert   is like this " + monitoring_message);
 
             //Consumption of alerts from son-broker
-            if (message.containsKey("alertname")) {
+            if (monitoring_message.has("alertname")) {
 
-                String gnsid = message.get("serviceID").toString();
-                String alertname = message.get("alertname").toString();
-                String vnfr_id = message.get("functionID").toString();
+                String gnsid = monitoring_message.getString("serviceID");
+                String alertname = monitoring_message.getString("alertname");
+                String vnfr_id = monitoring_message.getString("functionID");
 
                 //get info from tng-rep
                 String repo_url = "http://" + tng_rep + "/vnfrs/" + vnfr_id;
