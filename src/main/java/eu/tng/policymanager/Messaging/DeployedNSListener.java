@@ -182,7 +182,7 @@ public class DeployedNSListener {
                         //File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + runtimepolicy.get().getPolicyid() + ".yml");
                         //logger.info("get file from - " + current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + runtimepolicy.get().getPolicyid() + ".yml");
                         JSONObject policydescriptorRaw = new JSONObject(response.getBody());
-                        logger.info("responsee22222222222222" + policydescriptorRaw.toString());
+                        logger.info("response" + policydescriptorRaw.toString());
 
                         JSONObject pld = policydescriptorRaw.getJSONObject("pld");
 
@@ -270,7 +270,7 @@ public class DeployedNSListener {
 
                                                 prometheus_rule.put("name", monitoringRule.getName().replace(":", "_").replace("-", "_"));
 
-                                                logger.info("rule nameeeeeeeeeeeee-->" + monitoringRule.getName().replace(":", "_").replace("-", "_"));
+                                                logger.info("rule name-->" + monitoringRule.getName().replace(":", "_").replace("-", "_"));
 
                                                 prometheus_rule.put("duration", monitoringRule.getDuration() + monitoringRule.getDuration_unit());
                                                 prometheus_rule.put("description", monitoringRule.getDescription());
