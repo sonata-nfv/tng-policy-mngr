@@ -23,7 +23,17 @@ declare  ElasticityAction
 end
 
 
+
 rule "scaleOutAlert"
+when
+    LogMetric(vnf_name=="vnf1" && value== "mon_rule_vm_cpu_perc" ) from entry-point "MonitoringStream" 
+then
+    insertLogical( new ElasticityAction("s438920483","squid-vnf",ScalingType.addvnf,"1",Status.not_send));
+    System.out.println("insert test elasticity action");
+end
+
+
+rule "scaleOutAlertOld"
 when
     $m0 := MonitoredComponent( name== "squid-vnf" && metric== "cpu_util" ) from entry-point "MonitoringStream" 
 then
@@ -31,13 +41,6 @@ then
      System.out.println("insert test elasticity action");
 end
 
-rule "actionUponAlert"
-when
-    LogMetric(vnf_name=="vnf1" && value== "mon_rule_vm_cpu_perc" )
-then
-    insertLogical( new ComponentResourceAllocationAction("pilotTranscodingService","vnf1",InfrastructureType.ApplyFlavour,"3",Status.not_send)); 
-
-end
 
 rule "highTranscodingRateRule"
 when

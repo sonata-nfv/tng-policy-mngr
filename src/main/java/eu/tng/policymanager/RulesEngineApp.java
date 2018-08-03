@@ -90,7 +90,7 @@ public class RulesEngineApp {
     private static Logger log = LoggerFactory.getLogger(RulesEngineApp.class);
 
     public static final String RUNTIME_ACTIONS_QUEUE = "service.instance.scale";
-    public final static String monitoringqueue = "son.monitoring.policy";
+    public final static String MONITORING_QUEUE = "son.monitoring.PLC";
 
     public final static String NS_INSTATIATION_QUEUE = "policies.service.instances.create";
     public final static String NS_INSTATIATION_TOPIC = "service.instances.create";
@@ -154,7 +154,7 @@ public class RulesEngineApp {
 
     @Bean
     public Queue monitoringAlerts() {
-        return new Queue("son.monitoring.policy", false);
+        return new Queue(MONITORING_QUEUE, false);
     }
 
     @Bean

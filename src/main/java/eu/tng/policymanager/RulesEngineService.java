@@ -241,25 +241,6 @@ public class RulesEngineService {
 
     }
 
-    public void lala() {
-        CorrelationData cd = new CorrelationData();
-        cd.setId("232939289320838");
-        JSONObject elasticity_action_msg = new JSONObject();
-        elasticity_action_msg.put("vnf_name", "ddd");
-        elasticity_action_msg.put("vnfd_id", "ddd");
-        elasticity_action_msg.put("scaling_type", ScalingType.addvnf);
-        elasticity_action_msg.put("service_instance_id", "ddd");
-        elasticity_action_msg.put("value", 22);
-//        //template.convertAndSend(queue.getName(),"test", cd);
-//
-//        String correlationId = "corr-data-test-1";
-        Message message = MessageBuilder.withBody("valid message".getBytes()).build();
-
-        //template.convertAndSend(exchange.getName(), queue.getName(), message, new CorrelationData(correlationId));
-        Gson gson = new Gson();
-        //template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg.toString(), cd);
-
-    }
 
     /*
      Add a new knowledge base & session & corresponding rules so as to update kieModule
@@ -359,9 +340,10 @@ public class RulesEngineService {
         //kieSession.insert(logMetric);
         EntryPoint monitoringStream = kieSession.getEntryPoint("MonitoringStream");
 
-        logger.info(monitoringStream.getEntryPointId() + "  -------  " + monitoringStream.getFactCount());
+        logger.info("monitoringStream entrypoint " + monitoringStream.getEntryPointId());
 
         monitoringStream.insert(logMetric);
+        logger.info("monitoringStream fact count " + monitoringStream.getFactCount());
 
     }
 
@@ -572,14 +554,13 @@ public class RulesEngineService {
 
     }
 
-    private static String createPolicyRules(String nsrid, String policyname,String policyfile) {
+    private static String createPolicyRules(String nsrid, String policyname, String policyfile) {
 
         //TODO convert yml to drools
         //1. Fech yml file
         //File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
         //logger.info("get file from - " + current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
         //PolicyYamlFile policyyml = PolicyYamlFile.readYamlFile(policydescriptor);
-        
         PolicyYamlFile policyyml = PolicyYamlFile.readYaml(policyfile);
 
         //logger.info("get mi first policy rule name" + policyyml.getPolicyRules().get(0).getName());
@@ -765,7 +746,5 @@ public class RulesEngineService {
         }
 
     }
-
-
 
 }//EoC

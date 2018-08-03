@@ -34,6 +34,7 @@
 package eu.tng.policymanager;
 
 import com.google.gson.Gson;
+import eu.tng.policymanager.facts.LogMetric;
 import eu.tng.policymanager.repository.dao.PlacementPolicyRepository;
 import eu.tng.policymanager.repository.dao.RecommendedActionRepository;
 import eu.tng.policymanager.repository.dao.RuntimePolicyRecordRepository;
@@ -44,6 +45,7 @@ import eu.tng.policymanager.repository.domain.RuntimePolicy;
 import eu.tng.policymanager.repository.domain.RuntimePolicyRecord;
 import eu.tng.policymanager.response.BasicResponseCode;
 import eu.tng.policymanager.response.PolicyRestResponse;
+import eu.tng.policymanager.rules.generation.Util;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
 import java.util.Date;
 import java.util.List;
@@ -53,7 +55,12 @@ import org.json.JSONObject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -100,9 +107,61 @@ public class RulesEngineController {
     @Autowired
     RecommendedActionRepository recommendedActionRepository;
 
-    @RequestMapping(value = "/newMonitoringMessage", method = RequestMethod.POST)
-    public boolean newMonitoringMessage(@RequestBody MonitoringMessageTO tobject) {
-        rulesEngineService.createFact(tobject);
+    @Autowired
+    private RabbitTemplate template;
+
+    @Qualifier("runtimeActionsQueue")
+    @Autowired
+    private Queue queue;
+
+    @Autowired
+    private TopicExchange exchange;
+
+//    @RequestMapping(value = "/newMonitoringMessage", method = RequestMethod.POST)
+//    public boolean newMonitoringMessage(@RequestBody MonitoringMessageTO tobject) {
+//        rulesEngineService.createFact(tobject);
+//        return true;
+//    }
+
+     //usefull for testing drools
+    @RequestMapping(value = "/newLogMetric", method = RequestMethod.GET)
+    public boolean newMonitoringMessage() {
+        //test log metric expiration
+        LogMetric logMetric1 = new LogMetric("pilotTranscodingService", "vnf1", "mon_rule_vm_cpu_perc", "123", "456");
+        log.info("create log fact " + logMetric1.toString());
+        rulesEngineService.createLogFact(logMetric1);
+        //end of test
+        return true;
+    }
+
+    //usefull for testing scale out action
+    @RequestMapping(value = "/scale_out", method = RequestMethod.POST)
+    public boolean generateScaleoutAction(@RequestBody String tobject) {
+        JSONObject request = new JSONObject(tobject);
+
+        JSONObject elasticity_action_msg = new JSONObject();
+        elasticity_action_msg.put("vnf_name", request.getString("vnf_name"));
+        elasticity_action_msg.put("vnfd_id", request.getString("vnfd_id"));
+        elasticity_action_msg.put("scaling_type", request.getString("scaling_type"));
+        elasticity_action_msg.put("service_instance_id", request.getString("service_instance_id"));
+        //elasticity_action_msg.put("correlation_id", correlation_id);
+        elasticity_action_msg.put("value", request.getString("value"));
+        JSONArray constraints = new JSONArray();
+        JSONObject constraint = new JSONObject();
+        constraint.put("vim_id", request.getString("vim_id"));
+        constraints.put(constraint);
+
+        elasticity_action_msg.put("constraints", constraints);
+        CorrelationData cd = new CorrelationData();
+
+        String correlation_id = request.getString("correlation_id");
+        cd.setId(correlation_id);
+
+        // template.convertAndSend(queue.getName(), elasticity_action_msg, cd);
+        String elasticity_action_msg_as_yml = Util.jsonToYaml(elasticity_action_msg);
+        template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg_as_yml, cd);
+
+        System.out.println(" [x] Sent mock action to topic '" + elasticity_action_msg_as_yml + "'");
         return true;
     }
 
@@ -223,13 +282,6 @@ public class RulesEngineController {
 
         return "{\"warning\": \"The PLD ID " + policy_uuid + " does not exist at catalogues.\"}";
 
-    }
-
-    @RequestMapping(value = "/lala", method = RequestMethod.GET)
-    public String lala() {
-
-        rulesEngineService.lala();
-        return "lala";
     }
 
     //Update a Policy -TO BE CHECKED
