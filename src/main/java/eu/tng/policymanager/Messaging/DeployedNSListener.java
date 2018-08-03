@@ -95,7 +95,11 @@ public class DeployedNSListener {
         String deployedNSasYaml = new String(message, StandardCharsets.UTF_8);
         //String deployedNSasYaml = message;
 
-        enforceRuntimePolicy(deployedNSasYaml);
+        try {
+            enforceRuntimePolicy(deployedNSasYaml);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Exception message {0}", e.getMessage());
+        }
 
     }
 
@@ -177,10 +181,9 @@ public class DeployedNSListener {
 
                         //File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + runtimepolicy.get().getPolicyid() + ".yml");
                         //logger.info("get file from - " + current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + runtimepolicy.get().getPolicyid() + ".yml");
-                        
                         JSONObject policydescriptorRaw = new JSONObject(response.getBody());
-                        logger.info("responsee22222222222222"+policydescriptorRaw.toString());
-                        
+                        logger.info("responsee22222222222222" + policydescriptorRaw.toString());
+
                         JSONObject pld = policydescriptorRaw.getJSONObject("pld");
 
                         String policyAsYaml = Util.jsonToYaml(pld);
