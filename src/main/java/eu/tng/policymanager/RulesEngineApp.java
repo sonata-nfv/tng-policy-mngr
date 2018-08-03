@@ -167,7 +167,7 @@ public class RulesEngineApp {
     @Bean
     MessageListenerAdapter listenerAdapter2(MonitoringListener receiver) {
         MessageListenerAdapter msgadapter = new MessageListenerAdapter(receiver, "monitoringAlertReceived");
-        msgadapter.setMessageConverter(jackson2JsonMessageConverter());
+        //msgadapter.setMessageConverter(jackson2JsonMessageConverter());
         return msgadapter;
     }
 
