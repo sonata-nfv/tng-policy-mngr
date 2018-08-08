@@ -269,7 +269,7 @@ public class RulesEngineController {
                 //fetch ns_uuid
                 log.info("Fetch ns_uuid for current policy");
                 
-                JSONObject network_service = policy_descriptor.getJSONObject("pld").getJSONObject("network_service");
+                JSONObject network_service = policy_descriptor.getJSONObject("pld");
                 
                 String services_url_complete = services_url
                         + "?name=" + network_service.getString("name")
