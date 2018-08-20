@@ -50,6 +50,7 @@ docker-compose up --build -d
 ```
 
 Sample runtime policy descriptors can be found at [policy descriptor examples](https://github.com/sonata-nfv/tng-schema/tree/master/policy-descriptor/examples) based at [policy descriptor schema](https://github.com/sonata-nfv/tng-schema/blob/master/policy-descriptor/policy-schema.yml). Policy rules defined at policy descriptors are translated at drool rules. Following can be seen a drool rule example:
+
 ```
 rule "highTranscodingRateRule"
 when
@@ -81,7 +82,6 @@ The following lead developers are responsible for this repository and have admin
 
 - Eleni Fotopoulou ([@elfo](https://github.com/efotopoulou))
 - Anastasios Zafeiropoulos ([@tzafeir ](https://github.com/azafeiropoulos))
-
 
 #### Feedback-Chanel
 
