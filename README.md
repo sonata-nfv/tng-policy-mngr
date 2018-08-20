@@ -6,6 +6,7 @@ Policies in 5GTANGO are considering deployment and operational aspects of networ
 
 
 Following table shows the API endpoints of the Policy Manager.
+tng-policy-mngr supports its own swagger endpoint at http://<ip_adress>/swagger-ui.html
 
 | Action | HTTP Method | Endpoint |
 | --------------- | ------- | -------------------------------------------- |
@@ -31,6 +32,13 @@ To contribute to the development of this 5GTANGO component, you may use the very
 * Sonata Service Platform local installation (recommended) or vpn connection to SP environment* 
 * Docker >= 1.13
 * Docker compose version 3
+
+#####  Built With (Requirements)
+
+* [Java version 1.8](https://www.oracle.com/technetwork/java/javase/overview/java8-2100321.html) - The programming language used
+* [Maven](https://maven.apache.org/) - Dependency Management
+* [Drools version 7.7.0](https://www.drools.org/) - Business Rules Management System (BRMS) solution used so as to enforce policies
+* [Spring boot Framework 2.0.3 RELEASE](https://spring.io/projects/spring-boot) - Used application framework
 
 ##### Build and run tng-policy-mngr
 ```bash
