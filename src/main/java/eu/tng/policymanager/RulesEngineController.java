@@ -190,15 +190,18 @@ public class RulesEngineController {
         
         ResponseEntity<String> response = restTemplate.exchange(policies_url, HttpMethod.GET, entity, String.class);
 
-//        JSONArray policieslist = new JSONArray(response.getBody());
-//        
-//        for (int i = 0; i < policieslist.length(); i++) {
-//            
-//            JSONObject policy =policieslist.getJSONObject(i);
-//            this.getPolicy(policy.getString("uuid"));
-//            
-//        }
-        return response.getBody();
+        JSONArray policieslist = new JSONArray(response.getBody());
+        JSONArray policieslist_toreturn = new JSONArray();
+        
+        for (int i = 0; i < policieslist.length(); i++) {
+            
+            JSONObject policy =policieslist.getJSONObject(i);
+            String enriched_policy = this.getPolicy(policy.getString("uuid"));
+            policieslist_toreturn.put(new JSONObject(enriched_policy));
+            
+        }
+        //return response.getBody();
+        return policieslist_toreturn.toString();
     }
 
     //TODO: clean java headers!!!!!!!!!!!!!!!
