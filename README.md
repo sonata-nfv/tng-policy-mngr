@@ -34,7 +34,7 @@ To contribute to the development of this 5GTANGO component, you may use the very
 
 ### Setup development environment
 
-#####  Built With (Dependencies)
+####  Built With (Dependencies)
 
 * Sonata Service Platform local installation (recommended) or vpn connection to SP environment 
 * [Docker >= 1.13](https://www.docker.com/)
@@ -44,7 +44,7 @@ To contribute to the development of this 5GTANGO component, you may use the very
 * [Drools version 7.7.0](https://www.drools.org/) - Business Rules Management System (BRMS) solution used so as to enforce policies
 * [Spring boot Framework 2.0.3 RELEASE](https://spring.io/projects/spring-boot) - Used application framework
 
-##### Build and run tng-policy-mngr
+#### Build and run tng-policy-mngr
 ```bash
 docker-compose up --build -d
 ```
@@ -71,18 +71,17 @@ end
 
 All pull requests are automatically tested by Jenkins and will only be accepted if no test is broken.
 
-## License
+### License
 
 This 5GTANGO component is published under Apache 2.0 license. Please see the LICENSE file for more details.
 
----
-#### Lead Developers
+### Lead Developers
 
 The following lead developers are responsible for this repository and have admin rights. They can, for example, merge pull requests.
 
 - Eleni Fotopoulou ([@elfo](https://github.com/efotopoulou))
 - Anastasios Zafeiropoulos ([@tzafeir ](https://github.com/azafeiropoulos))
 
-#### Feedback-Chanel
+### Feedback-Chanel
 
 * Please use the GitHub issues to report bugs.

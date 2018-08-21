@@ -224,10 +224,6 @@ public class RulesEngineService {
                         elasticity_action_msg.put("constraints", constraints);
                         //template.convertAndSend(queue.getName(), elasticity_action_msg);
 
-//                        CorrelationData cd = new CorrelationData();
-//                        cd.setId(correlation_id);
-
-                        // template.convertAndSend(queue.getName(), elasticity_action_msg, cd);
                         String elasticity_action_msg_as_yml = Util.jsonToYaml(elasticity_action_msg);
 
                         template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg_as_yml, m -> {
