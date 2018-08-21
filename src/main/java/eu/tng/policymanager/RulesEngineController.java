@@ -336,8 +336,8 @@ public class RulesEngineController {
         
         log.info("Delete the policy descriptor");
         RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.set("Content-Type", "application/json");
+        //HttpHeaders httpHeaders = new HttpHeaders();
+        //httpHeaders.set("Content-Type", "application/json");
         
         Gson gson = new Gson();
         
