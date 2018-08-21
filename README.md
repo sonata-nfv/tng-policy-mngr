@@ -21,8 +21,8 @@ tng-policy-mngr supports its own swagger endpoint at http://<ip_adress>/swagger-
 | GET a Runtime policy | `GET` |`/api/v1/{policy_uuid}`|
 | Update a Runtime Policy | `PUT` |`/api/v1`|
 | Delete a Runtime Policy | `DELETE` |`/api/v1/{policy_uuid}`|
-| Bind a Runtime Policy to an SLA | `PATCH` |`/api/v1/{policy_uuid}`|
-| Define a Runtime Policy as default | `PATCH` |`/api/v1/{policy_uuid}`|
+| Bind a Runtime Policy to an SLA | `PATCH` |`/api/v1/bind/{policy_uuid}`|
+| Define a Runtime Policy as default | `PATCH` |`/api/v1/default/{policy_uuid}`|
 | GET a list of all Recommended Actions | `GET` |`/api/v1/actions`|
 | Create the Placement Policy | `POST` |`/api/v1/placement`|
 | GET the Placement policy | `GET` |`/api/v1/placement`|

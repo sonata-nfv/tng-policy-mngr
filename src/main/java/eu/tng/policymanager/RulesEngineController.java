@@ -274,12 +274,10 @@ public class RulesEngineController {
 
                 JSONObject pld = policy_descriptor.getJSONObject("pld");
 
-                log.info("pld " + pld);
-
+                //log.info("pld " + pld);
                 JSONObject network_service = pld.getJSONObject("network_service");
 
-                log.info("network_service " + network_service);
-
+                //log.info("network_service " + network_service);
                 String services_url_complete = services_url
                         + "?name=" + network_service.getString("name")
                         + "&version=" + network_service.getString("version")
@@ -326,7 +324,7 @@ public class RulesEngineController {
             //TODO update locally
             //rulesEngineService.savePolicyDescriptor(tobject, policy_uuid);
         } catch (Exception e) {
-            //log.info(e.getMessage());
+            log.info(e.getMessage());
             PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_UPDATED_FAILURE, "Check connection with tng-cat");
             return buildResponseEntity(response);
         }
@@ -342,8 +340,6 @@ public class RulesEngineController {
 
         log.info("Delete the policy descriptor");
         RestTemplate restTemplate = new RestTemplate();
-        //HttpHeaders httpHeaders = new HttpHeaders();
-        //httpHeaders.set("Content-Type", "application/json");
 
         Gson gson = new Gson();
 
@@ -380,8 +376,8 @@ public class RulesEngineController {
 
     // Bind a Policy to an SLA
     // Define a Policy as default
-    @RequestMapping(value = "/{policy_uuid}", method = RequestMethod.PATCH)
-    public ResponseEntity updateRuntimePolicy(@RequestBody RuntimePolicy tobject, @PathVariable("policy_uuid") String policy_uuid) {
+    @RequestMapping(value = "/default/{policy_uuid}", method = RequestMethod.PATCH)
+    public ResponseEntity updateRuntimePolicyasDefault(@RequestBody RuntimePolicy tobject, @PathVariable("policy_uuid") String policy_uuid) {
 
         Optional<RuntimePolicy> runtimepolicy = runtimePolicyRepository.findByPolicyid(policy_uuid);
         RuntimePolicy rp;
@@ -395,19 +391,61 @@ public class RulesEngineController {
             rp = runtimepolicy.get();
         }
 
-        if (tobject.getSlaid() != null) {
-            rp.setSlaid(tobject.getSlaid());
-        }
-        if (tobject.isDefaultPolicy() == true) {
-            rp.setDefaultPolicy(tobject.isDefaultPolicy());
-        }
         if (tobject.getNsid() != null) {
             rp.setNsid(tobject.getNsid());
         }
 
+        if (tobject.isDefaultPolicy() == true || tobject.isDefaultPolicy() == false) {
+            rp.setDefaultPolicy(tobject.isDefaultPolicy());
+
+            if (tobject.isDefaultPolicy() == true) {
+
+                //check if exists other default policy for same service
+                Optional<RuntimePolicy> existing_default_policy = runtimePolicyRepository.findByNsidAndDefaultPolicyTrue(tobject.getNsid());
+                if (existing_default_policy.isPresent()) {
+                    RuntimePolicy exPolicy = existing_default_policy.get();
+                    exPolicy.setDefaultPolicy(false);
+                    runtimePolicyRepository.save(exPolicy);
+                }
+
+            }
+            rp = runtimePolicyRepository.save(rp);
+        }
+        PolicyRestResponse response;
+        response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_METADATA_UPDATED, runtimepolicy);
+        return buildResponseEntity(response);
+
+    }
+
+    @RequestMapping(value = "/bind/{policy_uuid}", method = RequestMethod.PATCH)
+    public ResponseEntity bindRuntimePolicyWithSla(@RequestBody RuntimePolicy tobject, @PathVariable("policy_uuid") String policy_uuid) {
+
+        Optional<RuntimePolicy> runtimepolicy = runtimePolicyRepository.findByPolicyid(policy_uuid);
+        RuntimePolicy rp;
+
+        if (!runtimepolicy.isPresent()) {
+            log.info("create new runtime policy object");
+            rp = new RuntimePolicy();
+            rp.setPolicyid(policy_uuid);
+        } else {
+            log.info("update runtime policy object");
+            rp = runtimepolicy.get();
+        }
+
+        if (tobject.getNsid() != null) {
+            rp.setNsid(tobject.getNsid());
+        }
+
+        if (tobject.getSlaid() != null) {
+            if (tobject.getSlaid() != rp.getSlaid()) {
+                rp.setSlaid(tobject.getSlaid());
+            }
+
+        }
+
         Optional<RuntimePolicy> existing_runtimepolicy = runtimePolicyRepository.findBySlaidAndNsid(tobject.getSlaid(), tobject.getNsid());
         PolicyRestResponse response;
-        if (existing_runtimepolicy.isPresent()) {
+        if (existing_runtimepolicy.isPresent() && existing_runtimepolicy.get().getSlaid() != null) {
             response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ALREADY_BINDED, "");
             log.info(Message.POLICY_ALREADY_BINDED);
         } else {
@@ -426,7 +464,8 @@ public class RulesEngineController {
      "datacenters": ["vim_city 1", "vim_city 2"]
      }*/
     @RequestMapping(value = "/placement", method = RequestMethod.POST)
-    public ResponseEntity createPlacementPolicy(@RequestBody String tobject) {
+    public ResponseEntity createPlacementPolicy(@RequestBody String tobject
+    ) {
         log.info("Create placement policy");
         HttpHeaders responseHeaders = new HttpHeaders();
         Gson gson = new Gson();
@@ -484,7 +523,8 @@ public class RulesEngineController {
 
     //deactivate an enforced policy
     @RequestMapping(value = "/deactivate/{nsr_id}", method = RequestMethod.GET)
-    public ResponseEntity deactivate(@PathVariable("nsr_id") String nsr_id) {
+    public ResponseEntity deactivate(@PathVariable("nsr_id") String nsr_id
+    ) {
         log.info("remove knowledgebase");
         rulesEngineService.removeKnowledgebase("s" + nsr_id.replaceAll("-", ""));
 
@@ -496,7 +536,8 @@ public class RulesEngineController {
         return buildResponseEntity(response);
     }
 
-    ResponseEntity buildResponseEntity(PolicyRestResponse response) {
+    ResponseEntity buildResponseEntity(PolicyRestResponse response
+    ) {
 
         HttpHeaders responseHeaders = new HttpHeaders();
         Gson gson = new Gson();
