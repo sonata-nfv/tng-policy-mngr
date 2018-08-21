@@ -82,37 +82,37 @@ import org.springframework.web.client.RestTemplate;
 @RestController
 @RequestMapping("/api/v1")
 public class RulesEngineController {
-    
+
     private static final Logger log = LoggerFactory.getLogger(RulesEngineController.class);
-    
+
     @Autowired
     RulesEngineService rulesEngineService;
-    
+
     @Value("${tng.cat.policies}")
     private String policies_url;
-    
+
     @Value("${tng.cat.network.services}")
     private String services_url;
-    
+
     @Autowired
     RuntimePolicyRepository runtimePolicyRepository;
-    
+
     @Autowired
     RuntimePolicyRecordRepository runtimePolicyRecordRepository;
-    
+
     @Autowired
     PlacementPolicyRepository placementPolicyRepository;
-    
+
     @Autowired
     RecommendedActionRepository recommendedActionRepository;
-    
+
     @Autowired
     private RabbitTemplate template;
-    
+
     @Qualifier("runtimeActionsQueue")
     @Autowired
     private Queue queue;
-    
+
     @Autowired
     private TopicExchange exchange;
 
@@ -136,7 +136,7 @@ public class RulesEngineController {
     @RequestMapping(value = "/scale_out", method = RequestMethod.POST)
     public boolean generateScaleoutAction(@RequestBody String tobject) {
         JSONObject request = new JSONObject(tobject);
-        
+
         JSONObject elasticity_action_msg = new JSONObject();
         elasticity_action_msg.put("vnf_name", request.getString("vnf_name"));
         elasticity_action_msg.put("vnfd_id", request.getString("vnfd_id"));
@@ -148,10 +148,10 @@ public class RulesEngineController {
         JSONObject constraint = new JSONObject();
         constraint.put("vim_id", request.getString("vim_id"));
         constraints.put(constraint);
-        
+
         elasticity_action_msg.put("constraints", constraints);
         CorrelationData cd = new CorrelationData();
-        
+
         String correlation_id = request.getString("correlation_id");
         cd.setId(correlation_id);
 
@@ -162,12 +162,12 @@ public class RulesEngineController {
         //template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg_as_yml, cd);
         template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg_as_yml, m -> {
             //m.getMessageProperties().getHeaders().put("foo", "bar");
-            m.getMessageProperties().setAppId("tng-policy-mngr");            
+            m.getMessageProperties().setAppId("tng-policy-mngr");
             m.getMessageProperties().setReplyTo(queue.getName());
             m.getMessageProperties().setCorrelationId(correlation_id);
             return m;
         });
-        
+
         System.out.println(" [x] Sent mock action to topic '" + elasticity_action_msg_as_yml + "'");
         return true;
     }
@@ -187,18 +187,18 @@ public class RulesEngineController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
-        
+
         ResponseEntity<String> response = restTemplate.exchange(policies_url, HttpMethod.GET, entity, String.class);
 
         JSONArray policieslist = new JSONArray(response.getBody());
         JSONArray policieslist_toreturn = new JSONArray();
-        
+
         for (int i = 0; i < policieslist.length(); i++) {
-            
-            JSONObject policy =policieslist.getJSONObject(i);
+
+            JSONObject policy = policieslist.getJSONObject(i);
             String enriched_policy = this.getPolicy(policy.getString("uuid"));
             policieslist_toreturn.put(new JSONObject(enriched_policy));
-            
+
         }
         //return response.getBody();
         return policieslist_toreturn.toString();
@@ -213,29 +213,29 @@ public class RulesEngineController {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        
+
         HttpEntity<String> httpEntity = new HttpEntity<>(tobject, httpHeaders);
-        
+
         String responseone = null;
         try {
             responseone = restTemplate.postForObject(policies_url, httpEntity, String.class);
-            
+
             JSONObject policyDescriptor = new JSONObject(responseone);
             String policy_uuid = policyDescriptor.getString("uuid");
 
             //save locally
             rulesEngineService.savePolicyDescriptor(tobject, policy_uuid);
-            
+
         } catch (Exception e) {
             log.info(e.getMessage());
             PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
                     + ". Check if policy vendor or version are null");
             return buildResponseEntity(response);
         }
-        
+
         PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED, responseone);
         return buildResponseEntity(response);
-        
+
     }
 
     //GET a policy
@@ -246,23 +246,23 @@ public class RulesEngineController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
-        
+
         ResponseEntity<String> response;
         try {
             response = restTemplate.exchange(policies_url + "/" + policy_uuid, HttpMethod.GET, entity, String.class);
             if (response.getStatusCode().is2xxSuccessful()) {
-                
+
                 JSONObject policy_descriptor = new JSONObject(response.getBody());
                 Optional<RuntimePolicy> runtimepolicy = runtimePolicyRepository.findByPolicyid(policy_uuid);
                 if (runtimepolicy.isPresent()) {
                     policy_descriptor.put("default_policy", runtimepolicy.get().isDefaultPolicy());
                 } else {
                     policy_descriptor.put("default_policy", false);
-                    
+
                 }
-                
+
                 Optional<RuntimePolicyRecord> runtimepolicyrecord = runtimePolicyRecordRepository.findByPolicyid(policy_uuid);
-                
+
                 if (runtimepolicyrecord.isPresent()) {
                     policy_descriptor.put("enforced", true);
                 } else {
@@ -271,35 +271,41 @@ public class RulesEngineController {
 
                 //fetch ns_uuid
                 log.info("Fetch ns_uuid for current policy");
-                
-                JSONObject network_service = policy_descriptor.getJSONObject("pld");
-                
+
+                JSONObject pld = policy_descriptor.getJSONObject("pld");
+
+                log.info("pld " + pld);
+
+                JSONObject network_service = pld.getJSONObject("network_service");
+
+                log.info("network_service " + network_service);
+
                 String services_url_complete = services_url
                         + "?name=" + network_service.getString("name")
                         + "&version=" + network_service.getString("version")
                         + "&vendor=" + network_service.getString("vendor");
-                
+
                 ResponseEntity<String> response1 = restTemplate.exchange(services_url_complete, HttpMethod.GET, entity, String.class);
-                
+
                 log.info("invoke the " + services_url_complete);
-                
+
                 JSONArray network_services = new JSONArray(response1.getBody());
-                
+
                 if (network_services.length() > 0) {
                     String ns_uuid = network_services.getJSONObject(0).getString("uuid");
                     policy_descriptor.put("ns_uuid", ns_uuid);
                 }
-                
+
                 return policy_descriptor.toString();
-                
+
             }
         } catch (HttpClientErrorException e) {
             return "{\"error\": \"The PLD ID " + policy_uuid + " does not exist at catalogues. Message : "
                     + e.getMessage() + "\"}";
         }
-        
+
         return "{\"warning\": \"The PLD ID " + policy_uuid + " does not exist at catalogues.\"}";
-        
+
     }
 
     //Update a Policy -TO BE CHECKED
@@ -324,33 +330,33 @@ public class RulesEngineController {
             PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_UPDATED_FAILURE, "Check connection with tng-cat");
             return buildResponseEntity(response);
         }
-        
+
         PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_UPDATED, tobject);
         return buildResponseEntity(response);
-        
+
     }
 
     //Delete a Policy
     @RequestMapping(value = "/{policy_uuid}", method = RequestMethod.DELETE)
     public ResponseEntity deletePolicyDescriptor(@PathVariable("policy_uuid") String policy_uuid) {
-        
+
         log.info("Delete the policy descriptor");
         RestTemplate restTemplate = new RestTemplate();
         //HttpHeaders httpHeaders = new HttpHeaders();
         //httpHeaders.set("Content-Type", "application/json");
-        
+
         Gson gson = new Gson();
-        
+
         HttpHeaders responseHeaders = new HttpHeaders();
-        
+
         Optional<RuntimePolicyRecord> runtimePolicyRecord = runtimePolicyRecordRepository.findByPolicyid(policy_uuid);
-        
+
         if (runtimePolicyRecord.isPresent()) {
             log.info(Message.POLICY_DELETED_FORBIDEN);
             PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DELETED_FORBIDEN, policy_uuid);
             return buildResponseEntity(response);
         }
-        
+
         try {
             restTemplate.delete(policies_url + "/" + policy_uuid);
             rulesEngineService.deletePolicyDescriptor(policy_uuid);
@@ -358,16 +364,16 @@ public class RulesEngineController {
             if (runtimePolicy.isPresent()) {
                 runtimePolicyRepository.delete(runtimePolicy.get());
             }
-            
+
         } catch (Exception e) {
             PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DELETED_FAILURE, e.getMessage());
             String responseAsString = gson.toJson(response);
-            
+
             responseHeaders.set("Content-Length", String.valueOf(responseAsString.length()));
             ResponseEntity responseEntity = new ResponseEntity(responseAsString, responseHeaders, HttpStatus.OK);
             return responseEntity;
         }
-        
+
         PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DELETED, true);
         return buildResponseEntity(response);
     }
@@ -376,10 +382,10 @@ public class RulesEngineController {
     // Define a Policy as default
     @RequestMapping(value = "/{policy_uuid}", method = RequestMethod.PATCH)
     public ResponseEntity updateRuntimePolicy(@RequestBody RuntimePolicy tobject, @PathVariable("policy_uuid") String policy_uuid) {
-        
+
         Optional<RuntimePolicy> runtimepolicy = runtimePolicyRepository.findByPolicyid(policy_uuid);
         RuntimePolicy rp;
-        
+
         if (!runtimepolicy.isPresent()) {
             log.info("create new runtime policy object");
             rp = new RuntimePolicy();
@@ -388,7 +394,7 @@ public class RulesEngineController {
             log.info("update runtime policy object");
             rp = runtimepolicy.get();
         }
-        
+
         if (tobject.getSlaid() != null) {
             rp.setSlaid(tobject.getSlaid());
         }
@@ -398,7 +404,7 @@ public class RulesEngineController {
         if (tobject.getNsid() != null) {
             rp.setNsid(tobject.getNsid());
         }
-        
+
         Optional<RuntimePolicy> existing_runtimepolicy = runtimePolicyRepository.findBySlaidAndNsid(tobject.getSlaid(), tobject.getNsid());
         PolicyRestResponse response;
         if (existing_runtimepolicy.isPresent()) {
@@ -409,7 +415,7 @@ public class RulesEngineController {
             response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_METADATA_UPDATED, runtimepolicy);
             log.info(Message.POLICY_METADATA_UPDATED);
         }
-        
+
         return buildResponseEntity(response);
     }
 
@@ -425,31 +431,31 @@ public class RulesEngineController {
         HttpHeaders responseHeaders = new HttpHeaders();
         Gson gson = new Gson();
         placementPolicyRepository.deleteAll();
-        
+
         JSONObject placementpolicy_object = new JSONObject(tobject);
         PlacementPolicy placementpolicy_tosave = new PlacementPolicy();
-        
+
         String policy = placementpolicy_object.getString("policy");
         placementpolicy_tosave.setPolicy(policy);
-        
+
         if (placementpolicy_object.has("datacenters")) {
             JSONArray datacenters = placementpolicy_object.getJSONArray("datacenters");
-            
+
             String[] datacenters_tosave = new String[datacenters.length()];
-            
+
             for (int i = 0; i < datacenters.length(); i++) {
                 datacenters_tosave[i] = (String) datacenters.get(i);
             }
-            
+
             placementpolicy_tosave.setDatacenters(datacenters_tosave);
         }
-        
+
         PlacementPolicy placementpolicy = placementPolicyRepository.save(placementpolicy_tosave);
         String responseAsString = gson.toJson(placementpolicy);
         responseHeaders.set("Content-Length", String.valueOf(responseAsString.length()));
         ResponseEntity responseEntity = new ResponseEntity(placementpolicy, responseHeaders, HttpStatus.OK);
         return responseEntity;
-        
+
     }
 
     //GET a list of all placement policies
@@ -457,7 +463,7 @@ public class RulesEngineController {
     public String listPlacementPolicies() {
         log.info("Fetch placement policy");
         List<PlacementPolicy> placementPolicies = placementPolicyRepository.findAll();
-        
+
         if (placementPolicies.size() > 0) {
             Gson gson = new Gson();
             return gson.toJson(placementPolicies.get(0));
@@ -472,7 +478,7 @@ public class RulesEngineController {
         log.info("Fetch list of Actions");
         List<RecommendedAction> recommendedActions = recommendedActionRepository.findAll();
         Gson gson = new Gson();
-        
+
         return gson.toJson(recommendedActions);
     }
 
@@ -481,25 +487,25 @@ public class RulesEngineController {
     public ResponseEntity deactivate(@PathVariable("nsr_id") String nsr_id) {
         log.info("remove knowledgebase");
         rulesEngineService.removeKnowledgebase("s" + nsr_id.replaceAll("-", ""));
-        
+
         Optional<RuntimePolicyRecord> runtimePolicyRecord = runtimePolicyRecordRepository.findByNsrid(nsr_id);
-        
+
         runtimePolicyRecordRepository.delete(runtimePolicyRecord.get());
-        
+
         PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DEACTIVATED, true);
         return buildResponseEntity(response);
     }
-    
+
     ResponseEntity buildResponseEntity(PolicyRestResponse response) {
-        
+
         HttpHeaders responseHeaders = new HttpHeaders();
         Gson gson = new Gson();
-        
+
         String responseAsString = gson.toJson(response);
         responseHeaders.set("Content-Length", String.valueOf(responseAsString.length()));
         ResponseEntity responseEntity = new ResponseEntity(responseAsString, responseHeaders, HttpStatus.OK);
         return responseEntity;
-        
+
     }
 
     /**
@@ -508,7 +514,7 @@ public class RulesEngineController {
      *
      */
     private final static class Message {
-        
+
         final static String POLICIES_LIST = "Return policies list";
         final static String POLICIES_INFO = "Welcome to tng-policy-mngr. For more info check: ";
         final static String POLICY_ACTIVATED = "Policy is succesfully activated";
@@ -526,7 +532,7 @@ public class RulesEngineController {
         final static String POLICY_UPDATED = "Policy is succesfully updated";
         final static String POLICY_UPDATED_FAILURE = "Policy failed to be updated at catalogues";
         final static String CATALOGUES_CONNECTION_ERROR = "Check conneciton with tng-catalogues";
-        
+
     }
-    
+
 }
