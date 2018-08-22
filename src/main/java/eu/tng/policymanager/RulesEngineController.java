@@ -48,6 +48,7 @@ import eu.tng.policymanager.response.PolicyRestResponse;
 import eu.tng.policymanager.rules.generation.Util;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -71,6 +72,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -157,7 +159,6 @@ public class RulesEngineController {
 
         // template.convertAndSend(queue.getName(), elasticity_action_msg, cd);
         String elasticity_action_msg_as_yml = Util.jsonToYaml(elasticity_action_msg);
-        //template.setCorrelationKey("test111111111111");
 
         //template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg_as_yml, cd);
         template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg_as_yml, m -> {
@@ -181,8 +182,14 @@ public class RulesEngineController {
 
     //GET a list of all runtime policies
     @RequestMapping(value = "", method = RequestMethod.GET)
-    public String listPolicies() {
-        log.info("Fetch all policies");
+    public String listPolicies(@RequestParam Map<String, String> queryParameters) {
+
+        if (queryParameters.containsKey("ns_uuid")) {
+            log.info("Fetch policies with query filter " + queryParameters);
+        } else {
+            log.info("Fetch all policies");
+        }
+
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -197,7 +204,18 @@ public class RulesEngineController {
 
             JSONObject policy = policieslist.getJSONObject(i);
             String enriched_policy = this.getPolicy(policy.getString("uuid"));
-            policieslist_toreturn.put(new JSONObject(enriched_policy));
+            JSONObject enriched_policyJSON = new JSONObject(enriched_policy);
+            if (queryParameters.containsKey("ns_uuid")) {
+
+                if (enriched_policyJSON.has("ns_uuid")) {
+                    if (queryParameters.get("ns_uuid").equalsIgnoreCase(enriched_policyJSON.getString("ns_uuid"))) {
+                        policieslist_toreturn.put(enriched_policyJSON);
+                    }
+                }
+
+            } else {
+                policieslist_toreturn.put(enriched_policyJSON);
+            }
 
         }
         //return response.getBody();
