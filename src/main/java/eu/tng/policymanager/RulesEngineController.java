@@ -35,6 +35,9 @@ package eu.tng.policymanager;
 
 import com.google.gson.Gson;
 import eu.tng.policymanager.facts.LogMetric;
+import eu.tng.policymanager.facts.action.ElasticityAction;
+import eu.tng.policymanager.facts.enums.ScalingType;
+import eu.tng.policymanager.facts.enums.Status;
 import eu.tng.policymanager.repository.dao.PlacementPolicyRepository;
 import eu.tng.policymanager.repository.dao.RecommendedActionRepository;
 import eu.tng.policymanager.repository.dao.RuntimePolicyRecordRepository;
@@ -134,9 +137,32 @@ public class RulesEngineController {
         return true;
     }
 
-    //usefull for testing scale out action
+    @RequestMapping(value = "/newElasticityAction", method = RequestMethod.GET)
+    public boolean generateElasticityAction() {
+
+        log.info("createAMockUpAction");
+        RecommendedAction recommendedAction = new RecommendedAction();
+
+        ElasticityAction doactionsubclass = new ElasticityAction("nsr_abcd", "vnf_name_squid-vnf", ScalingType.addvnf, "value_1", Status.send);
+
+        recommendedAction.setAction(doactionsubclass);
+        recommendedAction.setCorrelation_id("7895");
+        recommendedActionRepository.save(recommendedAction);
+
+        RecommendedAction recommendedAction1 = new RecommendedAction();
+        ElasticityAction doactionsubclass1 = new ElasticityAction("nsr_efg", "vnf_name_squid-vnf", ScalingType.addvnf, "value_1", Status.send);
+
+        recommendedAction1.setAction(doactionsubclass1);
+        recommendedAction1.setCorrelation_id("12345");
+        recommendedActionRepository.save(recommendedAction1);
+
+        return true;
+    }
+//usefull for testing scale out action
+
     @RequestMapping(value = "/scale_out", method = RequestMethod.POST)
-    public boolean generateScaleoutAction(@RequestBody String tobject) {
+    public boolean generateScaleoutAction(@RequestBody String tobject
+    ) {
         JSONObject request = new JSONObject(tobject);
 
         JSONObject elasticity_action_msg = new JSONObject();
@@ -182,7 +208,8 @@ public class RulesEngineController {
 
     //GET a list of all runtime policies. Accept as query parameter the ns_uuid
     @RequestMapping(value = "", method = RequestMethod.GET)
-    public String listPolicies(@RequestParam Map<String, String> queryParameters) {
+    public String listPolicies(@RequestParam Map<String, String> queryParameters
+    ) {
 
         if (queryParameters.containsKey("ns_uuid")) {
             log.info("Fetch policies with query filter " + queryParameters);
@@ -224,7 +251,8 @@ public class RulesEngineController {
     //TODO: clean java headers!!!!!!!!!!!!!!!
     //Create a Policy
     @RequestMapping(value = "", method = RequestMethod.POST)
-    public ResponseEntity createPolicyDescriptor(@RequestBody String tobject) {
+    public ResponseEntity createPolicyDescriptor(@RequestBody String tobject
+    ) {
         //save to catalogues
         log.info("Create a Policy");
         RestTemplate restTemplate = new RestTemplate();
@@ -257,7 +285,8 @@ public class RulesEngineController {
 
     //GET a policy
     @RequestMapping(value = "/{policy_uuid}", method = RequestMethod.GET)
-    public String getPolicy(@PathVariable("policy_uuid") String policy_uuid) {
+    public String getPolicy(@PathVariable("policy_uuid") String policy_uuid
+    ) {
         log.info("Fetch a policy with uuid" + policy_uuid);
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
@@ -326,7 +355,8 @@ public class RulesEngineController {
 
     //Update a Policy -TO BE CHECKED
     @RequestMapping(value = "", method = RequestMethod.PUT)
-    public ResponseEntity updatePolicyDescriptor(@RequestBody String tobject) {
+    public ResponseEntity updatePolicyDescriptor(@RequestBody String tobject
+    ) {
         log.info("Update a policy descriptor");
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders httpHeaders = new HttpHeaders();
@@ -354,7 +384,8 @@ public class RulesEngineController {
 
     //Delete a Policy
     @RequestMapping(value = "/{policy_uuid}", method = RequestMethod.DELETE)
-    public ResponseEntity deletePolicyDescriptor(@PathVariable("policy_uuid") String policy_uuid) {
+    public ResponseEntity deletePolicyDescriptor(@PathVariable("policy_uuid") String policy_uuid
+    ) {
 
         log.info("Delete the policy descriptor");
         RestTemplate restTemplate = new RestTemplate();
@@ -395,7 +426,8 @@ public class RulesEngineController {
     // Bind a Policy to an SLA
     // Define a Policy as default
     @RequestMapping(value = "/default/{policy_uuid}", method = RequestMethod.PATCH)
-    public ResponseEntity updateRuntimePolicyasDefault(@RequestBody RuntimePolicy tobject, @PathVariable("policy_uuid") String policy_uuid) {
+    public ResponseEntity updateRuntimePolicyasDefault(@RequestBody RuntimePolicy tobject, @PathVariable("policy_uuid") String policy_uuid
+    ) {
 
         Optional<RuntimePolicy> runtimepolicy = runtimePolicyRepository.findByPolicyid(policy_uuid);
         RuntimePolicy rp;
@@ -436,7 +468,8 @@ public class RulesEngineController {
     }
 
     @RequestMapping(value = "/bind/{policy_uuid}", method = RequestMethod.PATCH)
-    public ResponseEntity bindRuntimePolicyWithSla(@RequestBody RuntimePolicy tobject, @PathVariable("policy_uuid") String policy_uuid) {
+    public ResponseEntity bindRuntimePolicyWithSla(@RequestBody RuntimePolicy tobject, @PathVariable("policy_uuid") String policy_uuid
+    ) {
 
         Optional<RuntimePolicy> runtimepolicy = runtimePolicyRepository.findByPolicyid(policy_uuid);
         RuntimePolicy rp;

@@ -35,7 +35,6 @@ package eu.tng.policymanager;
 
 import com.google.gson.Gson;
 import eu.tng.policymanager.facts.RuleActionType;
-import static eu.tng.policymanager.config.DroolsConfig.POLICY_DESCRIPTORS_PACKAGE;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
 import eu.tng.policymanager.facts.action.Action;
 import eu.tng.policymanager.facts.action.ComponentResourceAllocationAction;
@@ -43,7 +42,6 @@ import eu.tng.policymanager.facts.LogMetric;
 import eu.tng.policymanager.facts.MonitoredComponent;
 import eu.tng.policymanager.facts.action.ElasticityAction;
 import eu.tng.policymanager.facts.action.NetworkManagementAction;
-import eu.tng.policymanager.facts.enums.ScalingType;
 import eu.tng.policymanager.facts.enums.Status;
 import eu.tng.policymanager.repository.PolicyRule;
 import eu.tng.policymanager.rules.generation.KieUtil;
@@ -66,7 +64,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -100,16 +97,11 @@ import org.kie.api.conf.EventProcessingOption;
 import org.kie.api.runtime.conf.ClockTypeOption;
 import org.kie.api.runtime.rule.EntryPoint;
 import org.kie.internal.io.ResourceFactory;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessageBuilder;
-import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.yaml.snakeyaml.Yaml;
 
 @Service
 public class RulesEngineService {
