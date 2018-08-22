@@ -180,7 +180,7 @@ public class RulesEngineController {
         return "{ \"alive_now\": \"" + new Date() + "\"}";
     }
 
-    //GET a list of all runtime policies
+    //GET a list of all runtime policies. Accept as query parameter the ns_uuid
     @RequestMapping(value = "", method = RequestMethod.GET)
     public String listPolicies(@RequestParam Map<String, String> queryParameters) {
 
