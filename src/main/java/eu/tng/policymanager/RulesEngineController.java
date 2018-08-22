@@ -218,7 +218,6 @@ public class RulesEngineController {
             }
 
         }
-        //return response.getBody();
         return policieslist_toreturn.toString();
     }
 
@@ -274,6 +273,7 @@ public class RulesEngineController {
                 Optional<RuntimePolicy> runtimepolicy = runtimePolicyRepository.findByPolicyid(policy_uuid);
                 if (runtimepolicy.isPresent()) {
                     policy_descriptor.put("default_policy", runtimepolicy.get().isDefaultPolicy());
+                    policy_descriptor.put("sla_id", runtimepolicy.get().getSlaid());
                 } else {
                     policy_descriptor.put("default_policy", false);
 
