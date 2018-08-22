@@ -29,19 +29,25 @@ pipeline {
         }
       }
     }
-    stage('Deployment in Integration') {
+    stage('Deployment in Pre-Integration') {
       parallel {
-        stage('Deployment in Integration') {
+        stage('Deployment in Pre-Integration') {
           steps {
-            echo 'Deploying in integration...'
+            echo 'Deploying in Pre-integration...'
           }
         }
         stage('Deploying') {
+          when{
+            not{
+              branch 'master'
+            }        
+          } 
           steps {
             sh 'rm -rf tng-devops || true'
             sh 'git clone https://github.com/sonata-nfv/tng-devops.git'
             dir(path: 'tng-devops') {
-              sh 'ansible-playbook roles/sp.yml -i environments -e "target=int-sp component=policy-manager"'
+              sh 'ansible-playbook roles/sp.yml -i environments -e "target=pre-int-sp-ath.5gtango.eu component=policy-manager"'
+
             }
             
           }
