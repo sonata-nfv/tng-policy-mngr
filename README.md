@@ -17,6 +17,7 @@ tng-policy-mngr supports its own swagger endpoint at http://<ip_adress>/swagger-
 | Action | HTTP Method | Endpoint |
 | --------------- | ------- | -------------------------------------------- |
 | GET a list of all Runtime policies | `GET` |`/api/v1`|
+| GET a list of all Runtime policies matching a specific network service | `GET` |`/api/v1?ns_uuid={value}`|
 | Create a Runtime Policy | `POST` |`/api/v1`|
 | GET a Runtime policy | `GET` |`/api/v1/{policy_uuid}`|
 | Update a Runtime Policy | `PUT` |`/api/v1`|
