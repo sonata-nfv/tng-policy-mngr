@@ -6,6 +6,7 @@
 package eu.tng.policymanager.repository.dao;
 
 import eu.tng.policymanager.repository.domain.RuntimePolicyRecord;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
@@ -15,7 +16,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
  */
 public interface RuntimePolicyRecordRepository extends MongoRepository<RuntimePolicyRecord, String> {
 
-    Optional<RuntimePolicyRecord> findByPolicyid(String policyid);
+    List<RuntimePolicyRecord> findByPolicyid(String policyid);
 
     Optional<RuntimePolicyRecord> findByNsrid(String nsid);
 
