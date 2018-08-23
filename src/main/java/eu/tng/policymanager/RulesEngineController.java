@@ -146,6 +146,7 @@ public class RulesEngineController {
         ElasticityAction doactionsubclass = new ElasticityAction("nsr_abcd", "vnf_name_squid-vnf", ScalingType.addvnf, "value_1", Status.send);
 
         recommendedAction.setAction(doactionsubclass);
+        recommendedAction.setInDateTime(new Date());
         recommendedAction.setCorrelation_id("7895");
         recommendedActionRepository.save(recommendedAction);
 
@@ -153,6 +154,7 @@ public class RulesEngineController {
         ElasticityAction doactionsubclass1 = new ElasticityAction("nsr_efg", "vnf_name_squid-vnf", ScalingType.addvnf, "value_1", Status.send);
 
         recommendedAction1.setAction(doactionsubclass1);
+        recommendedAction1.setInDateTime(new Date());
         recommendedAction1.setCorrelation_id("12345");
         recommendedActionRepository.save(recommendedAction1);
 
@@ -428,6 +430,7 @@ public class RulesEngineController {
     @RequestMapping(value = "/default/{policy_uuid}", method = RequestMethod.PATCH)
     public ResponseEntity updateRuntimePolicyasDefault(@RequestBody RuntimePolicy tobject, @PathVariable("policy_uuid") String policy_uuid
     ) {
+        PolicyRestResponse response;
 
         Optional<RuntimePolicy> runtimepolicy = runtimePolicyRepository.findByPolicyid(policy_uuid);
         RuntimePolicy rp;
@@ -443,6 +446,10 @@ public class RulesEngineController {
 
         if (tobject.getNsid() != null) {
             rp.setNsid(tobject.getNsid());
+        } else {
+
+            response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.MISSING_PARAMETER, null);
+            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(response);
         }
 
         if (tobject.isDefaultPolicy() == true || tobject.isDefaultPolicy() == false) {
@@ -461,7 +468,7 @@ public class RulesEngineController {
             }
             rp = runtimePolicyRepository.save(rp);
         }
-        PolicyRestResponse response;
+
         response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_METADATA_UPDATED, runtimepolicy);
         return buildResponseEntity(response);
 
@@ -470,7 +477,7 @@ public class RulesEngineController {
     @RequestMapping(value = "/bind/{policy_uuid}", method = RequestMethod.PATCH)
     public ResponseEntity bindRuntimePolicyWithSla(@RequestBody RuntimePolicy tobject, @PathVariable("policy_uuid") String policy_uuid
     ) {
-
+        PolicyRestResponse response;
         Optional<RuntimePolicy> runtimepolicy = runtimePolicyRepository.findByPolicyid(policy_uuid);
         RuntimePolicy rp;
 
@@ -483,19 +490,16 @@ public class RulesEngineController {
             rp = runtimepolicy.get();
         }
 
-        if (tobject.getNsid() != null) {
-            rp.setNsid(tobject.getNsid());
+        if (tobject.getNsid() == null || tobject.getSlaid() == null) {
+            response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.MISSING_PARAMETER, null);
+            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(response);
         }
 
-        if (tobject.getSlaid() != null) {
-            if (tobject.getSlaid() != rp.getSlaid()) {
-                rp.setSlaid(tobject.getSlaid());
-            }
-
-        }
+        rp.setNsid(tobject.getNsid());
+        rp.setSlaid(tobject.getSlaid());
 
         Optional<RuntimePolicy> existing_runtimepolicy = runtimePolicyRepository.findBySlaidAndNsid(tobject.getSlaid(), tobject.getNsid());
-        PolicyRestResponse response;
+
         if (existing_runtimepolicy.isPresent() && existing_runtimepolicy.get().getSlaid() != null) {
             response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ALREADY_BINDED, "");
             log.info(Message.POLICY_ALREADY_BINDED);
@@ -619,6 +623,7 @@ public class RulesEngineController {
         final static String POLICY_DELETION = "Policy failed to be deleted at catalogues";
         final static String POLICY_METADATA_UPDATED = "Policy metadata are sucesfully updated";
         final static String POLICY_ALREADY_BINDED = "Already exists a policy binded with the requested sla and nsid";
+        final static String MISSING_PARAMETER = "Bad Request. Missing parameters.";
         final static String POLICY_DEFAULT = "Policy is set as default";
         final static String POLICY_NOT_EXISTS = "Policy does not exist";
         final static String POLICY_UPDATED = "Policy is succesfully updated";
