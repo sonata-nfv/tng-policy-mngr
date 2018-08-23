@@ -5,14 +5,7 @@
  */
 package eu.tng.policymanager;
 
-import com.google.gson.Gson;
-import static eu.tng.policymanager.config.DroolsConfig.POLICY_DESCRIPTORS_PACKAGE;
-import eu.tng.policymanager.repository.PolicyRule;
-import eu.tng.policymanager.repository.PolicyYamlFile;
-import eu.tng.policymanager.repository.RuleCondition;
 import eu.tng.policymanager.rules.generation.RepositoryUtil;
-import java.io.File;
-import java.util.List;
 import java.util.logging.Logger;
 import org.drools.compiler.lang.api.CEDescrBuilder;
 import org.drools.compiler.lang.api.DescrFactory;
@@ -30,6 +23,8 @@ import org.junit.Test;
 public class TestRulesGeneration {
 
     private static final Logger logger = Logger.getLogger(RepositoryUtil.class.getName());
+    
+
 
     @Test
     public void test() throws JSONException {

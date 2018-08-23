@@ -7,6 +7,7 @@ package eu.tng.policymanager.repository.domain;
 
 
 import eu.tng.policymanager.facts.action.Action;
+import java.util.Date;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -21,6 +22,8 @@ public class RecommendedAction {
     private String correlation_id;
 
     private Action action;
+    
+    private Date inDateTime;
 
     public String getCorrelation_id() {
         return correlation_id;
@@ -36,6 +39,14 @@ public class RecommendedAction {
 
     public void setAction(Action action) {
         this.action = action;
+    }
+
+    public Date getInDateTime() {
+        return inDateTime;
+    }
+
+    public void setInDateTime(Date inDateTime) {
+        this.inDateTime = inDateTime;
     }
 
 }

@@ -35,9 +35,7 @@ package eu.tng.policymanager.Messaging;
 
 import eu.tng.policymanager.RulesEngineService;
 import eu.tng.policymanager.facts.LogMetric;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
 import java.util.logging.Level;
 
 import org.springframework.stereotype.Component;
@@ -51,7 +49,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 @Component

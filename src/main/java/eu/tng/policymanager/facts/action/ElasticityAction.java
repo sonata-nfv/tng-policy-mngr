@@ -18,6 +18,7 @@ public class ElasticityAction extends Action {
     String vnfd_id;
     String vim_id;
     ScalingType scaling_type;
+    
 
     public ElasticityAction(String service_instance_id, String vnf_name, ScalingType scaling_type, String value, Status status) {
         this.service_instance_id = service_instance_id;
