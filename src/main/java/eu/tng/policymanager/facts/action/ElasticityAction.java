@@ -82,8 +82,8 @@ public class ElasticityAction extends Action {
         return this.value == that.value
                 && this.service_instance_id.equals(that.service_instance_id)
                 && this.vnf_name.equals(that.vnf_name)
-                && this.vnfd_id.equals(that.vnfd_id)
-                && this.vim_id.equals(that.vim_id)
+                //&& this.vnfd_id.equals(that.vnfd_id)
+                //&& this.vim_id.equals(that.vim_id)
                 && this.scaling_type.equals(that.scaling_type)
                 && this.status.equals(that.status);
     }

@@ -80,7 +80,7 @@ rule "ElasticityRuleHelper"
 when
    
  $m1 := LogMetric(vnfd_id !=null) from entry-point "MonitoringStream" 
- $m2 := ElasticityAction (vnf_name==$m1.vnf_name)
+ $m2 := ElasticityAction ()
  then
  $m2.setVnfd_id($m1.getVnfd_id());
  $m2.setVim_id($m1.getVim_id());
