@@ -490,7 +490,7 @@ public class RulesEngineController {
             rp = runtimepolicy.get();
         }
 
-        if (tobject.getNsid() == null || tobject.getSlaid() == null) {
+        if (tobject.getNsid() == null) {
             response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.MISSING_PARAMETER, null);
             return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(response);
         }
