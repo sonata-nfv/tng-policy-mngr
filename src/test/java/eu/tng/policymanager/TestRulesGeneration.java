@@ -7,6 +7,7 @@ package eu.tng.policymanager;
 
 import eu.tng.policymanager.rules.generation.RepositoryUtil;
 import java.util.logging.Logger;
+import org.drools.compiler.lang.DrlDumper;
 import org.drools.compiler.lang.api.CEDescrBuilder;
 import org.drools.compiler.lang.api.DescrFactory;
 import org.drools.compiler.lang.api.PackageDescrBuilder;
@@ -21,14 +22,12 @@ import org.junit.Test;
  * @author Eleni Fotopoulou <efotopoulou@ubitech.eu>
  */
 public class TestRulesGeneration {
-
+    
     private static final Logger logger = Logger.getLogger(RepositoryUtil.class.getName());
     
-
-
     @Test
     public void test() throws JSONException {
-
+        
         JSONObject samplepolicydemocomplex = new JSONObject("{\n"
                 + "	\"condition\": \"AND\",\n"
                 + "	\"rules\": [{\n"
@@ -58,14 +57,21 @@ public class TestRulesGeneration {
                 + "	}]\n"
                 + "}");
 
-         //TODO convert yml to drools
+
         PackageDescrBuilder packageDescrBuilder = DescrFactory.newPackage();
         RuleDescrBuilder droolrule = packageDescrBuilder.newRule().name("test");
-
+        
         CEDescrBuilder<RuleDescrBuilder, AndDescr> when = droolrule.lhs();
-
-        logger.info(RepositoryUtil.constructDroolsRule(when, samplepolicydemocomplex, "AND").toString());
-
+        
+        
+        
+        logger.info("Test to be executed " + RepositoryUtil.constructDroolsRule(when, samplepolicydemocomplex, "AND").toString());
+        
+        //String created_rules = new DrlDumper().dump(packageDescrBuilder.getDescr());
+        //created_rules = created_rules.replace("|", "over");
+        
+        //logger.info("Result " + created_rules);
+        
     }
-
+    
 }

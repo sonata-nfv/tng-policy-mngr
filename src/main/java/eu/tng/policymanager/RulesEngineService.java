@@ -111,7 +111,7 @@ public class RulesEngineService {
     private static final String rulesPackage = "rules";
     private static final String current_dir = System.getProperty("user.dir");
     ReleaseId releaseId = KieServices.Factory.get().newReleaseId("eu.tng", "policymanager", "1.0");
-    private static final String FACTS_EXPIRATION = "2m";
+    private static final String FACTS_EXPIRATION = "1m";
 
     private final KieServices kieServices;
     private final KieFileSystem kieFileSystem;
@@ -150,7 +150,7 @@ public class RulesEngineService {
     }
 
 //fireAllRules every 5 minutes 1min== 60000
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 6000)
     public void searchForGeneratedActions() {
 
         logger.info("Search for actions");
@@ -207,7 +207,6 @@ public class RulesEngineService {
                         elasticity_action_msg.put("vnfd_id", doactionsubclass.getVnfd_id());
                         elasticity_action_msg.put("scaling_type", doactionsubclass.getScaling_type());
                         elasticity_action_msg.put("service_instance_id", doactionsubclass.getService_instance_id());
-                        //elasticity_action_msg.put("correlation_id", correlation_id);
                         elasticity_action_msg.put("value", doactionsubclass.getValue());
 
                         JSONArray constraints = new JSONArray();
@@ -607,7 +606,7 @@ public class RulesEngineService {
                 String action_object = ruleaction.getAction_object();
 
                 rhs_actions += "insertLogical( new " + action_object + "(\"" + nsrid + "\",\"" + ruleaction.getTarget() + "\","
-                        + ruleaction.getAction_type() + "." + ruleaction.getName() + ",\"" + ruleaction.getValue() + "\",Status.not_send)); \n";
+                        + ruleaction.getAction_type() + "." + ruleaction.getName() + ",\"" + ruleaction.getValue() + "\",$m1.getVnfd_id(),$m1.getVim_id(),Status.not_send)); \n";
 
             }
             droolrule.rhs(rhs_actions);
@@ -618,17 +617,17 @@ public class RulesEngineService {
         String created_rules = new DrlDumper().dump(packageDescrBuilder.getDescr());
         created_rules = created_rules.replace("|", "over");
 
-        created_rules += "\n"
-                + "rule \"ElasticityRuleHelper\"\n"
-                + "when\n"
-                + "   \n"
-                + " $m1 := LogMetric(vnfd_id !=null) from entry-point \"MonitoringStream\"  \n"
-                + " $m2 := ElasticityAction (vnf_name==$m1.vnf_name)\n"
-                + " then\n"
-                + " $m2.setVnfd_id($m1.getVnfd_id());\n"
-                + " $m2.setVim_id($m1.getVim_id());\n"
-                + " update($m2);\n"
-                + "end";
+//        created_rules += "\n"
+//                + "rule \"ElasticityRuleHelper\"\n"
+//                + "when\n"
+//                + "   \n"
+//                + " $m1 := LogMetric(vnfd_id !=null) from entry-point \"MonitoringStream\"  \n"
+//                + " $m2 := ElasticityAction (vnf_name==$m1.vnf_name)\n"
+//                + " then\n"
+//                + " $m2.setVnfd_id($m1.getVnfd_id());\n"
+//                + " $m2.setVim_id($m1.getVim_id());\n"
+//                + " update($m2);\n"
+//                + "end";
         System.out.println(created_rules);
         return created_rules;
 
