@@ -330,6 +330,9 @@ public class RulesEngineService {
         String factSessionName = "RulesEngineSession_gsg" + logMetric.getNsrid().replaceAll("-", "");
         KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
 
+        
+        String clean_nsr_id = logMetric.getNsrid().substring(1);
+        logMetric.setNsrid(clean_nsr_id);
         System.out.println("Ιnsert logmetric fact: " + logMetric.toString());
 
         //kieSession.insert(logMetric);
@@ -605,7 +608,7 @@ public class RulesEngineService {
             for (eu.tng.policymanager.repository.Action ruleaction : ruleactions) {
                 String action_object = ruleaction.getAction_object();
 
-                rhs_actions += "insertLogical( new " + action_object + "(\"" + nsrid + "\",\"" + ruleaction.getTarget() + "\","
+                rhs_actions += "insertLogical( new " + action_object + "($m1.getNsrid(),\"" + ruleaction.getTarget() + "\","
                         + ruleaction.getAction_type() + "." + ruleaction.getName() + ",\"" + ruleaction.getValue() + "\",$m1.getVnfd_id(),$m1.getVim_id(),Status.not_send)); \n";
 
             }
