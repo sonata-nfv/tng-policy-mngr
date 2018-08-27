@@ -331,8 +331,8 @@ public class RulesEngineService {
         KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
 
         
-        String clean_nsr_id = logMetric.getNsrid().substring(1);
-        logMetric.setNsrid(clean_nsr_id);
+        //String clean_nsr_id = logMetric.getNsrid().substring(1);
+        //logMetric.setNsrid(clean_nsr_id);
         System.out.println("Ιnsert logmetric fact: " + logMetric.toString());
 
         //kieSession.insert(logMetric);
