@@ -209,13 +209,13 @@ public class RulesEngineService {
                         elasticity_action_msg.put("service_instance_id", doactionsubclass.getService_instance_id());
                         elasticity_action_msg.put("value", doactionsubclass.getValue());
 
-                        JSONArray constraints = new JSONArray();
-                        JSONObject constraint = new JSONObject();
-                        constraint.put("vim_id", doactionsubclass.getVim_id());
-                        constraints.put(constraint);
+                        //JSONArray constraints = new JSONArray();
+                        ///HashMap constraint = new HashMap();
+                        //constraint.put("vim_id", doactionsubclass.getVim_id());
+                        //constraints.put(constraint);
 
-                        elasticity_action_msg.put("constraints", constraints);
-                        //template.convertAndSend(queue.getName(), elasticity_action_msg);
+                        //elasticity_action_msg.put("constraints", constraints);
+                        
 
                         String elasticity_action_msg_as_yml = Util.jsonToYaml(elasticity_action_msg);
 
@@ -318,7 +318,7 @@ public class RulesEngineService {
 
     public void createLogFact(LogMetric logMetric) {
 
-        String factKnowledgebase = "GSGKnowledgeBase_gsg" + logMetric.getNsrid();
+        String factKnowledgebase = "GSGKnowledgeBase_gsg" + logMetric.getNsrid().replaceAll("-", "");
 
         Collection<String> kiebases = kieContainer.getKieBaseNames();
 
@@ -327,7 +327,7 @@ public class RulesEngineService {
             return;
         }
 
-        String factSessionName = "RulesEngineSession_gsg" + logMetric.getNsrid();
+        String factSessionName = "RulesEngineSession_gsg" + logMetric.getNsrid().replaceAll("-", "");
         KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
 
         System.out.println("Ιnsert logmetric fact: " + logMetric.toString());
