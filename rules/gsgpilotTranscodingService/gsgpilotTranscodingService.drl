@@ -11,13 +11,13 @@ declare  MonitoredComponent
 end
 
 declare  LogMetric 
-    @expires( 2m )
+    @expires( 5s )
     @role( event )
 
 end
 
 declare  ElasticityAction 
-    @expires( 2m )
+    @expires( 5s )
     @role( event )
 
 end
@@ -26,11 +26,13 @@ end
 
 rule "scaleOutAlert"
 when
-    LogMetric(vnf_name=="vnf1" && value== "mon_rule_vm_cpu_perc" ) from entry-point "MonitoringStream" 
+ $m1 := LogMetric(vnf_name=="vnf1" && value== "mon_rule_vm_cpu_perc" ) from entry-point "MonitoringStream" 
 then
-    insertLogical( new ElasticityAction("s438920483","squid-vnf",ScalingType.addvnf,"1",Status.not_send));
+    insertLogical( new ElasticityAction("s438920483","squid-vnf",ScalingType.addvnf,"1",$m1.getVnfd_id(),$m1.getVim_id(),Status.not_send));
     System.out.println("insert test elasticity action");
 end
+
+
 
 
 rule "scaleOutAlertOld"
@@ -74,17 +76,6 @@ then
     //insertLogical( new Action("pilotTranscodingService","vnf1",RuleActionType.LifecycleManagement,"200","restart")); 
     //insertLogical( new Action("pilotTranscodingService","vnf1",RuleActionType.Profile,"Green","setProfile")); 
 
-end
-
-rule "ElasticityRuleHelper"
-when
-   
- $m1 := LogMetric(vnfd_id !=null) from entry-point "MonitoringStream" 
- $m2 := ElasticityAction ()
- then
- $m2.setVnfd_id($m1.getVnfd_id());
- $m2.setVim_id($m1.getVim_id());
- update($m2);
 end
 
 rule "ElasticityRuleHelperTest"

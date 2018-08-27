@@ -18,13 +18,22 @@ public class ElasticityAction extends Action {
     String vnfd_id;
     String vim_id;
     ScalingType scaling_type;
-    
 
     public ElasticityAction(String service_instance_id, String vnf_name, ScalingType scaling_type, String value, Status status) {
         this.service_instance_id = service_instance_id;
         this.vnf_name = vnf_name;
         this.scaling_type = scaling_type;
         this.value = value;
+        this.status = status;
+    }
+
+    public ElasticityAction(String service_instance_id, String vnf_name, ScalingType scaling_type, String value, String vnfd_id, String vim_id, Status status) {
+        this.service_instance_id = service_instance_id;
+        this.vnf_name = vnf_name;
+        this.scaling_type = scaling_type;
+        this.value = value;
+        this.vnfd_id = vnfd_id;
+        this.vim_id = vim_id;
         this.status = status;
     }
 
