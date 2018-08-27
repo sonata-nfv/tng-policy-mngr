@@ -111,7 +111,8 @@ public class MonitoringListener {
 
                     String vim_id = vnfc_instance.getString("vim_id");
 
-                    LogMetric logMetric = new LogMetric("s" + gnsid.replaceAll("-", ""), vnf_name, alertname, vnfd_id, vim_id);
+                    //LogMetric logMetric = new LogMetric("s" + gnsid.replaceAll("-", ""), vnf_name, alertname, vnfd_id, vim_id);
+                    LogMetric logMetric = new LogMetric("s" + gnsid, vnf_name, alertname, vnfd_id, vim_id);
 
                     logger.info("create log fact " + logMetric.toString());
                     rulesEngineService.createLogFact(logMetric);
