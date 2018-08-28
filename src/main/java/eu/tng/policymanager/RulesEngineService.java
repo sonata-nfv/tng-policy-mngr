@@ -204,7 +204,8 @@ public class RulesEngineService {
                         String correlation_id = doactionsubclass.getCorrelation_id();
 
                         elasticity_action_msg.put("vnf_name", doactionsubclass.getVnf_name());
-                        elasticity_action_msg.put("vnfd_id", doactionsubclass.getVnfd_id());
+                        elasticity_action_msg.put("vnfd_id", doactionsubclass.getVnf_name());
+                        //elasticity_action_msg.put("vnfd_id", doactionsubclass.getVnfd_id());
                         elasticity_action_msg.put("scaling_type", doactionsubclass.getScaling_type());
                         elasticity_action_msg.put("service_instance_id", doactionsubclass.getService_instance_id());
                         elasticity_action_msg.put("value", doactionsubclass.getValue());
