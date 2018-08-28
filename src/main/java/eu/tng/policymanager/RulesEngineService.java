@@ -608,8 +608,10 @@ public class RulesEngineService {
             for (eu.tng.policymanager.repository.Action ruleaction : ruleactions) {
                 String action_object = ruleaction.getAction_object();
 
+//                rhs_actions += "insertLogical( new " + action_object + "($m1.getNsrid(),\"" + ruleaction.getTarget() + "\","
+//                        + ruleaction.getAction_type() + "." + ruleaction.getName() + ",\"" + ruleaction.getValue() + "\",$m1.getVnfd_id(),$m1.getVim_id(),Status.not_send)); \n";
                 rhs_actions += "insertLogical( new " + action_object + "($m1.getNsrid(),\"" + ruleaction.getTarget() + "\","
-                        + ruleaction.getAction_type() + "." + ruleaction.getName() + ",\"" + ruleaction.getValue() + "\",$m1.getVnfd_id(),$m1.getVim_id(),Status.not_send)); \n";
+                        + ruleaction.getAction_type() + "." + ruleaction.getName() + ",\"" + ruleaction.getValue() + "\",\"" + ruleaction.getTarget() + "\",$m1.getVim_id(),Status.not_send)); \n";
 
             }
             droolrule.rhs(rhs_actions);
