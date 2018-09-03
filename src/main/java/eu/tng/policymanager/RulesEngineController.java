@@ -93,6 +93,9 @@ public class RulesEngineController {
     @Autowired
     RulesEngineService rulesEngineService;
 
+    @Autowired
+    CataloguesConnector cataloguesConnector;
+
     @Value("${tng.cat.policies}")
     private String policies_url;
 
@@ -124,29 +127,32 @@ public class RulesEngineController {
     @Autowired
     private TopicExchange exchange;
 
-//    @RequestMapping(value = "/newMonitoringMessage", method = RequestMethod.POST)
-//    public boolean newMonitoringMessage(@RequestBody MonitoringMessageTO tobject) {
-//        rulesEngineService.createFact(tobject);
-//        return true;
-//    }
     //usefull for testing drools
-    @RequestMapping(value = "/newLogMetric", method = RequestMethod.GET)
-    public boolean newMonitoringMessage() {
+    @RequestMapping(value = "/newLogMetric", method = RequestMethod.POST)
+    public boolean newMonitoringMessage(@RequestBody String tobject) {
         //test log metric expiration
-        LogMetric logMetric1 = new LogMetric("pilotTranscodingService", "vnf1", "mon_rule_vm_cpu_perc", "123", "456");
+        JSONObject request = new JSONObject(tobject);
+        //LogMetric logMetric1 = new LogMetric("pilotTranscodingService", "vnf1", "mon_rule_vm_cpu_perc", "123", "456");
+        LogMetric logMetric1 = new LogMetric(request.getString("nsrid"), 
+                request.getString("vnf_name"), 
+                request.getString("value"), 
+                request.getString("vnfd_id"), 
+                request.getString("vim_id"));
+        
         log.info("create log fact " + logMetric1.toString());
         rulesEngineService.createLogFact(logMetric1);
         //end of test
         return true;
     }
 
+    //usefull for rabbitmq message format
     @RequestMapping(value = "/newElasticityAction", method = RequestMethod.GET)
     public boolean generateElasticityAction() {
 
         log.info("createAMockUpAction");
         RecommendedAction recommendedAction = new RecommendedAction();
 
-        ElasticityAction doactionsubclass = new ElasticityAction("nsr_abcd", "vnf_name_squid-vnf","eu.tango","0.1", ScalingType.addvnf, "value_1", Status.send);
+        ElasticityAction doactionsubclass = new ElasticityAction("nsr_abcd", "vnf_name_squid-vnf", "eu.tango", "0.1", ScalingType.addvnf, "value_1","random", Status.send);
 
         recommendedAction.setAction(doactionsubclass);
         recommendedAction.setInDateTime(new Date());
@@ -154,7 +160,7 @@ public class RulesEngineController {
         recommendedActionRepository.save(recommendedAction);
 
         RecommendedAction recommendedAction1 = new RecommendedAction();
-        ElasticityAction doactionsubclass1 = new ElasticityAction("nsr_efg", "vnf_name_squid-vnf","eu.tango","0.1", ScalingType.addvnf, "value_1", Status.send);
+        ElasticityAction doactionsubclass1 = new ElasticityAction("nsr_efg", "vnf_name_squid-vnf", "eu.tango", "0.1", ScalingType.addvnf, "value_1","random", Status.send);
 
         recommendedAction1.setAction(doactionsubclass1);
         recommendedAction1.setInDateTime(new Date());
@@ -163,8 +169,8 @@ public class RulesEngineController {
 
         return true;
     }
-//usefull for testing scale out action
 
+    //usefull for testing scale out action
     @RequestMapping(value = "/scale_out", method = RequestMethod.POST)
     public boolean generateScaleoutAction(@RequestBody String tobject
     ) {
@@ -445,12 +451,12 @@ public class RulesEngineController {
     ) {
         PolicyRestResponse response;
 
-        if (!this.checkifPolicyDescriptorExists(policy_uuid)) {
+        if (!cataloguesConnector.checkifPolicyDescriptorExists(policy_uuid)) {
             response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.POLICY_NOT_EXISTS, null);
             return buildResponseEntity(response, HttpStatus.NOT_FOUND);
         }
-        
-        if (!this.checkifNSDescriptorExists(tobject.getNsid())) {
+
+        if (!cataloguesConnector.checkifNSDescriptorExists(tobject.getNsid())) {
             response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.NS_NOT_EXISTS, null);
             return buildResponseEntity(response, HttpStatus.NOT_FOUND);
         }
@@ -501,12 +507,12 @@ public class RulesEngineController {
     public ResponseEntity bindRuntimePolicyWithSla(@RequestBody RuntimePolicy tobject, @PathVariable("policy_uuid") String policy_uuid
     ) {
         PolicyRestResponse response;
-        if (!this.checkifPolicyDescriptorExists(policy_uuid)) {
+        if (!cataloguesConnector.checkifPolicyDescriptorExists(policy_uuid)) {
             response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.POLICY_NOT_EXISTS, null);
             return buildResponseEntity(response, HttpStatus.NOT_FOUND);
         }
 
-        if (tobject.getSlaid() != null && !this.checkifSlaDescriptorExists(tobject.getSlaid())) {
+        if (tobject.getSlaid() != null && !cataloguesConnector.checkifSlaDescriptorExists(tobject.getSlaid())) {
             response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.SLA_NOT_EXISTS, null);
             return buildResponseEntity(response, HttpStatus.NOT_FOUND);
         }
@@ -526,7 +532,7 @@ public class RulesEngineController {
         if (tobject.getNsid() == null) {
             response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.MISSING_PARAMETER, null);
             return buildResponseEntity(response, HttpStatus.PARTIAL_CONTENT);
-        } else if (!this.checkifNSDescriptorExists(tobject.getNsid())) {
+        } else if (!cataloguesConnector.checkifNSDescriptorExists(tobject.getNsid())) {
             response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.NS_NOT_EXISTS, null);
             return buildResponseEntity(response, HttpStatus.NOT_FOUND);
         }
@@ -613,6 +619,34 @@ public class RulesEngineController {
     }
 
     //deactivate an enforced policy
+    @RequestMapping(value = "/activate/{nsr_id}/{runtimepolicy_id}", method = RequestMethod.GET)
+    public boolean activate(@PathVariable("nsr_id") String nsr_id, @PathVariable("runtimepolicy_id") String runtimepolicy_id) {
+
+        //1. Fech yml file from catalogues
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> response;
+        try {
+            response = restTemplate.exchange(policies_url + "/" + runtimepolicy_id, HttpMethod.GET, entity, String.class);
+        } catch (HttpClientErrorException e) {
+            log.warn("{\"error\": \"The PLD ID " + runtimepolicy_id + " does not exist at catalogues. Message : "
+                    + e.getMessage() + "\"}");
+            return false;
+        }
+
+        JSONObject policydescriptorRaw = new JSONObject(response.getBody());
+        log.info("response" + policydescriptorRaw.toString());
+
+        JSONObject pld = policydescriptorRaw.getJSONObject("pld");
+
+        String policyAsYaml = Util.jsonToYaml(pld);
+        rulesEngineService.addNewKnowledgebase(nsr_id, runtimepolicy_id, policyAsYaml);
+        return true;
+    }
+
+    //deactivate an enforced policy
     @RequestMapping(value = "/deactivate/{nsr_id}", method = RequestMethod.GET)
     public ResponseEntity deactivate(@PathVariable("nsr_id") String nsr_id
     ) {
@@ -636,51 +670,6 @@ public class RulesEngineController {
         responseHeaders.set("Content-Length", String.valueOf(responseAsString.length()));
         ResponseEntity responseEntity = new ResponseEntity(responseAsString, responseHeaders, httpstatus);
         return responseEntity;
-
-    }
-
-    private boolean checkifPolicyDescriptorExists(String policy_uuid) {
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        try {
-            restTemplate.exchange(policies_url + "/" + policy_uuid, HttpMethod.GET, entity, String.class);
-        } catch (HttpClientErrorException e) {
-            log.info("HttpClientErrorException " + e.getMessage());
-            return false;
-        }
-        return true;
-
-    }
-
-    private boolean checkifSlaDescriptorExists(String sla_uuid) {
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        try {
-            restTemplate.exchange(slas_url + "/" + sla_uuid, HttpMethod.GET, entity, String.class);
-        } catch (HttpClientErrorException e) {
-            log.info("HttpClientErrorException " + e.getMessage());
-            return false;
-        }
-        return true;
-
-    }
-
-    private boolean checkifNSDescriptorExists(String ns_uuid) {
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        try {
-            restTemplate.exchange(services_url + "/" + ns_uuid, HttpMethod.GET, entity, String.class);
-        } catch (HttpClientErrorException e) {
-            log.info("HttpClientErrorException " + e.getMessage());
-            return false;
-        }
-        return true;
 
     }
 

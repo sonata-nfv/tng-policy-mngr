@@ -34,6 +34,7 @@
 package eu.tng.policymanager;
 
 import com.google.gson.Gson;
+import eu.tng.policymanager.CataloguesConnector.VnfDoesNotExistException;
 import eu.tng.policymanager.facts.RuleActionType;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
 import eu.tng.policymanager.facts.action.Action;
@@ -150,6 +151,9 @@ public class RulesEngineService {
     private String vnfs_url;
 
     @Autowired
+    CataloguesConnector cataloguesConnector;
+
+    @Autowired
     public RulesEngineService(KieUtil kieUtil) {
         logger.info("Rule Engine Session initializing...");
         this.kieServices = KieServices.Factory.get();
@@ -217,9 +221,12 @@ public class RulesEngineService {
 
                         try {
                             //get vnf_id by vnf_name , vendor, version
-
-                            String vnfd_id = this.getVnfId(vnfs_url, doactionsubclass.getVnf_name(), doactionsubclass.getVendor(), doactionsubclass.getVersion());
+                            String vnfd_id = cataloguesConnector.getVnfId(vnfs_url, doactionsubclass.getVnf_name(), doactionsubclass.getVendor(), doactionsubclass.getVersion());
                             elasticity_action_msg.put("vnfd_id", vnfd_id);
+
+                            if (doactionsubclass.getCriterion().equalsIgnoreCase("random")) {
+                                cataloguesConnector.get_vnfr_id_to_remove(doactionsubclass.getNs_id(), vnfd_id);
+                            }
                         } catch (VnfDoesNotExistException ex) {
                             Logger.getLogger(RulesEngineService.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
                         }
@@ -631,6 +638,7 @@ public class RulesEngineService {
                         + "\"" + ruleaction.getTarget().getVersion() + "\","
                         + ruleaction.getAction_type() + "." + ruleaction.getName() + ","
                         + "\"" + ruleaction.getValue() + "\","
+                        + "\"" + ruleaction.getCriterion() + "\","
                         + "Status.not_send)); \n";
 
             }
@@ -767,40 +775,6 @@ public class RulesEngineService {
 
     }
 
-    String getVnfId(String vnfs_url, String name, String vendor, String version) throws VnfDoesNotExistException {
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        String vnfs_url_complete = vnfs_url
-                + "?name=" + name
-                + "&version=" + vendor
-                + "&vendor=" + version;
-
-        ResponseEntity<String> response1 = restTemplate.exchange(vnfs_url_complete, HttpMethod.GET, entity, String.class);
-
-        logger.log(java.util.logging.Level.INFO, "invoke the {0}", vnfs_url_complete);
-
-        JSONArray vnfs = new JSONArray(response1.getBody());
-        if (vnfs.length() == 0) {
-            throw new VnfDoesNotExistException("Vnf with name:" + name + " vendor:" + vendor + " version:" + version + " does not exist at the catalogues");
-        }
-
-        String ns_uuid = vnfs.getJSONObject(0).getString("uuid");
-        return ns_uuid;
-    }
-
-    class VnfDoesNotExistException extends Exception {
-
-        // Parameterless Constructor
-        public VnfDoesNotExistException() {
-        }
-
-        // Constructor that accepts a message
-        public VnfDoesNotExistException(String message) {
-            super(message);
-        }
-    }
 
 }//EoC
