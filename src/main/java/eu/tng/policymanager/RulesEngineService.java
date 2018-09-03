@@ -43,6 +43,7 @@ import eu.tng.policymanager.facts.LogMetric;
 import eu.tng.policymanager.facts.MonitoredComponent;
 import eu.tng.policymanager.facts.action.ElasticityAction;
 import eu.tng.policymanager.facts.action.NetworkManagementAction;
+import eu.tng.policymanager.facts.enums.ScalingType;
 import eu.tng.policymanager.facts.enums.Status;
 import eu.tng.policymanager.repository.PolicyRule;
 import eu.tng.policymanager.rules.generation.KieUtil;
@@ -224,9 +225,11 @@ public class RulesEngineService {
                             String vnfd_id = cataloguesConnector.getVnfId(vnfs_url, doactionsubclass.getVnf_name(), doactionsubclass.getVendor(), doactionsubclass.getVersion());
                             elasticity_action_msg.put("vnfd_id", vnfd_id);
 
-                            if (doactionsubclass.getCriterion().equalsIgnoreCase("random")) {
-                                cataloguesConnector.get_vnfr_id_to_remove(doactionsubclass.getNs_id(), vnfd_id);
+                            if (doactionsubclass.getScaling_type().equals(ScalingType.removevnf) && doactionsubclass.getCriterion().equalsIgnoreCase("random")) {
+                                String vnfr_id = cataloguesConnector.get_vnfr_id_to_remove(doactionsubclass.getNs_id(), vnfd_id);
+                                elasticity_action_msg.put("vnfr_id", vnfr_id);
                             }
+                            
                         } catch (VnfDoesNotExistException ex) {
                             Logger.getLogger(RulesEngineService.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
                         }
@@ -774,7 +777,5 @@ public class RulesEngineService {
         }
 
     }
-
-
 
 }//EoC
