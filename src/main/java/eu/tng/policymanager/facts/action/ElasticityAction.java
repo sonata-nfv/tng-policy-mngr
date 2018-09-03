@@ -17,18 +17,20 @@ public class ElasticityAction extends Action {
     String vnf_name;
     String vendor;
     String version;
+    String criterion;
 
     String vnfd_id;
     String vim_id;
     ScalingType scaling_type;
 
-    public ElasticityAction(String service_instance_id, String vnf_name, String vendor, String version, ScalingType scaling_type, String value, Status status) {
+    public ElasticityAction(String service_instance_id, String vnf_name, String vendor, String version, ScalingType scaling_type, String value, String criterion, Status status) {
         this.service_instance_id = service_instance_id;
         this.vnf_name = vnf_name;
         this.vendor = vendor;
         this.version = version;
         this.scaling_type = scaling_type;
         this.value = value;
+        this.criterion = criterion;
         this.status = status;
     }
 
@@ -54,6 +56,14 @@ public class ElasticityAction extends Action {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public String getCriterion() {
+        return criterion;
+    }
+
+    public void setCriterion(String criterion) {
+        this.criterion = criterion;
     }
 
     public ScalingType getScaling_type() {
@@ -89,6 +99,7 @@ public class ElasticityAction extends Action {
                 + ", service_instance_id=" + service_instance_id
                 + ", vnfd_id=" + vnfd_id
                 + ", vim_id=" + vim_id
+                + ", criterion=" + criterion
                 + ", scaling_type=\"" + scaling_type + "\"}";
     }
 
@@ -109,6 +120,7 @@ public class ElasticityAction extends Action {
                 //&& this.vnfd_id.equals(that.vnfd_id)
                 //&& this.vim_id.equals(that.vim_id)
                 && this.scaling_type.equals(that.scaling_type)
+                && this.criterion.equals(that.criterion)
                 && this.status.equals(that.status);
     }
 

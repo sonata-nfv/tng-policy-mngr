@@ -179,8 +179,6 @@ public class DeployedNSListener {
                             return;
                         }
 
-                        //File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + runtimepolicy.get().getPolicyid() + ".yml");
-                        //logger.info("get file from - " + current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + runtimepolicy.get().getPolicyid() + ".yml");
                         JSONObject policydescriptorRaw = new JSONObject(response.getBody());
                         logger.info("response" + policydescriptorRaw.toString());
 

@@ -35,7 +35,6 @@ package eu.tng.policymanager;
 
 import eu.tng.policymanager.Messaging.DeployedNSListener;
 import eu.tng.policymanager.Messaging.MonitoringListener;
-import eu.tng.policymanager.Messaging.RuntimeActionsListener;
 import eu.tng.policymanager.config.DroolsConfig;
 import eu.tng.policymanager.repository.PolicyYamlFile;
 
@@ -109,6 +108,11 @@ public class RulesEngineApp {
     }
 
     @Bean
+    public CataloguesConnector cataloguesConnector() {
+        return new CataloguesConnector();
+    }
+
+    @Bean
     TopicExchange exchange() {
         return new TopicExchange("son-kernel", false, false);
     }
@@ -119,7 +123,6 @@ public class RulesEngineApp {
     }
 
     // Configure connection with rabbit mq for NS runtime Actions Queue
-
     @Bean
     public Queue runtimeActionsQueue() {
         return new Queue(RUNTIME_ACTIONS_QUEUE);
@@ -149,9 +152,7 @@ public class RulesEngineApp {
 //        container.setMessageListener(listenerAdapter);
 //        return container;
 //    }
-
     // Configure connection with rabbit mq for prometheus alerts Queue
-
     @Bean
     public Queue monitoringAlerts() {
         return new Queue(MONITORING_QUEUE, false);
@@ -183,7 +184,6 @@ public class RulesEngineApp {
     }
 
     // Configure connection with rabbit mq for NS instantiatin Queue
-
     @Bean
     public Queue nsInstantiationQueue() {
         return new Queue(NS_INSTATIATION_QUEUE, false);
