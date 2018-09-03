@@ -146,7 +146,7 @@ public class RulesEngineController {
         log.info("createAMockUpAction");
         RecommendedAction recommendedAction = new RecommendedAction();
 
-        ElasticityAction doactionsubclass = new ElasticityAction("nsr_abcd", "vnf_name_squid-vnf", ScalingType.addvnf, "value_1", Status.send);
+        ElasticityAction doactionsubclass = new ElasticityAction("nsr_abcd", "vnf_name_squid-vnf","eu.tango","0.1", ScalingType.addvnf, "value_1", Status.send);
 
         recommendedAction.setAction(doactionsubclass);
         recommendedAction.setInDateTime(new Date());
@@ -154,7 +154,7 @@ public class RulesEngineController {
         recommendedActionRepository.save(recommendedAction);
 
         RecommendedAction recommendedAction1 = new RecommendedAction();
-        ElasticityAction doactionsubclass1 = new ElasticityAction("nsr_efg", "vnf_name_squid-vnf", ScalingType.addvnf, "value_1", Status.send);
+        ElasticityAction doactionsubclass1 = new ElasticityAction("nsr_efg", "vnf_name_squid-vnf","eu.tango","0.1", ScalingType.addvnf, "value_1", Status.send);
 
         recommendedAction1.setAction(doactionsubclass1);
         recommendedAction1.setInDateTime(new Date());

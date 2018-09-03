@@ -28,7 +28,10 @@ public class Action {
     private String value;
 
     @JsonProperty
-    private String target;
+    private String criterion;
+
+    @JsonProperty
+    private Target target;
 
     public String getAction_object() {
         return action_object;
@@ -62,11 +65,19 @@ public class Action {
         this.value = value;
     }
 
-    public String getTarget() {
+    public String getCriterion() {
+        return criterion;
+    }
+
+    public void setCriterion(String criterion) {
+        this.criterion = criterion;
+    }
+    
+    public Target getTarget() {
         return target;
     }
 
-    public void setTarget(String target) {
+    public void setTarget(Target target) {
         this.target = target;
     }
 
