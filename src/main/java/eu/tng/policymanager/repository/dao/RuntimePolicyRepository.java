@@ -6,6 +6,7 @@
 package eu.tng.policymanager.repository.dao;
 
 import eu.tng.policymanager.repository.domain.RuntimePolicy;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
@@ -21,6 +22,6 @@ public interface RuntimePolicyRepository extends MongoRepository<RuntimePolicy, 
 
     Optional<RuntimePolicy> findBySlaid(String slaid);
 
-    Optional<RuntimePolicy> findBySlaidAndNsid(String slaid, String nsid);
+    List<RuntimePolicy> findBySlaidAndNsid(String slaid, String nsid);
 
 }

@@ -542,9 +542,9 @@ public class RulesEngineController {
         rp.setNsid(tobject.getNsid());
         rp.setSlaid(tobject.getSlaid());
 
-        Optional<RuntimePolicy> existing_runtimepolicy = runtimePolicyRepository.findBySlaidAndNsid(tobject.getSlaid(), tobject.getNsid());
+        List<RuntimePolicy> existing_runtimepolicy_list = runtimePolicyRepository.findBySlaidAndNsid(tobject.getSlaid(), tobject.getNsid());
 
-        if (existing_runtimepolicy.isPresent() && existing_runtimepolicy.get().getSlaid() != null) {
+        if (existing_runtimepolicy_list.size()>0 && existing_runtimepolicy_list.get(0).getSlaid() != null) {
             response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ALREADY_BINDED, "");
             log.info(Message.POLICY_ALREADY_BINDED);
         } else {
