@@ -53,6 +53,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -133,12 +134,12 @@ public class RulesEngineController {
         //test log metric expiration
         JSONObject request = new JSONObject(tobject);
         //LogMetric logMetric1 = new LogMetric("pilotTranscodingService", "vnf1", "mon_rule_vm_cpu_perc", "123", "456");
-        LogMetric logMetric1 = new LogMetric(request.getString("nsrid"), 
-                request.getString("vnf_name"), 
-                request.getString("value"), 
-                request.getString("vnfd_id"), 
+        LogMetric logMetric1 = new LogMetric(request.getString("nsrid"),
+                request.getString("vnf_name"),
+                request.getString("value"),
+                request.getString("vnfd_id"),
                 request.getString("vim_id"));
-        
+
         log.info("create log fact " + logMetric1.toString());
         rulesEngineService.createLogFact(logMetric1);
         //end of test
@@ -152,7 +153,7 @@ public class RulesEngineController {
         log.info("createAMockUpAction");
         RecommendedAction recommendedAction = new RecommendedAction();
 
-        ElasticityAction doactionsubclass = new ElasticityAction("nsr_abcd", "vnf_name_squid-vnf", "eu.tango", "0.1", ScalingType.addvnf, "value_1","random", Status.send);
+        ElasticityAction doactionsubclass = new ElasticityAction("nsr_abcd", "vnf_name_squid-vnf", "eu.tango", "0.1", ScalingType.addvnf, "value_1", "random", Status.send);
 
         recommendedAction.setAction(doactionsubclass);
         recommendedAction.setInDateTime(new Date());
@@ -160,7 +161,7 @@ public class RulesEngineController {
         recommendedActionRepository.save(recommendedAction);
 
         RecommendedAction recommendedAction1 = new RecommendedAction();
-        ElasticityAction doactionsubclass1 = new ElasticityAction("nsr_efg", "vnf_name_squid-vnf", "eu.tango", "0.1", ScalingType.addvnf, "value_1","random", Status.send);
+        ElasticityAction doactionsubclass1 = new ElasticityAction("nsr_efg", "vnf_name_squid-vnf", "eu.tango", "0.1", ScalingType.addvnf, "value_1", "random", Status.send);
 
         recommendedAction1.setAction(doactionsubclass1);
         recommendedAction1.setInDateTime(new Date());
@@ -219,7 +220,7 @@ public class RulesEngineController {
 
     //GET a list of all runtime policies. Accept as query parameter the ns_uuid
     @RequestMapping(value = "", method = RequestMethod.GET)
-    public String listPolicies(@RequestParam Map<String, String> queryParameters
+    public ResponseEntity listPolicies(@RequestParam Map<String, String> queryParameters
     ) {
 
         if (queryParameters.containsKey("ns_uuid")) {
@@ -256,7 +257,8 @@ public class RulesEngineController {
             }
 
         }
-        return policieslist_toreturn.toString();
+        return new ResponseEntity(policieslist_toreturn.toString(), headers, HttpStatus.OK);
+        //return policieslist_toreturn.toString();
     }
 
     //TODO: clean java headers!!!!!!!!!!!!!!!
@@ -573,6 +575,7 @@ public class RulesEngineController {
 
         String policy = placementpolicy_object.getString("policy");
         placementpolicy_tosave.setPolicy(policy);
+        placementpolicy_tosave.setUuid(UUID.randomUUID());
 
         if (placementpolicy_object.has("datacenters")) {
             JSONArray datacenters = placementpolicy_object.getJSONArray("datacenters");
@@ -589,22 +592,34 @@ public class RulesEngineController {
         PlacementPolicy placementpolicy = placementPolicyRepository.save(placementpolicy_tosave);
         String responseAsString = gson.toJson(placementpolicy);
         responseHeaders.set("Content-Length", String.valueOf(responseAsString.length()));
-        ResponseEntity responseEntity = new ResponseEntity(placementpolicy, responseHeaders, HttpStatus.OK);
+        responseHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+        JSONObject placement_policy_to_send = new JSONObject(gson.toJson(placementpolicy));
+        placement_policy_to_send.remove("id");
+
+        ResponseEntity responseEntity = new ResponseEntity(placement_policy_to_send.toString(), responseHeaders, HttpStatus.OK);
         return responseEntity;
 
     }
 
     //GET a list of all placement policies
     @RequestMapping(value = "/placement", method = RequestMethod.GET)
-    public String listPlacementPolicies() {
+    public ResponseEntity listPlacementPolicies() {
         log.info("Fetch placement policy");
         List<PlacementPolicy> placementPolicies = placementPolicyRepository.findAll();
 
+        ResponseEntity responseEntity;
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.setContentType(MediaType.APPLICATION_JSON);
+
         if (placementPolicies.size() > 0) {
             Gson gson = new Gson();
-            return gson.toJson(placementPolicies.get(0));
+
+            JSONObject placement_policy = new JSONObject(gson.toJson(placementPolicies.get(0)));
+            placement_policy.remove("id");
+            return new ResponseEntity(placement_policy.toString(), responseHeaders, HttpStatus.OK);
         } else {
-            return new JSONObject().toString();
+            return new ResponseEntity(new JSONObject().toString(), responseHeaders, HttpStatus.OK);
         }
     }
 

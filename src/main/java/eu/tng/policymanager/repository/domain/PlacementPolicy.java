@@ -5,8 +5,7 @@
  */
 package eu.tng.policymanager.repository.domain;
 
-import java.util.ArrayList;
-import org.json.JSONArray;
+import java.util.UUID;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -19,6 +18,8 @@ public class PlacementPolicy {
 
     @Id
     private String id;
+
+    private UUID uuid;
 
     private String policy;
 
@@ -34,6 +35,14 @@ public class PlacementPolicy {
 
     public String getPolicy() {
         return policy;
+    }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
     }
 
     public void setPolicy(String policy) {
