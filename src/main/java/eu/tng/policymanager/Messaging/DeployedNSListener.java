@@ -140,7 +140,7 @@ public class DeployedNSListener {
                     logger.log(Level.INFO, "A new service is Deployed: {0}", deployedNSasYaml);
 
                     String nsr_id = newDeployedGraph.getJSONObject("nsr").getString("id");
-                    Optional<RuntimePolicy> runtimepolicy = null;
+                    RuntimePolicy runtimepolicy = null;
 
                     if (newDeployedGraph.has("sla_id")) {
 
@@ -149,21 +149,28 @@ public class DeployedNSListener {
                         if (!sla_id.equals(null)) {
 
                             logger.log(Level.INFO, "Check for policy  binded with SLA {0} and NS {1}", new Object[]{sla_id.toString(), ns_id});
-                            runtimepolicy = runtimePolicyRepository.findBySlaidAndNsid(sla_id.toString(), ns_id);
+
+                            List<RuntimePolicy> p_list = runtimePolicyRepository.findBySlaidAndNsid(sla_id.toString(), ns_id);
+
+                            if (p_list.size() > 0) {runtimepolicy = p_list.get(0);}
+
                         } else {
 
                             logger.log(Level.INFO, "Check for default policy for ns {0}", ns_id);
-                            runtimepolicy = runtimePolicyRepository.findByNsidAndDefaultPolicyTrue(ns_id);
+
+                            Optional<RuntimePolicy> plc = runtimePolicyRepository.findByNsidAndDefaultPolicyTrue(ns_id);
+                            if (plc.isPresent()) {runtimepolicy = plc.get();}
+
                         }
 
                     } else {
                         logger.log(Level.INFO, "Check for default policy for ns {0}", ns_id);
-                        runtimepolicy = runtimePolicyRepository.findByNsidAndDefaultPolicyTrue(ns_id);
+                        runtimepolicy = runtimePolicyRepository.findByNsidAndDefaultPolicyTrue(ns_id).get();
                     }
 
-                    if (runtimepolicy != null && runtimepolicy.isPresent()) {
+                    if (runtimepolicy != null) {
 
-                        String runtimepolicy_id = runtimepolicy.get().getPolicyid();
+                        String runtimepolicy_id = runtimepolicy.getPolicyid();
 
                         //1. Fech yml file from catalogues
                         RestTemplate restTemplate = new RestTemplate();
@@ -187,7 +194,7 @@ public class DeployedNSListener {
                         String policyAsYaml = Util.jsonToYaml(pld);
 
                         logger.log(Level.INFO, "Activate policy for NSR {0}", nsr_id);
-                        boolean is_enforcement_succesfull = rulesEngineService.addNewKnowledgebase("s" + nsr_id.replaceAll("-", ""), runtimepolicy.get().getPolicyid(), policyAsYaml);
+                        boolean is_enforcement_succesfull = rulesEngineService.addNewKnowledgebase("s" + nsr_id.replaceAll("-", ""), runtimepolicy.getPolicyid(), policyAsYaml);
 
                         if (is_enforcement_succesfull) {
 

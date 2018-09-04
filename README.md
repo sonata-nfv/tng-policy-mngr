@@ -34,7 +34,6 @@ tng-policy-mngr supports its own swagger endpoint at http://<ip_adress>/swagger-
 To contribute to the development of this 5GTANGO component, you may use the very same development workflow as for any other 5GTANGO Github project. That is, you have to fork the repository and create pull requests.
 
 ### Setup development environment
-
 ####  Built With (Dependencies)
 
 * Sonata Service Platform local installation (recommended) or vpn connection to SP environment 
