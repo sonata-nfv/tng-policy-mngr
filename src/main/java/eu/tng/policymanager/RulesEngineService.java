@@ -635,7 +635,7 @@ public class RulesEngineService {
 
 //                rhs_actions += "insertLogical( new " + action_object + "($m1.getNsrid(),\"" + ruleaction.getTarget() + "\","
 //                        + ruleaction.getAction_type() + "." + ruleaction.getName() + ",\"" + ruleaction.getValue() + "\",$m1.getVnfd_id(),$m1.getVim_id(),Status.not_send)); \n";
-                rhs_actions += "insertLogical( new " + action_object + "($m1.getNsrid(),"
+                rhs_actions += "insertLogical( new " + action_object + "($m0.getNsrid(),"
                         + "\"" + ruleaction.getTarget().getName() + "\","
                         + "\"" + ruleaction.getTarget().getVendor() + "\","
                         + "\"" + ruleaction.getTarget().getVersion() + "\","
