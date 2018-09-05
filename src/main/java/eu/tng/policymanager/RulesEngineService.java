@@ -224,7 +224,7 @@ public class RulesEngineService {
                             elasticity_action_msg.put("vnfd_id", vnfd_id);
 
                             if (doactionsubclass.getScaling_type().equals(ScalingType.removevnf) && doactionsubclass.getCriterion().equalsIgnoreCase("random")) {
-                                String vnfr_id = repositoryConnector.get_vnfr_id_to_remove_random(doactionsubclass.getNs_id(), vnfd_id);
+                                String vnfr_id = repositoryConnector.get_vnfr_id_to_remove_random(doactionsubclass.getService_instance_id(), vnfd_id);
                                 elasticity_action_msg.put("vnf_id", vnfr_id);
                             }
 
