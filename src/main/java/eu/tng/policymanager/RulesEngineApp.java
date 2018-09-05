@@ -113,6 +113,11 @@ public class RulesEngineApp {
     }
 
     @Bean
+    public RepositoryConnector repositoryConnector() {
+        return new RepositoryConnector();
+    }
+
+    @Bean
     TopicExchange exchange() {
         return new TopicExchange("son-kernel", false, false);
     }

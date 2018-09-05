@@ -5,6 +5,7 @@
  */
 package eu.tng.policymanager;
 
+import eu.tng.policymanager.Exceptions.VNFDoesNotExistException;
 import org.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,7 +83,7 @@ public class CataloguesConnector {
 
     }
 
-    String getVnfId(String vnfs_url, String name, String vendor, String version) throws VnfDoesNotExistException {
+    String getVnfId(String vnfs_url, String name, String vendor, String version) throws VNFDoesNotExistException {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -99,30 +100,13 @@ public class CataloguesConnector {
 
         JSONArray vnfs = new JSONArray(response1.getBody());
         if (vnfs.length() == 0) {
-            throw new VnfDoesNotExistException("Vnf with name:" + name + " vendor:" + vendor + " version:" + version + " does not exist at the catalogues");
+            throw new VNFDoesNotExistException("Vnf with name:" + name + " vendor:" + vendor + " version:" + version + " does not exist at the catalogues");
         }
 
         String ns_uuid = vnfs.getJSONObject(0).getString("uuid");
         return ns_uuid;
     }
 
-    String get_vnfr_id_to_remove(String nsrid, String vnfd_id) {
 
-         //to be implemented
-        return "123pigastinkiria";
-
-    }
-
-    class VnfDoesNotExistException extends Exception {
-
-        // Parameterless Constructor
-        public VnfDoesNotExistException() {
-        }
-
-        // Constructor that accepts a message
-        public VnfDoesNotExistException(String message) {
-            super(message);
-        }
-    }
 
 }
