@@ -52,18 +52,21 @@ docker-compose up --build -d
 Sample runtime policy descriptors can be found at [policy descriptor examples](https://github.com/sonata-nfv/tng-schema/tree/master/policy-descriptor/examples) based at [policy descriptor schema](https://github.com/sonata-nfv/tng-schema/blob/master/policy-descriptor/policy-schema.yml). Policy rules defined at policy descriptors are translated at drool rules. Following can be seen a drool rule example:
 
 ```
-rule "highTranscodingRateRule"
-when
-    (
-    $tot0 := java.lang.Double( $tot0 >=150 ) from accumulate(     
-    $m0 := MonitoredComponent( name== "transcodingNode" && metric== "transcondingRate" ) over window:time(1m)from entry-point "MonitoringStream" ,
-        average( $m0.getValue() )  ) and
-    $tot1 := java.lang.Double( $tot1 >=3 ) from accumulate(     
-    $m1 := MonitoredComponent( name== "transcodingNode" && metric== "queueSize" ) over window:time(1m)from entry-point "MonitoringStream" ,
-        average( $m1.getValue() )  ) ) 
+rule "ElasticityRuleScaleOut"
+when 
+	$m1 := LogMetric( vnf_name== "haproxy-vnf" && value== "mon_rule_vnf_haproxy-vnf_vdu_vdu01_haproxy_backend_sespsrv" ) from entry-point "MonitoringStream"  
 then
-    insertLogical( new Action("pilotTranscodingService","transcodingNode",RuleActionType.COMPONENT_LIFECYCLE_MANAGEMENT,"2","infrastracture-start")); 
+	insertLogical( new ElasticityAction($m1.getNsrid(),"squid-vnf","eu.5gtango","0.1",ScalingType.addvnf,"1","null",Status.not_send)); 
 
+end
+
+rule "ElasticityRuleScaleIn"
+when
+	(
+	$m1 := LogMetric( vnf_name== "haproxy-vnf" && value== "mon_rule1_vnf_haproxy-vnf_vdu_vdu01_haproxy_backend_sespsrv" ) from entry-point "MonitoringStream" and
+	$m1 := LogMetric( vnf_name== "haproxy-vnf" && value== "mon_rule_vnf_haproxy-vnf_vdu_vdu01_haproxy_backend_actsrvs" ) from entry-point "MonitoringStream" ) 
+then
+	insertLogical( new ElasticityAction($m1.getNsrid(),"squid-vnf","eu.5gtango","0.1",ScalingType.removevnf,"1","random",Status.not_send)); 
 end
 ```
 
