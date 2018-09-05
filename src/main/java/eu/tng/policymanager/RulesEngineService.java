@@ -34,7 +34,9 @@
 package eu.tng.policymanager;
 
 import com.google.gson.Gson;
-import eu.tng.policymanager.CataloguesConnector.VnfDoesNotExistException;
+import eu.tng.policymanager.Exceptions.NSDoesNotExistException;
+import eu.tng.policymanager.Exceptions.VNFDoesNotExistException;
+import eu.tng.policymanager.Exceptions.VNFRDoesNotExistException;
 import eu.tng.policymanager.facts.RuleActionType;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
 import eu.tng.policymanager.facts.action.Action;
@@ -79,7 +81,6 @@ import org.drools.compiler.lang.api.DescrFactory;
 import org.drools.compiler.lang.api.PackageDescrBuilder;
 import org.drools.compiler.lang.api.RuleDescrBuilder;
 import org.drools.compiler.lang.descr.AndDescr;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.kie.api.KieBase;
 import org.kie.api.KieServices;
@@ -105,13 +106,7 @@ import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.web.client.RestTemplate;
 
 @Service
 public class RulesEngineService {
@@ -153,6 +148,9 @@ public class RulesEngineService {
 
     @Autowired
     CataloguesConnector cataloguesConnector;
+
+    @Autowired
+    RepositoryConnector repositoryConnector;
 
     @Autowired
     public RulesEngineService(KieUtil kieUtil) {
@@ -226,11 +224,11 @@ public class RulesEngineService {
                             elasticity_action_msg.put("vnfd_id", vnfd_id);
 
                             if (doactionsubclass.getScaling_type().equals(ScalingType.removevnf) && doactionsubclass.getCriterion().equalsIgnoreCase("random")) {
-                                String vnfr_id = cataloguesConnector.get_vnfr_id_to_remove(doactionsubclass.getNs_id(), vnfd_id);
-                                elasticity_action_msg.put("vnfr_id", vnfr_id);
+                                String vnfr_id = repositoryConnector.get_vnfr_id_to_remove_random(doactionsubclass.getNs_id(), vnfd_id);
+                                elasticity_action_msg.put("vnf_id", vnfr_id);
                             }
-                            
-                        } catch (VnfDoesNotExistException ex) {
+
+                        } catch (VNFDoesNotExistException | NSDoesNotExistException | VNFRDoesNotExistException ex) {
                             Logger.getLogger(RulesEngineService.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
                         }
 
