@@ -71,7 +71,6 @@ end
 ```
 
 ### CI Integration
-
 All pull requests are automatically tested by Jenkins and will only be accepted if no test is broken.
 
 ### License
