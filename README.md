@@ -53,24 +53,20 @@ Sample runtime policy descriptors can be found at [policy descriptor examples](h
 
 ```
 rule "ElasticityRuleScaleOut"
-when
-    
-    $m1 := LogMetric( vnf_name== "haproxy-vnf" && value== "mon_rule_vnf_haproxy-vnf_vdu_vdu01_haproxy_backend_sespsrv" ) from entry-point "MonitoringStream"  
+when 
+	$m1 := LogMetric( vnf_name== "haproxy-vnf" && value== "mon_rule_vnf_haproxy-vnf_vdu_vdu01_haproxy_backend_sespsrv" ) from entry-point "MonitoringStream"  
 then
-insertLogical( new ElasticityAction($m1.getNsrid(),"squid-vnf","eu.5gtango","0.1",ScalingType.addvnf,"1","null",Status.not_send)); 
-
+	insertLogical( new ElasticityAction($m1.getNsrid(),"squid-vnf","eu.5gtango","0.1",ScalingType.addvnf,"1","null",Status.not_send)); 
 
 end
 
 rule "ElasticityRuleScaleIn"
 when
-    (
-    $m1 := LogMetric( vnf_name== "haproxy-vnf" && value== "mon_rule1_vnf_haproxy-vnf_vdu_vdu01_haproxy_backend_sespsrv" ) from entry-point "MonitoringStream" and
-    $m1 := LogMetric( vnf_name== "haproxy-vnf" && value== "mon_rule_vnf_haproxy-vnf_vdu_vdu01_haproxy_backend_actsrvs" ) from entry-point "MonitoringStream" ) 
+	(
+	$m1 := LogMetric( vnf_name== "haproxy-vnf" && value== "mon_rule1_vnf_haproxy-vnf_vdu_vdu01_haproxy_backend_sespsrv" ) from entry-point "MonitoringStream" and
+	$m1 := LogMetric( vnf_name== "haproxy-vnf" && value== "mon_rule_vnf_haproxy-vnf_vdu_vdu01_haproxy_backend_actsrvs" ) from entry-point "MonitoringStream" ) 
 then
-insertLogical( new ElasticityAction($m1.getNsrid(),"squid-vnf","eu.5gtango","0.1",ScalingType.removevnf,"1","random",Status.not_send)); 
-
-
+	insertLogical( new ElasticityAction($m1.getNsrid(),"squid-vnf","eu.5gtango","0.1",ScalingType.removevnf,"1","random",Status.not_send)); 
 end
 ```
 
