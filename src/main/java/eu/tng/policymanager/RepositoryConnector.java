@@ -71,7 +71,7 @@ public class RepositoryConnector {
 
             JSONObject vnfr = new JSONObject(vnfr_response.getBody());
 
-            if (vnfr.getString("descriptor_reference").equalsIgnoreCase(vnfd_id)) {
+            if (vnfr.getString("descriptor_reference").equalsIgnoreCase(vnfd_id) && vnfr.getString("status").equalsIgnoreCase("normal operation") ) {
 
                 log.info("vnfr to be removed is " + vnfr_id);
                 vnfr_id_found = true;
