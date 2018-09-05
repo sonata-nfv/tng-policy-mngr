@@ -115,7 +115,7 @@ public class RulesEngineService {
     private static final String rulesPackage = "rules";
     private static final String current_dir = System.getProperty("user.dir");
     ReleaseId releaseId = KieServices.Factory.get().newReleaseId("eu.tng", "policymanager", "1.0");
-    private static final String FACTS_EXPIRATION = "1m";
+    private static final String FACTS_EXPIRATION = "3m";
 
     private final KieServices kieServices;
     private final KieFileSystem kieFileSystem;
