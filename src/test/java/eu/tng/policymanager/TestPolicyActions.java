@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author Eleni Fotopoulou <efotopoulou@ubitech.eu>
  */
 //@RunWith(SpringJUnit4ClassRunner.class)
-
 //@SpringBootTest(classes = Application.class)
 //@WebAppConfiguration
 public class TestPolicyActions {
@@ -26,6 +25,21 @@ public class TestPolicyActions {
 
     @Autowired
     RecommendedActionRepository recommendedActionRepository;
+
+    //@Test
+    public void testStringSubSring() {
+        String nsr_id = "6a72ddc9-36e5-4055-8c58-d691b39d4cc6";
+
+        String rule_prefix = nsr_id.substring(0, Math.min(nsr_id.length(), 8));
+        String rule_name = rule_prefix + "_" + "haproxy-vnf:vdu01:haproxy_frontend_scur:less30".replace(":", "_").replace("-", "_");
+        System.out.println("rule_name "+rule_name);
+        
+        
+        String alertname = rule_name.substring(9);
+        
+         System.out.println("alertname "+alertname);
+        
+    }
 
     @Test
     public void createAMockUpAction() {

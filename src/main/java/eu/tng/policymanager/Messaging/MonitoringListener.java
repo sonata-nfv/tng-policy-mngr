@@ -78,7 +78,7 @@ public class MonitoringListener {
             if (monitoring_message.has("alertname")) {
 
                 String gnsid = monitoring_message.getString("serviceID");
-                String alertname = monitoring_message.getString("alertname");
+                String alertname = monitoring_message.getString("alertname").substring(9);
                 String vnfr_id = monitoring_message.getString("functionID");
 
                 //get info from tng-rep
