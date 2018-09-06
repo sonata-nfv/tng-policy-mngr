@@ -152,14 +152,18 @@ public class DeployedNSListener {
 
                             List<RuntimePolicy> p_list = runtimePolicyRepository.findBySlaidAndNsid(sla_id.toString(), ns_id);
 
-                            if (p_list.size() > 0) {runtimepolicy = p_list.get(0);}
+                            if (p_list.size() > 0) {
+                                runtimepolicy = p_list.get(0);
+                            }
 
                         } else {
 
                             logger.log(Level.INFO, "Check for default policy for ns {0}", ns_id);
 
                             Optional<RuntimePolicy> plc = runtimePolicyRepository.findByNsidAndDefaultPolicyTrue(ns_id);
-                            if (plc.isPresent()) {runtimepolicy = plc.get();}
+                            if (plc.isPresent()) {
+                                runtimepolicy = plc.get();
+                            }
 
                         }
 
@@ -262,8 +266,8 @@ public class DeployedNSListener {
                                             logger.info("MonitoringRule--> " + monitoringRule.toString());
 
                                             //Formatted like this : <vnf_name>:<vdu_id>-<record_id>
-                                            String policy_vdu_reference = monitoringRule.getName().split(":")[2]
-                                                    + ":" + monitoringRule.getName().split(":")[4]
+                                            String policy_vdu_reference = monitoringRule.getName().split(":")[0]
+                                                    + ":" + monitoringRule.getName().split(":")[1]
                                                     + "-" + vnfr_id;
 
                                             logger.info("policy_vdu_reference--> " + policy_vdu_reference);
@@ -273,9 +277,17 @@ public class DeployedNSListener {
 
                                                 JSONObject prometheus_rule = new JSONObject();
 
-                                                prometheus_rule.put("name", monitoringRule.getName().replace(":", "_").replace("-", "_"));
+                                                String rule_prefix = nsr_id.substring(0, Math.min(nsr_id.length(), 9));
+                                                String rule_name = rule_prefix + "_" + monitoringRule.getName().replace(":", "_").replace("-", "_");
 
-                                                logger.info("rule name-->" + monitoringRule.getName().replace(":", "_").replace("-", "_"));
+                                                if (rule_name.length() > 60) {
+                                                    logger.info("Monitoring rule name is too large.");
+                                                    rule_name = rule_name.substring(0, Math.min(rule_name.length(), 59));
+                                                }
+
+                                                prometheus_rule.put("name", rule_name);
+
+                                                logger.info("rule name-->" + rule_name);
 
                                                 prometheus_rule.put("duration", monitoringRule.getDuration() + monitoringRule.getDuration_unit());
                                                 prometheus_rule.put("description", monitoringRule.getDescription());
