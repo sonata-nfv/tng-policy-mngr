@@ -116,12 +116,12 @@ public class ElasticityAction extends Action {
                 && this.service_instance_id.equals(that.service_instance_id)
                 && this.vnf_name.equals(that.vnf_name)
                 && this.vendor.equals(that.vendor)
-                && this.version.equals(that.version)
+                && this.version.equals(that.version);
                 //&& this.vnfd_id.equals(that.vnfd_id)
                 //&& this.vim_id.equals(that.vim_id)
-                && this.scaling_type.equals(that.scaling_type)
-                && this.criterion.equals(that.criterion)
-                && this.status.equals(that.status);
+                //&& this.scaling_type.equals(that.scaling_type)
+                //&& this.criterion.equals(that.criterion)
+                //&& this.status.equals(that.status);
     }
 
     @Override
