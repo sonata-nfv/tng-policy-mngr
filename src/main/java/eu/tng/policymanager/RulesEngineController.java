@@ -121,8 +121,6 @@ public class RulesEngineController {
 //
 //    @Autowired
 //    private TopicExchange exchange;
-
-
     //GET healthcheck for runtime policies
     @RequestMapping(value = "/pings", method = RequestMethod.GET)
     public String pings() {
@@ -456,7 +454,7 @@ public class RulesEngineController {
 
         List<RuntimePolicy> existing_runtimepolicy_list = runtimePolicyRepository.findBySlaidAndNsid(tobject.getSlaid(), tobject.getNsid());
 
-        if (existing_runtimepolicy_list.size()>0 && existing_runtimepolicy_list.get(0).getSlaid() != null) {
+        if (existing_runtimepolicy_list.size() > 0 && existing_runtimepolicy_list.get(0).getSlaid() != null) {
             response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ALREADY_BINDED, "");
             log.info(Message.POLICY_ALREADY_BINDED);
         } else {
@@ -545,8 +543,6 @@ public class RulesEngineController {
         return gson.toJson(recommendedActions);
     }
 
-    
-
     //deactivate an enforced policy
     @RequestMapping(value = "/deactivate/{nsr_id}", method = RequestMethod.GET)
     public ResponseEntity deactivate(@PathVariable("nsr_id") String nsr_id
@@ -556,7 +552,10 @@ public class RulesEngineController {
 
         Optional<RuntimePolicyRecord> runtimePolicyRecord = runtimePolicyRecordRepository.findByNsrid(nsr_id);
 
-        runtimePolicyRecordRepository.delete(runtimePolicyRecord.get());
+        //todo : check if exists before delete
+        if (runtimePolicyRecord.isPresent()) {
+            runtimePolicyRecordRepository.delete(runtimePolicyRecord.get());
+        }
 
         PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DEACTIVATED, true);
         return buildResponseEntity(response, HttpStatus.OK);
