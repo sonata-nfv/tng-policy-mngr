@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.logging.Level;
 import org.springframework.stereotype.Component;
 import java.util.logging.Logger;
@@ -277,11 +278,11 @@ public class DeployedNSListener {
 
                                                 JSONObject prometheus_rule = new JSONObject();
 
-                                                String rule_prefix = nsr_id.substring(0, Math.min(nsr_id.length(), 9));
+                                                String rule_prefix = nsr_id.substring(0, Math.min(nsr_id.length(), 8));
                                                 String rule_name = rule_prefix + "_" + monitoringRule.getName().replace(":", "_").replace("-", "_");
 
                                                 if (rule_name.length() > 60) {
-                                                    logger.info("Monitoring rule name is too large.");
+                                                    logger.info("Monitoring rule name is too large.it must not be more than 50 characters");
                                                     rule_name = rule_name.substring(0, Math.min(rule_name.length(), 59));
                                                 }
 
