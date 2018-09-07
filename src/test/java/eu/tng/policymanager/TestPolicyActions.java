@@ -31,14 +31,13 @@ public class TestPolicyActions {
         String nsr_id = "6a72ddc9-36e5-4055-8c58-d691b39d4cc6";
 
         String rule_prefix = nsr_id.substring(0, Math.min(nsr_id.length(), 8));
-        String rule_name = rule_prefix + "_" + "haproxy-vnf:vdu01:haproxy_frontend_scur:less30".replace(":", "_").replace("-", "_");
-        System.out.println("rule_name "+rule_name);
-        
-        
-        String alertname = rule_name.substring(9);
-        
-         System.out.println("alertname "+alertname);
-        
+        String rule_name = "haproxy-vnf:vdu01:haproxy_frontend_scur:less30".replace(":", "_").replace("-", "_") + "_" + rule_prefix;
+        System.out.println("rule_name " + rule_name);
+
+        String alertname = rule_name.substring(0, rule_name.length() - 9);
+
+        System.out.println("alertname " + alertname);
+
     }
 
     @Test
