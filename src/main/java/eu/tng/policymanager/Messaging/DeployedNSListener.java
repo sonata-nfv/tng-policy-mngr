@@ -279,7 +279,7 @@ public class DeployedNSListener {
                                                 JSONObject prometheus_rule = new JSONObject();
 
                                                 String rule_prefix = nsr_id.substring(0, Math.min(nsr_id.length(), 8));
-                                                String rule_name = rule_prefix + "_" + monitoringRule.getName().replace(":", "_").replace("-", "_");
+                                                String rule_name = monitoringRule.getName().replace(":", "_").replace("-", "_") + "_" + rule_prefix;
 
                                                 if (rule_name.length() > 60) {
                                                     logger.info("Monitoring rule name is too large.it must not be more than 50 characters");
@@ -296,7 +296,7 @@ public class DeployedNSListener {
                                                 prometheus_rule.put("notification_type", new JSONObject("{\"id\": 2,\"type\":\"rabbitmq\"}"));
                                                 logger.info("monitoringRule condition " + monitoringRule.getCondition());
 
-                                                prometheus_rule.put("condition", monitoringRule.getCondition() + "{resource_id=\"" + vc_id + "\"}" + monitoringRule.getThreshold());
+                                                prometheus_rule.put("condition", monitoringRule.getCondition() + "{resource_id=\"" + vc_id + "\"} " + monitoringRule.getThreshold());
 
                                                 prometheus_rules.put(prometheus_rule);
                                             }
