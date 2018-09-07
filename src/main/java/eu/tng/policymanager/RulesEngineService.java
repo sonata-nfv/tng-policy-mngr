@@ -208,10 +208,6 @@ public class RulesEngineService {
                         recommendedAction.setAction(doactionsubclass);
                         recommendedAction.setInDateTime(new Date());
 
-                        RecommendedAction newRecommendedAction = recommendedActionRepository.save(recommendedAction);
-
-                        doactionsubclass.setCorrelation_id(newRecommendedAction.getCorrelation_id());
-
                         JSONObject elasticity_action_msg = new JSONObject();
 
                         String correlation_id = doactionsubclass.getCorrelation_id();
@@ -225,6 +221,10 @@ public class RulesEngineService {
 
                             if (doactionsubclass.getScaling_type().equals(ScalingType.removevnf) && doactionsubclass.getCriterion().equalsIgnoreCase("random")) {
                                 String vnfr_id = repositoryConnector.get_vnfr_id_to_remove_random(doactionsubclass.getService_instance_id(), vnfd_id);
+                                if (vnfr_id == null) {
+                                    logger.info("Elasticity action was prevented from been generated.");
+                                    return;
+                                }
                                 elasticity_action_msg.put("vnf_id", vnfr_id);
                             }
 
@@ -241,6 +241,9 @@ public class RulesEngineService {
                         //constraint.put("vim_id", doactionsubclass.getVim_id());
                         //constraints.put(constraint);
                         //elasticity_action_msg.put("constraints", constraints);
+                        RecommendedAction newRecommendedAction = recommendedActionRepository.save(recommendedAction);
+                        doactionsubclass.setCorrelation_id(newRecommendedAction.getCorrelation_id());
+
                         String elasticity_action_msg_as_yml = Util.jsonToYaml(elasticity_action_msg);
 
                         template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg_as_yml, m -> {
