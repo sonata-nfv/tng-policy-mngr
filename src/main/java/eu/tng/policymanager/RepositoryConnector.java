@@ -59,11 +59,13 @@ public class RepositoryConnector {
         JSONArray network_functions = vnf.getJSONArray("network_functions");
 
         boolean vnfr_id_found = false;
+        int num_of_vnfs = 0;
+        String vnfr_id_to_remove = null;
         for (int i = 0; i < network_functions.length(); i++) {
             JSONObject network_function = network_functions.getJSONObject(i);
-            String vnfr_id = network_function.getString("vnfr_id");
+            vnfr_id_to_remove = network_function.getString("vnfr_id");
 
-            String vnfr_request = "http://" + tng_rep + "/vnfrs/" + vnfr_id;
+            String vnfr_request = "http://" + tng_rep + "/vnfrs/" + vnfr_id_to_remove;
 
             ResponseEntity<String> vnfr_response = restTemplate.exchange(vnfr_request, HttpMethod.GET, entity, String.class);
 
@@ -71,11 +73,11 @@ public class RepositoryConnector {
 
             JSONObject vnfr = new JSONObject(vnfr_response.getBody());
 
-            if (vnfr.getString("descriptor_reference").equalsIgnoreCase(vnfd_id) && vnfr.getString("status").equalsIgnoreCase("normal operation") ) {
+            if (vnfr.getString("descriptor_reference").equalsIgnoreCase(vnfd_id) && vnfr.getString("status").equalsIgnoreCase("normal operation")) {
 
-                log.info("vnfr to be removed is " + vnfr_id);
+                log.info("vnfr to be removed is " + vnfr_id_to_remove);
                 vnfr_id_found = true;
-                return vnfr_id;
+                num_of_vnfs = num_of_vnfs + 1;
             }
 
         }
@@ -83,7 +85,12 @@ public class RepositoryConnector {
         if (vnfr_id_found == false) {
             throw new VNFRDoesNotExistException("Vnf with vnfd_id:" + vnfd_id + " not found for service :" + nsrid);
         }
-        return null;
+
+        if (num_of_vnfs < 2) {
+            return null;
+        } else {
+            return vnfr_id_to_remove;
+        }
 
     }
 
