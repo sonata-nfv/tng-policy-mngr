@@ -208,9 +208,12 @@ public class RulesEngineService {
                         recommendedAction.setAction(doactionsubclass);
                         recommendedAction.setInDateTime(new Date());
 
+                        
+                        
+
                         JSONObject elasticity_action_msg = new JSONObject();
 
-                        String correlation_id = doactionsubclass.getCorrelation_id();
+                       
 
                         elasticity_action_msg.put("vnf_name", doactionsubclass.getVnf_name());
 
@@ -241,9 +244,10 @@ public class RulesEngineService {
                         //constraint.put("vim_id", doactionsubclass.getVim_id());
                         //constraints.put(constraint);
                         //elasticity_action_msg.put("constraints", constraints);
+                        
                         RecommendedAction newRecommendedAction = recommendedActionRepository.save(recommendedAction);
                         doactionsubclass.setCorrelation_id(newRecommendedAction.getCorrelation_id());
-
+                        String correlation_id = doactionsubclass.getCorrelation_id();
                         String elasticity_action_msg_as_yml = Util.jsonToYaml(elasticity_action_msg);
 
                         template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg_as_yml, m -> {
