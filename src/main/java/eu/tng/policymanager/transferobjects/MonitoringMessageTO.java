@@ -5,7 +5,6 @@
  */
 package eu.tng.policymanager.transferobjects;
 
-
 import eu.tng.policymanager.facts.enums.MetricValueTypes;
 import eu.tng.policymanager.facts.enums.MonitoringTypes;
 import java.io.Serializable;
@@ -33,6 +32,11 @@ public class MonitoringMessageTO implements Serializable {
 
     //Grounded Service Graph ID
     private String gsgid;
+
+    private String nsrid;
+    private String vnf_id;
+    private String vnfd_id;
+    private String vim_id;
 
     //Grounded Component ID (id of neo4j entity)
     private Long gcid;
@@ -146,6 +150,38 @@ public class MonitoringMessageTO implements Serializable {
         this.nodeid = nodeid;
     }
 
+    public String getNsrid() {
+        return nsrid;
+    }
+
+    public void setNsrid(String nsrid) {
+        this.nsrid = nsrid;
+    }
+
+    public String getVnf_id() {
+        return vnf_id;
+    }
+
+    public void setVnf_id(String vnf_id) {
+        this.vnf_id = vnf_id;
+    }
+
+    public String getVnfd_id() {
+        return vnfd_id;
+    }
+
+    public void setVnfd_id(String vnfd_id) {
+        this.vnfd_id = vnfd_id;
+    }
+
+    public String getVim_id() {
+        return vim_id;
+    }
+
+    public void setVim_id(String vim_id) {
+        this.vim_id = vim_id;
+    }
+
     @Override
     public String toString() {
         return "MonitoringMessage{"
@@ -155,6 +191,10 @@ public class MonitoringMessageTO implements Serializable {
                 + ", metricValueType='" + metricValueType + '\''
                 + ", unixtimestamp=" + unixtimestamp
                 + ", gsgid='" + gsgid + '\''
+                + ", nsrid='" + nsrid + '\''
+                + ", vnf_id='" + vnf_id + '\''
+                + ", vnfd_id='" + vnfd_id + '\''
+                + ", vim_id='" + vim_id + '\''
                 + ", gcid=" + gcid
                 + ", cnid='" + cnid + '\''
                 + ", privateIP='" + privateIP + '\''

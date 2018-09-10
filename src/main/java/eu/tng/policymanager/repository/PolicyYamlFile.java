@@ -41,12 +41,23 @@ public class PolicyYamlFile {
     @JsonProperty
     private List<PolicyRule> policyRules;
 
-    public static PolicyYamlFile readYaml(final File file) {
+    public static PolicyYamlFile readYamlFile(final File file) {
         PolicyYamlFile policyYamlFile = null;
         final ObjectMapper mapper = new ObjectMapper(new YAMLFactory()); // jackson databind
         try {
 
             policyYamlFile = mapper.readValue(file, PolicyYamlFile.class);
+        } catch (IOException ex) {
+            Logger.getLogger(PolicyYamlFile.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return policyYamlFile;
+    }
+
+    public static PolicyYamlFile readYaml(String yamlfile) {
+        PolicyYamlFile policyYamlFile = null;
+        try {
+            final ObjectMapper mapper = new ObjectMapper(new YAMLFactory()); // jackson databind
+            policyYamlFile = mapper.readValue(yamlfile, PolicyYamlFile.class);
         } catch (IOException ex) {
             Logger.getLogger(PolicyYamlFile.class.getName()).log(Level.SEVERE, null, ex);
         }

@@ -6,6 +6,7 @@
 package eu.tng.policymanager.repository.dao;
 
 import eu.tng.policymanager.repository.domain.RecommendedAction;
+import java.util.Optional;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 /**
@@ -14,5 +15,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
  */
 public interface RecommendedActionRepository extends MongoRepository<RecommendedAction, String> {
 
-   
+    Optional<RecommendedAction> findTopByNsridOrderByInDateTimeDesc(String nsr_id);
+
 }

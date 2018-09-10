@@ -5,25 +5,53 @@ import eu.tng.policymanager.facts.action.*
 import eu.tng.policymanager.facts.enums.*
 
 declare  MonitoredComponent 
-    @expires( 5m )
+    @expires( 2m )
     @role( event )
 
 end
 
 declare  LogMetric 
-    @expires( 5m )
+    @expires( 3m )
+    @role( event )
+
+end
+
+declare  ElasticityAction 
+    @expires( 3m )
     @role( event )
 
 end
 
 
-rule "actionUponAlert"
+rule "inertiarule2"
 when
-    LogMetric(vnf_name=="vnf1" && value== "mon_rule_vm_cpu_perc" )
+  $e1: ElasticityAction($service_instance_id : service_instance_id)
+  $e2: ElasticityAction(service_instance_id == $service_instance_id, this after[ 1ms, 3m ] $e1 )  
 then
-    insertLogical( new ComponentResourceAllocationAction("pilotTranscodingService","vnf1",InfrastructureType.ApplyFlavour,"3",Status.not_send)); 
-
+   System.out.println("Retracting ElasticityAction: " + $e2.getService_instance_id());
+   //$e2.setStatus(Status.send);
+   //update($e2);
+   retract($e2);
 end
+
+
+rule "scaleOutAlert"
+when
+ $m1 := LogMetric(vnf_name=="vnf1" && value== "mon_rule_vm_cpu_perc" ) from entry-point "MonitoringStream" 
+then
+    insertLogical( new ElasticityAction("s438920483","squid-vnf","eu.5gtango","0.1",ScalingType.addvnf,"1","random",Status.not_send));
+    System.out.println("insert test add elasticity action");
+end
+
+
+rule "scaleInAlert"
+when
+ $m1 := LogMetric(vnf_name=="vnf1" && value== "mon_rule_vm_cpu_perc1" ) from entry-point "MonitoringStream" 
+then
+    insertLogical( new ElasticityAction("s438920483","squid-vnf","eu.5gtango","0.1",ScalingType.removevnf,"1","random",Status.not_send));
+    System.out.println("insert test remove elasticity action");
+end
+
 
 rule "highTranscodingRateRule"
 when
@@ -59,14 +87,4 @@ then
 
 end
 
-rule "ElasticityRuleHelper"
-when
-   
- $m1 := LogMetric(vnfd_id !=null) from entry-point "MonitoringStream" 
- $m2 := ElasticityAction (vnf_name==$m1.vnf_name)
- then
- $m2.setVnfd_id($m1.getVnfd_id());
- $m2.setVim_id($m1.getVim_id());
- update($m2);
-end
 

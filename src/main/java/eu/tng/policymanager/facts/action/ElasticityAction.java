@@ -15,15 +15,22 @@ import eu.tng.policymanager.facts.enums.Status;
 public class ElasticityAction extends Action {
 
     String vnf_name;
+    String vendor;
+    String version;
+    String criterion;
+
     String vnfd_id;
     String vim_id;
     ScalingType scaling_type;
 
-    public ElasticityAction(String service_instance_id, String vnf_name, ScalingType scaling_type, String value, Status status) {
+    public ElasticityAction(String service_instance_id, String vnf_name, String vendor, String version, ScalingType scaling_type, String value, String criterion, Status status) {
         this.service_instance_id = service_instance_id;
         this.vnf_name = vnf_name;
+        this.vendor = vendor;
+        this.version = version;
         this.scaling_type = scaling_type;
         this.value = value;
+        this.criterion = criterion;
         this.status = status;
     }
 
@@ -33,6 +40,30 @@ public class ElasticityAction extends Action {
 
     public void setVnf_name(String vnf_name) {
         this.vnf_name = vnf_name;
+    }
+
+    public String getVendor() {
+        return vendor;
+    }
+
+    public void setVendor(String vendor) {
+        this.vendor = vendor;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getCriterion() {
+        return criterion;
+    }
+
+    public void setCriterion(String criterion) {
+        this.criterion = criterion;
     }
 
     public ScalingType getScaling_type() {
@@ -62,10 +93,14 @@ public class ElasticityAction extends Action {
     @Override
     public String toString() {
         return "ElasticityAction: { vnf_name=\"" + vnf_name + "\""
+                + ", vendor=" + vendor
+                + ", version=" + version
                 + ", value=" + value
                 + ", service_instance_id=" + service_instance_id
                 + ", vnfd_id=" + vnfd_id
                 + ", vim_id=" + vim_id
+                + ", criterion=" + criterion
+                + ", status=" + status
                 + ", scaling_type=\"" + scaling_type + "\"}";
     }
 
@@ -81,16 +116,19 @@ public class ElasticityAction extends Action {
         return this.value == that.value
                 && this.service_instance_id.equals(that.service_instance_id)
                 && this.vnf_name.equals(that.vnf_name)
-                && this.vnfd_id.equals(that.vnfd_id)
-                && this.vim_id.equals(that.vim_id)
+                && this.vendor.equals(that.vendor)
+                && this.version.equals(that.version)
+                //&& this.vnfd_id.equals(that.vnfd_id)
+                //&& this.vim_id.equals(that.vim_id)
                 && this.scaling_type.equals(that.scaling_type)
+                && this.criterion.equals(that.criterion)
                 && this.status.equals(that.status);
     }
 
     @Override
     public int hashCode() {
         int result = scaling_type.hashCode();
-        result = (int) (31 * result + vnf_name.hashCode() + service_instance_id.hashCode());
+        result = (int) (31 * result + vnf_name.hashCode() + vendor.hashCode() + version.hashCode() + service_instance_id.hashCode());
         return result;
     }
 

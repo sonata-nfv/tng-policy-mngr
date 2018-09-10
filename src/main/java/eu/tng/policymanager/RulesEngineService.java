@@ -34,8 +34,10 @@
 package eu.tng.policymanager;
 
 import com.google.gson.Gson;
+import eu.tng.policymanager.Exceptions.NSDoesNotExistException;
+import eu.tng.policymanager.Exceptions.VNFDoesNotExistException;
+import eu.tng.policymanager.Exceptions.VNFRDoesNotExistException;
 import eu.tng.policymanager.facts.RuleActionType;
-import static eu.tng.policymanager.config.DroolsConfig.POLICY_DESCRIPTORS_PACKAGE;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
 import eu.tng.policymanager.facts.action.Action;
 import eu.tng.policymanager.facts.action.ComponentResourceAllocationAction;
@@ -52,6 +54,7 @@ import eu.tng.policymanager.repository.RuleCondition;
 import eu.tng.policymanager.repository.dao.RecommendedActionRepository;
 import eu.tng.policymanager.repository.domain.RecommendedAction;
 import eu.tng.policymanager.rules.generation.RepositoryUtil;
+import eu.tng.policymanager.rules.generation.Util;
 import eu.tng.policymanager.transferobjects.MonitoringMessageTO;
 import java.io.File;
 import java.io.FileInputStream;
@@ -62,12 +65,16 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
@@ -78,7 +85,6 @@ import org.drools.compiler.lang.api.DescrFactory;
 import org.drools.compiler.lang.api.PackageDescrBuilder;
 import org.drools.compiler.lang.api.RuleDescrBuilder;
 import org.drools.compiler.lang.descr.AndDescr;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.kie.api.KieBase;
 import org.kie.api.KieServices;
@@ -99,16 +105,12 @@ import org.kie.api.conf.EventProcessingOption;
 import org.kie.api.runtime.conf.ClockTypeOption;
 import org.kie.api.runtime.rule.EntryPoint;
 import org.kie.internal.io.ResourceFactory;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessageBuilder;
-import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.yaml.snakeyaml.Yaml;
 
 @Service
 public class RulesEngineService {
@@ -117,7 +119,7 @@ public class RulesEngineService {
     private static final String rulesPackage = "rules";
     private static final String current_dir = System.getProperty("user.dir");
     ReleaseId releaseId = KieServices.Factory.get().newReleaseId("eu.tng", "policymanager", "1.0");
-    private static final String FACTS_EXPIRATION = "2m";
+    private static final String FACTS_EXPIRATION = "3m";
 
     private final KieServices kieServices;
     private final KieFileSystem kieFileSystem;
@@ -145,6 +147,15 @@ public class RulesEngineService {
     @Autowired
     RecommendedActionRepository recommendedActionRepository;
 
+    @Value("${tng.cat.vnfs}")
+    private String vnfs_url;
+
+    @Autowired
+    CataloguesConnector cataloguesConnector;
+
+    @Autowired
+    RepositoryConnector repositoryConnector;
+
     @Autowired
     public RulesEngineService(KieUtil kieUtil) {
         logger.info("Rule Engine Session initializing...");
@@ -156,7 +167,7 @@ public class RulesEngineService {
     }
 
 //fireAllRules every 5 minutes 1min== 60000
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 30000)
     public void searchForGeneratedActions() {
 
         logger.info("Search for actions");
@@ -199,36 +210,69 @@ public class RulesEngineService {
                         RecommendedAction recommendedAction = new RecommendedAction();
 
                         recommendedAction.setAction(doactionsubclass);
-
-                        RecommendedAction newRecommendedAction = recommendedActionRepository.save(recommendedAction);
-
-                        doactionsubclass.setCorrelation_id(newRecommendedAction.getCorrelation_id());
+                        recommendedAction.setInDateTime(new Date());
+                        recommendedAction.setNsrid(nsrid);
 
                         JSONObject elasticity_action_msg = new JSONObject();
 
-                        String correlation_id = doactionsubclass.getCorrelation_id();
-
                         elasticity_action_msg.put("vnf_name", doactionsubclass.getVnf_name());
-                        elasticity_action_msg.put("vnfd_id", doactionsubclass.getVnfd_id());
+
+                        try {
+                            //get vnf_id by vnf_name , vendor, version
+                            String vnfd_id = cataloguesConnector.getVnfId(vnfs_url, doactionsubclass.getVnf_name(), doactionsubclass.getVendor(), doactionsubclass.getVersion());
+                            elasticity_action_msg.put("vnfd_id", vnfd_id);
+
+                            if (doactionsubclass.getScaling_type().equals(ScalingType.removevnf) && doactionsubclass.getCriterion().equalsIgnoreCase("random")) {
+                                String vnfr_id = repositoryConnector.get_vnfr_id_to_remove_random(doactionsubclass.getService_instance_id(), vnfd_id);
+                                if (vnfr_id == null) {
+                                    logger.info("Elasticity action was prevented from been generated.");
+                                    return;
+                                }
+                                elasticity_action_msg.put("vnf_id", vnfr_id);
+                            }
+
+                        } catch (VNFDoesNotExistException | NSDoesNotExistException | VNFRDoesNotExistException ex) {
+                            Logger.getLogger(RulesEngineService.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+                        }
+
                         elasticity_action_msg.put("scaling_type", doactionsubclass.getScaling_type());
                         elasticity_action_msg.put("service_instance_id", doactionsubclass.getService_instance_id());
-                        //elasticity_action_msg.put("correlation_id", correlation_id);
                         elasticity_action_msg.put("value", doactionsubclass.getValue());
 
-                        JSONArray constraints = new JSONArray();
-                        JSONObject constraint = new JSONObject();
-                        constraint.put("vim_id", doactionsubclass.getVim_id());
-                        constraints.put(constraint);
+                        //JSONArray constraints = new JSONArray();
+                        ///HashMap constraint = new HashMap();
+                        //constraint.put("vim_id", doactionsubclass.getVim_id());
+                        //constraints.put(constraint);
+                        //elasticity_action_msg.put("constraints", constraints);
+                        //check if exists a recent recommended Action for the specific service 
+                        logger.info("check if exists a recent recommended Action for the specific service" + nsrid);
+                        Optional<RecommendedAction> recent_action = recommendedActionRepository.findTopByNsridOrderByInDateTimeDesc(nsrid);
 
-                        elasticity_action_msg.put("constraints", constraints);
-                        //template.convertAndSend(queue.getName(), elasticity_action_msg);
+                        if (recent_action.isPresent()) {
+                            LocalDateTime recent_date = recent_action.get().getInDateTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+                            LocalDateTime now = LocalDateTime.now();
+                            Duration duration = Duration.between(now, recent_date);
+                            long diff = Math.abs(duration.toMinutes());
+                            logger.info("Duration between last created action and now " + diff);
+                            if (diff < 3) {
+                                return;
+                            }
 
-                        CorrelationData cd = new CorrelationData();
-                        cd.setId(correlation_id);
-                        // template.convertAndSend(queue.getName(), elasticity_action_msg, cd);
-                        //template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg.toString(), cd);
+                        }
 
-                        System.out.println(" [x] Sent to topic '" + elasticity_action_msg + "'");
+                        RecommendedAction newRecommendedAction = recommendedActionRepository.save(recommendedAction);
+                        doactionsubclass.setCorrelation_id(newRecommendedAction.getCorrelation_id());
+                        String correlation_id = doactionsubclass.getCorrelation_id();
+                        String elasticity_action_msg_as_yml = Util.jsonToYaml(elasticity_action_msg);
+
+                        template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg_as_yml, m -> {
+                            m.getMessageProperties().setAppId("tng-policy-mngr");
+                            m.getMessageProperties().setReplyTo(queue.getName());
+                            m.getMessageProperties().setCorrelationId(correlation_id);
+                            return m;
+                        });
+
+                        System.out.println(" [x] Sent to topic '" + elasticity_action_msg_as_yml + "'");
                     }
 
                 }
@@ -238,25 +282,6 @@ public class RulesEngineService {
 
     }
 
-    public void lala() {
-        CorrelationData cd = new CorrelationData();
-        cd.setId("232939289320838");
-        JSONObject elasticity_action_msg = new JSONObject();
-        elasticity_action_msg.put("vnf_name", "ddd");
-        elasticity_action_msg.put("vnfd_id", "ddd");
-        elasticity_action_msg.put("scaling_type", ScalingType.addvnf);
-        elasticity_action_msg.put("service_instance_id", "ddd");
-        elasticity_action_msg.put("value", 22);
-//        //template.convertAndSend(queue.getName(),"test", cd);
-//
-//        String correlationId = "corr-data-test-1";
-        Message message = MessageBuilder.withBody("valid message".getBytes()).build();
-
-        //template.convertAndSend(exchange.getName(), queue.getName(), message, new CorrelationData(correlationId));
-        Gson gson = new Gson();
-        //template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg.toString(), cd);
-
-    }
 
     /*
      Add a new knowledge base & session & corresponding rules so as to update kieModule
@@ -317,14 +342,18 @@ public class RulesEngineService {
         String factSessionName = "RulesEngineSession_gsg" + monitoringMessageTO.getGsgid();
         KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
 
-        logger.info("FactCount " + kieSession.getFactCount());
+        logger.info("FactCount " + kieSession.getFactCount() + " to session " + factSessionName);
 
         EntryPoint monitoringStream = kieSession.getEntryPoint("MonitoringStream");
 
         MonitoredComponent monitoredComponent = new MonitoredComponent(monitoringMessageTO.getNodeid(),
                 monitoringMessageTO.getMetricName(),
                 Double.valueOf(monitoringMessageTO.getMetricValue()),
-                monitoringMessageTO.getGsgid());
+                monitoringMessageTO.getGsgid(),
+                monitoringMessageTO.getNsrid(),
+                monitoringMessageTO.getVnf_id(),
+                monitoringMessageTO.getVnfd_id(),
+                monitoringMessageTO.getVim_id());
 
         System.out.println("Ιnsert monitoredComponent to session  " + monitoredComponent.toString());
         logger.info(monitoringStream.getEntryPointId() + "  -------  " + monitoringStream.getFactCount());
@@ -335,7 +364,7 @@ public class RulesEngineService {
 
     public void createLogFact(LogMetric logMetric) {
 
-        String factKnowledgebase = "GSGKnowledgeBase_gsg" + logMetric.getNsrid();
+        String factKnowledgebase = "GSGKnowledgeBase_gsg" + logMetric.getNsrid().replaceAll("-", "");
 
         Collection<String> kiebases = kieContainer.getKieBaseNames();
 
@@ -344,17 +373,20 @@ public class RulesEngineService {
             return;
         }
 
-        String factSessionName = "RulesEngineSession_gsg" + logMetric.getNsrid();
+        String factSessionName = "RulesEngineSession_gsg" + logMetric.getNsrid().replaceAll("-", "");
         KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
 
+        //String clean_nsr_id = logMetric.getNsrid().substring(1);
+        //logMetric.setNsrid(clean_nsr_id);
         System.out.println("Ιnsert logmetric fact: " + logMetric.toString());
 
         //kieSession.insert(logMetric);
         EntryPoint monitoringStream = kieSession.getEntryPoint("MonitoringStream");
 
-        logger.info(monitoringStream.getEntryPointId() + "  -------  " + monitoringStream.getFactCount());
+        logger.info("monitoringStream entrypoint " + monitoringStream.getEntryPointId());
 
         monitoringStream.insert(logMetric);
+        logger.info("monitoringStream fact count " + monitoringStream.getFactCount());
 
     }
 
@@ -504,26 +536,26 @@ public class RulesEngineService {
     /*
      Add a new knowledge base & session & corresponding rules so as to update kieModule
      */
-    public void addNewKnowledgebase(String gnsid, String policyname) {
+    public boolean addNewKnowledgebase(String gnsid, String policyname, String policyfile) {
 
         Collection<String> kiebases = kieContainer.getKieBaseNames();
         String factKnowledgebase = "GSGKnowledgeBase_gsg" + gnsid;
 
         if ("null".equals(policyname) || policyname == null) {
             logger.log(java.util.logging.Level.WARNING, "Grounded Service graph is deploed with none policy assigned");
-            return;
+            return true;
         }
 
         if (kiebases.contains(factKnowledgebase)) {
             logger.log(java.util.logging.Level.WARNING, "Knowledge base {0} already added", factKnowledgebase);
             //updateToVersion();
-            return;
+            return true;
         }
-        File f = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
-        if (!f.exists() && !f.isDirectory()) {
-            logger.log(java.util.logging.Level.WARNING, "Policy with name {0} does not exist at Catalogues", policyname);
-            return;
-        }
+//        File f = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
+//        if (!f.exists() && !f.isDirectory()) {
+//            logger.log(java.util.logging.Level.WARNING, "Policy with name {0} does not exist at Catalogues", policyname);
+//            return false;
+//        }
 
         String knowledgebasename = "gsg" + gnsid;
 
@@ -547,7 +579,7 @@ public class RulesEngineService {
         kieFileSystem.writeKModuleXML(kieModuleModel.toXML());
         logger.log(java.util.logging.Level.INFO, "kieModuleModel--ToXML\n{0}", kieModuleModel.toXML());
 
-        addPolicyRules(gnsid, policyname);
+        addPolicyRules(gnsid, policyname, policyfile);
 
         kieBuilder.buildAll();
 
@@ -561,15 +593,18 @@ public class RulesEngineService {
         KieSession kieSession = kieContainer.newKieSession(factSessionName);
         kieUtil.fireKieSession(kieSession, factSessionName);
 
+        return true;
+
     }
 
-    private static String createPolicyRules(String nsrid, String policyname) {
+    private static String createPolicyRules(String nsrid, String policyname, String policyfile) {
 
         //TODO convert yml to drools
         //1. Fech yml file
-        File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
-        logger.info("get file from - " + current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
-        PolicyYamlFile policyyml = PolicyYamlFile.readYaml(policydescriptor);
+        //File policydescriptor = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
+        //logger.info("get file from - " + current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
+        //PolicyYamlFile policyyml = PolicyYamlFile.readYamlFile(policydescriptor);
+        PolicyYamlFile policyyml = PolicyYamlFile.readYaml(policyfile);
 
         //logger.info("get mi first policy rule name" + policyyml.getPolicyRules().get(0).getName());
         List<PolicyRule> policyrules = policyyml.getPolicyRules();
@@ -618,8 +653,16 @@ public class RulesEngineService {
             for (eu.tng.policymanager.repository.Action ruleaction : ruleactions) {
                 String action_object = ruleaction.getAction_object();
 
-                rhs_actions += "insertLogical( new " + action_object + "(\"" + nsrid + "\",\"" + ruleaction.getTarget() + "\","
-                        + ruleaction.getAction_type() + "." + ruleaction.getName() + ",\"" + ruleaction.getValue() + "\",Status.not_send)); \n";
+//                rhs_actions += "insertLogical( new " + action_object + "($m1.getNsrid(),\"" + ruleaction.getTarget() + "\","
+//                        + ruleaction.getAction_type() + "." + ruleaction.getName() + ",\"" + ruleaction.getValue() + "\",$m1.getVnfd_id(),$m1.getVim_id(),Status.not_send)); \n";
+                rhs_actions += "insertLogical( new " + action_object + "($m0.getNsrid(),"
+                        + "\"" + ruleaction.getTarget().getName() + "\","
+                        + "\"" + ruleaction.getTarget().getVendor() + "\","
+                        + "\"" + ruleaction.getTarget().getVersion() + "\","
+                        + ruleaction.getAction_type() + "." + ruleaction.getName() + ","
+                        + "\"" + ruleaction.getValue() + "\","
+                        + "\"" + ruleaction.getCriterion() + "\","
+                        + "Status.not_send)); \n";
 
             }
             droolrule.rhs(rhs_actions);
@@ -631,24 +674,23 @@ public class RulesEngineService {
         created_rules = created_rules.replace("|", "over");
 
         created_rules += "\n"
-                + "rule \"ElasticityRuleHelper\"\n"
+                + "rule \"inertiarule\"\n"
                 + "when\n"
-                + "   \n"
-                + " $m1 := LogMetric(vnfd_id !=null) from entry-point \"MonitoringStream\"  \n"
-                + " $m2 := ElasticityAction (vnf_name==$m1.vnf_name)\n"
-                + " then\n"
-                + " $m2.setVnfd_id($m1.getVnfd_id());\n"
-                + " $m2.setVim_id($m1.getVim_id());\n"
-                + " update($m2);\n"
+                + "  $e1: ElasticityAction($service_instance_id : service_instance_id)\n"
+                + "  $e2: ElasticityAction(service_instance_id == $service_instance_id, this after[ 1ms, 3m ] $e1 )  \n"
+                + "then\n"
+                + "   System.out.println(\"Retracting ElasticityAction: \" + $e2.getService_instance_id());\n"
+                + "   retract($e2);\n"
                 + "end";
+          
         System.out.println(created_rules);
         return created_rules;
 
     }
 
-    public void addPolicyRules(String gnsid, String policyname) {
+    public void addPolicyRules(String gnsid, String policyname, String policyfile) {
 
-        String created_rules = createPolicyRules(gnsid, policyname);
+        String created_rules = createPolicyRules(gnsid, policyname, policyfile);
         try {
             String knowledgebasename = "gsg" + gnsid;
 
@@ -677,7 +719,7 @@ public class RulesEngineService {
 
             drlPath4deployment = "/descriptors/" + policyname + ".yml";
             out = new FileOutputStream(current_dir + "/" + drlPath4deployment);
-            out.write(jsonToYaml(runtimedescriptor).getBytes());
+            out.write(Util.jsonToYaml(runtimedescriptor).getBytes());
             out.close();
 
         } catch (FileNotFoundException ex) {
@@ -753,19 +795,6 @@ public class RulesEngineService {
             Logger.getLogger(RulesEngineService.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
 
-    }
-
-    private String jsonToYaml(JSONObject jsonobject) {
-        Yaml yaml = new Yaml();
-
-        // get json string
-        String prettyJSONString = jsonobject.toString(4);
-        // mapping
-        Map<String, Object> map = (Map<String, Object>) yaml.load(prettyJSONString);
-        // convert to yaml string (yaml formatted string)
-        String output = yaml.dump(map);
-        //logger.info(output);
-        return output;
     }
 
 }//EoC

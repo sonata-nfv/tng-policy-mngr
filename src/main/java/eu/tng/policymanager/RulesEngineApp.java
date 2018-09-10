@@ -33,10 +33,8 @@
  */
 package eu.tng.policymanager;
 
-import com.mongodb.MongoClient;
 import eu.tng.policymanager.Messaging.DeployedNSListener;
 import eu.tng.policymanager.Messaging.MonitoringListener;
-import eu.tng.policymanager.Messaging.RuntimeActionsListener;
 import eu.tng.policymanager.config.DroolsConfig;
 import eu.tng.policymanager.repository.PolicyYamlFile;
 
@@ -48,9 +46,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Exchange;
-import org.springframework.amqp.core.ExchangeBuilder;
-import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
@@ -61,17 +56,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.SimpleMessageConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
-import org.springframework.data.mongodb.MongoDbFactory;
-import org.springframework.data.mongodb.core.SimpleMongoDbFactory;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * The main class, which Spring Boot uses to bootstrap the application.
@@ -90,7 +81,7 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @Import({DroolsConfig.class})
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
 @EnableMongoRepositories("eu.tng.policymanager.repository.dao")
-//@EnableScheduling
+@EnableScheduling
 //@SpringBootApplication
 //@EnableJms
 public class RulesEngineApp {
@@ -98,7 +89,7 @@ public class RulesEngineApp {
     private static Logger log = LoggerFactory.getLogger(RulesEngineApp.class);
 
     public static final String RUNTIME_ACTIONS_QUEUE = "service.instance.scale";
-    public final static String monitoringqueue = "son.monitoring.policy";
+    public final static String MONITORING_QUEUE = "son.monitoring.PLC";
 
     public final static String NS_INSTATIATION_QUEUE = "policies.service.instances.create";
     public final static String NS_INSTATIATION_TOPIC = "service.instances.create";
@@ -117,6 +108,16 @@ public class RulesEngineApp {
     }
 
     @Bean
+    public CataloguesConnector cataloguesConnector() {
+        return new CataloguesConnector();
+    }
+
+    @Bean
+    public RepositoryConnector repositoryConnector() {
+        return new RepositoryConnector();
+    }
+
+    @Bean
     TopicExchange exchange() {
         return new TopicExchange("son-kernel", false, false);
     }
@@ -127,7 +128,6 @@ public class RulesEngineApp {
     }
 
     // Configure connection with rabbit mq for NS runtime Actions Queue
-
     @Bean
     public Queue runtimeActionsQueue() {
         return new Queue(RUNTIME_ACTIONS_QUEUE);
@@ -138,31 +138,29 @@ public class RulesEngineApp {
         return BindingBuilder.bind(runtimeActionsQueue()).to(exchange).with(runtimeActionsQueue().getName());
     }
 
-    @Qualifier("listenerAdapter1")
-    @Bean
-    MessageListenerAdapter listenerAdapter1(RuntimeActionsListener receiver) {
-
-        MessageListenerAdapter msgadapter = new MessageListenerAdapter(receiver, "expertSystemMessageReceived");
-        msgadapter.setMessageConverter(jackson2JsonMessageConverter());
-        return msgadapter;
-    }
-
-    @Qualifier("container1")
-    @Bean
-    SimpleMessageListenerContainer container1(ConnectionFactory connectionFactory,
-            @Qualifier("listenerAdapter1") MessageListenerAdapter listenerAdapter) {
-        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
-        container.setConnectionFactory(connectionFactory);
-        container.setQueueNames(RUNTIME_ACTIONS_QUEUE);
-        container.setMessageListener(listenerAdapter);
-        return container;
-    }
-
+//    @Qualifier("listenerAdapter1")
+//    @Bean
+//    MessageListenerAdapter listenerAdapter1(RuntimeActionsListener receiver) {
+//
+//        MessageListenerAdapter msgadapter = new MessageListenerAdapter(receiver, "expertSystemMessageReceived");
+//        msgadapter.setMessageConverter(jackson2JsonMessageConverter());
+//        return msgadapter;
+//    }
+//
+//    @Qualifier("container1")
+//    @Bean
+//    SimpleMessageListenerContainer container1(ConnectionFactory connectionFactory,
+//            @Qualifier("listenerAdapter1") MessageListenerAdapter listenerAdapter) {
+//        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
+//        container.setConnectionFactory(connectionFactory);
+//        container.setQueueNames(RUNTIME_ACTIONS_QUEUE);
+//        container.setMessageListener(listenerAdapter);
+//        return container;
+//    }
     // Configure connection with rabbit mq for prometheus alerts Queue
-
     @Bean
     public Queue monitoringAlerts() {
-        return new Queue("son.monitoring.policy", false);
+        return new Queue(MONITORING_QUEUE, false);
     }
 
     @Bean
@@ -175,7 +173,7 @@ public class RulesEngineApp {
     @Bean
     MessageListenerAdapter listenerAdapter2(MonitoringListener receiver) {
         MessageListenerAdapter msgadapter = new MessageListenerAdapter(receiver, "monitoringAlertReceived");
-        msgadapter.setMessageConverter(jackson2JsonMessageConverter());
+        //msgadapter.setMessageConverter(jackson2JsonMessageConverter());
         return msgadapter;
     }
 
@@ -191,7 +189,6 @@ public class RulesEngineApp {
     }
 
     // Configure connection with rabbit mq for NS instantiatin Queue
-
     @Bean
     public Queue nsInstantiationQueue() {
         return new Queue(NS_INSTATIATION_QUEUE, false);
