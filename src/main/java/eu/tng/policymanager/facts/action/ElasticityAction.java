@@ -100,6 +100,7 @@ public class ElasticityAction extends Action {
                 + ", vnfd_id=" + vnfd_id
                 + ", vim_id=" + vim_id
                 + ", criterion=" + criterion
+                + ", status=" + status
                 + ", scaling_type=\"" + scaling_type + "\"}";
     }
 

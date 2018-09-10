@@ -11,29 +11,46 @@ declare  MonitoredComponent
 end
 
 declare  LogMetric 
-    @expires( 5s )
+    @expires( 3m )
     @role( event )
 
 end
 
 declare  ElasticityAction 
-    @expires( 5s )
+    @expires( 3m )
     @role( event )
 
 end
 
+
+rule "inertiarule2"
+when
+  $e1: ElasticityAction($service_instance_id : service_instance_id)
+  $e2: ElasticityAction(service_instance_id == $service_instance_id, this after[ 1ms, 3m ] $e1 )  
+then
+   System.out.println("Retracting ElasticityAction: " + $e2.getService_instance_id());
+   //$e2.setStatus(Status.send);
+   //update($e2);
+   retract($e2);
+end
 
 
 rule "scaleOutAlert"
 when
  $m1 := LogMetric(vnf_name=="vnf1" && value== "mon_rule_vm_cpu_perc" ) from entry-point "MonitoringStream" 
 then
-    //insertLogical( new ElasticityAction("s438920483","squid-vnf",ScalingType.addvnf,"1",$m1.getVnfd_id(),$m1.getVim_id(),Status.not_send));
     insertLogical( new ElasticityAction("s438920483","squid-vnf","eu.5gtango","0.1",ScalingType.addvnf,"1","random",Status.not_send));
-    System.out.println("insert test elasticity action");
+    System.out.println("insert test add elasticity action");
 end
 
 
+rule "scaleInAlert"
+when
+ $m1 := LogMetric(vnf_name=="vnf1" && value== "mon_rule_vm_cpu_perc1" ) from entry-point "MonitoringStream" 
+then
+    insertLogical( new ElasticityAction("s438920483","squid-vnf","eu.5gtango","0.1",ScalingType.removevnf,"1","random",Status.not_send));
+    System.out.println("insert test remove elasticity action");
+end
 
 
 rule "highTranscodingRateRule"
