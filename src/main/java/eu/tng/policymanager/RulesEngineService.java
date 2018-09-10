@@ -65,12 +65,16 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
@@ -163,7 +167,7 @@ public class RulesEngineService {
     }
 
 //fireAllRules every 5 minutes 1min== 60000
-    @Scheduled(fixedRate = 6000)
+    @Scheduled(fixedRate = 30000)
     public void searchForGeneratedActions() {
 
         logger.info("Search for actions");
@@ -207,13 +211,9 @@ public class RulesEngineService {
 
                         recommendedAction.setAction(doactionsubclass);
                         recommendedAction.setInDateTime(new Date());
-
-                        
-                        
+                        recommendedAction.setNsrid(nsrid);
 
                         JSONObject elasticity_action_msg = new JSONObject();
-
-                       
 
                         elasticity_action_msg.put("vnf_name", doactionsubclass.getVnf_name());
 
@@ -244,7 +244,22 @@ public class RulesEngineService {
                         //constraint.put("vim_id", doactionsubclass.getVim_id());
                         //constraints.put(constraint);
                         //elasticity_action_msg.put("constraints", constraints);
-                        
+                        //check if exists a recent recommended Action for the specific service 
+                        logger.info("check if exists a recent recommended Action for the specific service" + nsrid);
+                        Optional<RecommendedAction> recent_action = recommendedActionRepository.findTopByNsridOrderByInDateTimeDesc(nsrid);
+
+                        if (recent_action.isPresent()) {
+                            LocalDateTime recent_date = recent_action.get().getInDateTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+                            LocalDateTime now = LocalDateTime.now();
+                            Duration duration = Duration.between(now, recent_date);
+                            long diff = Math.abs(duration.toMinutes());
+                            logger.info("Duration between last created action and now " + diff);
+                            if (diff < 3) {
+                                return;
+                            }
+
+                        }
+
                         RecommendedAction newRecommendedAction = recommendedActionRepository.save(recommendedAction);
                         doactionsubclass.setCorrelation_id(newRecommendedAction.getCorrelation_id());
                         String correlation_id = doactionsubclass.getCorrelation_id();
@@ -658,17 +673,16 @@ public class RulesEngineService {
         String created_rules = new DrlDumper().dump(packageDescrBuilder.getDescr());
         created_rules = created_rules.replace("|", "over");
 
-//        created_rules += "\n"
-//                + "rule \"ElasticityRuleHelper\"\n"
-//                + "when\n"
-//                + "   \n"
-//                + " $m1 := LogMetric(vnfd_id !=null) from entry-point \"MonitoringStream\"  \n"
-//                + " $m2 := ElasticityAction (vnf_name==$m1.vnf_name)\n"
-//                + " then\n"
-//                + " $m2.setVnfd_id($m1.getVnfd_id());\n"
-//                + " $m2.setVim_id($m1.getVim_id());\n"
-//                + " update($m2);\n"
-//                + "end";
+        created_rules += "\n"
+                + "rule \"inertiarule\"\n"
+                + "when\n"
+                + "  $e1: ElasticityAction($service_instance_id : service_instance_id)\n"
+                + "  $e2: ElasticityAction(service_instance_id == $service_instance_id, this after[ 1ms, 3m ] $e1 )  \n"
+                + "then\n"
+                + "   System.out.println(\"Retracting ElasticityAction: \" + $e2.getService_instance_id());\n"
+                + "   retract($e2);\n"
+                + "end";
+          
         System.out.println(created_rules);
         return created_rules;
 

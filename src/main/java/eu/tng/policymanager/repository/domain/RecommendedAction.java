@@ -20,6 +20,8 @@ public class RecommendedAction {
 
     @Id
     private String correlation_id;
+    
+    private String nsrid;
 
     private Action action;
     
@@ -49,4 +51,13 @@ public class RecommendedAction {
         this.inDateTime = inDateTime;
     }
 
+    public String getNsrid() {
+        return nsrid;
+    }
+
+    public void setNsrid(String nsrid) {
+        this.nsrid = nsrid;
+    }
+    
+    
 }
