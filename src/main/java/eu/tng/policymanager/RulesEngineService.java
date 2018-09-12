@@ -167,7 +167,7 @@ public class RulesEngineService {
     }
 
 //fireAllRules every 5 minutes 1min== 60000
-    @Scheduled(fixedRate = 30000)
+    @Scheduled(fixedRate = 6000)
     public void searchForGeneratedActions() {
 
         logger.info("Search for actions");
