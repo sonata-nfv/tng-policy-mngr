@@ -170,11 +170,11 @@ public class RulesEngineService {
     @Scheduled(fixedRate = 6000)
     public void searchForGeneratedActions() {
 
-        logger.info("Search for actions");
+        //logger.info("Search for actions");
 
         ConcurrentHashMap map = kieUtil.seeThreadMap();
         for (Object key : map.keySet()) {
-            System.out.println("factSessionName " + key.toString());
+            //System.out.println("factSessionName " + key.toString());
             String factSessionName = key.toString();
             KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
 
@@ -414,7 +414,7 @@ public class RulesEngineService {
                 return false;
             }
         };
-        System.out.println("------New FACT----------");
+        //System.out.println("------New FACT----------");
 
         List<Action> facts = new ArrayList<Action>();
         List<Action> factsToBeUpdated = new ArrayList<>();
@@ -450,20 +450,28 @@ public class RulesEngineService {
     private void printFactsMessage(KieSession kieSession) {
         Collection<FactHandle> allHandles = kieSession.getFactHandles();
 
-        String msg = "\nAll facts:\n";
+        //String msg = "\nAll facts:\n";
+        String msg = "";
         for (FactHandle handle : allHandles) {
             msg += "    " + kieSession.getObject(handle) + "\n";
         }
-        System.out.println(msg);
+        if (!msg.equalsIgnoreCase("")){
+             System.out.println("\nAll facts:\n"+msg);
+        }
+       
 
         EntryPoint monitoringstream = kieSession.getEntryPoint("MonitoringStream");
         Collection<FactHandle> allHandles1 = monitoringstream.getFactHandles();
 
-        String msg1 = "\nAll facts of stream:\n";
+        //String msg1 = "\nAll facts of stream:\n";
+        String msg1 = "";
         for (FactHandle handle : allHandles1) {
             msg1 += "    " + monitoringstream.getObject(handle) + "\n";
         }
-        System.out.println(msg1);
+        
+        if (!msg1.equalsIgnoreCase("")){
+             System.out.println("\nAll facts of stream:\n"+msg1);
+        }
 
     }
 
