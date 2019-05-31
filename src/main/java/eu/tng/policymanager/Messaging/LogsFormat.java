@@ -5,15 +5,20 @@
  */
 package eu.tng.policymanager.Messaging;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  *
  * @author eleni
  */
 public class LogsFormat {
     
-    public void createLog(type,timestamps,operation,message,status) {
+    private  final Logger log = LoggerFactory.getLogger(LogsFormat.class);
+    
+    public void createLog(String type,String timestamps,String operation,String message,String status) {
         
-        logger.info("{\"type\":\"{}\",\"timestamp\":\"{}\",\"start_stop\":\"\",\"component\":\"tng-sla-mgmt\",\"operation\":\"{}\",\"message\":\"{}\",\"status\":\"{}\",\"time_elapsed\":\"\"}",type, timestamps, operation, message, status);
+        log.info("{\"type\":\"{}\",\"timestamp\":\"{}\",\"start_stop\":\"\",\"component\":\"tng-policy-mngr\",\"operation\":\"{}\",\"message\":\"{}\",\"status\":\"{}\",\"time_elapsed\":\"\"}",type, timestamps, operation, message, status);
     }
     
 }
