@@ -44,6 +44,7 @@ import eu.tng.policymanager.repository.domain.RuntimePolicy;
 import eu.tng.policymanager.repository.domain.RuntimePolicyRecord;
 import eu.tng.policymanager.response.BasicResponseCode;
 import eu.tng.policymanager.response.PolicyRestResponse;
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -124,7 +125,11 @@ public class RulesEngineController {
     //GET healthcheck for runtime policies
     @RequestMapping(value = "/pings", method = RequestMethod.GET)
     public String pings() {
-        log.info("ping policy manager");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+	String timestamps = timestamp.toString();
+        
+        LogsFormat.createLog("I", timestamps, "healthcheck", "ping policy manager", "200");
+        
         return "{ \"alive_now\": \"" + new Date() + "\"}";
     }
 
