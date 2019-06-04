@@ -13,12 +13,22 @@ import org.slf4j.LoggerFactory;
  * @author eleni
  */
 public class LogsFormat {
-    
-    private  final Logger log = LoggerFactory.getLogger(LogsFormat.class);
-    
-    public void createLog(String type,String timestamps,String operation,String message,String status) {
-        
-        log.info("{\"type\":\"{}\",\"timestamp\":\"{}\",\"start_stop\":\"\",\"component\":\"tng-policy-mngr\",\"operation\":\"{}\",\"message\":\"{}\",\"status\":\"{}\",\"time_elapsed\":\"\"}",type, timestamps, operation, message, status);
+
+    private final Logger log = LoggerFactory.getLogger(LogsFormat.class);
+
+    public void createLogInfo(String type, String timestamps, String operation, String message, String status) {
+
+        log.info("{\"type\":\"{}\",\"timestamp\":\"{}\",\"start_stop\":\"\",\"component\":\"tng-policy-mngr\",\"operation\":\"{}\",\"message\":\"{}\",\"status\":\"{}\",\"time_elapsed\":\"\"}", type, timestamps, operation, message, status);
     }
-    
+
+    public void createLogError(String type, String timestamps, String operation, String message, String status) {
+
+        log.error("{\"type\":\"{}\",\"timestamp\":\"{}\",\"start_stop\":\"\",\"component\":\"tng-policy-mngr\",\"operation\":\"{}\",\"message\":\"{}\",\"status\":\"{}\",\"time_elapsed\":\"\"}", type, timestamps, operation, message, status);
+    }
+
+    public void createLogWarn(String type, String timestamps, String operation, String message, String status) {
+
+        log.warn("{\"type\":\"{}\",\"timestamp\":\"{}\",\"start_stop\":\"\",\"component\":\"tng-policy-mngr\",\"operation\":\"{}\",\"message\":\"{}\",\"status\":\"{}\",\"time_elapsed\":\"\"}", type, timestamps, operation, message, status);
+    }
+
 }

@@ -85,8 +85,7 @@ import org.springframework.web.client.RestTemplate;
 @RequestMapping("/api/v1")
 public class RulesEngineController {
 
-    private static final Logger log = LoggerFactory.getLogger(RulesEngineController.class);
-
+    //private static final Logger log = LoggerFactory.getLogger(RulesEngineController.class);
     @Autowired
     LogsFormat logsFormat;
 
@@ -131,7 +130,7 @@ public class RulesEngineController {
     public String pings() {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
-        logsFormat.createLog("I", timestamp.toString(), "healthcheck", "ping policy manager", "200");
+        logsFormat.createLogInfo("I", timestamp.toString(), "healthcheck", "ping policy manager", "200");
 
         return "{ \"alive_now\": \"" + new Date() + "\"}";
     }
@@ -141,11 +140,14 @@ public class RulesEngineController {
     public ResponseEntity listPolicies(@RequestParam Map<String, String> queryParameters
     ) {
 
-        if (queryParameters.containsKey("ns_uuid")) {
-            log.info("Fetch policies with query filter " + queryParameters);
-        } else {
-            log.info("Fetch all policies");
-        }
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logsFormat.createLogInfo("I", timestamp.toString(), "Fetch all policies", "", "200");
+//        if (queryParameters.containsKey("ns_uuid")) {
+//            log.info("Fetch policies with query filter " + queryParameters);
+//        } else {
+//            log.info("Fetch all policies");
+//            
+//        }
 
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
@@ -185,7 +187,8 @@ public class RulesEngineController {
     public ResponseEntity createPolicyDescriptor(@RequestBody String tobject
     ) {
         //save to catalogues
-        log.info("Create a Policy");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logsFormat.createLogInfo("I", timestamp.toString(), "Create a Policy", "Request creation of Policy", "200");
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
@@ -203,7 +206,7 @@ public class RulesEngineController {
             rulesEngineService.savePolicyDescriptor(tobject, policy_uuid);
 
         } catch (Exception e) {
-            log.info(e.getMessage());
+            logsFormat.createLogError("E", timestamp.toString(), "Error in policy creation", e.getMessage(), "200");
             PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
                     + ". Check if policy vendor or version are null");
             return buildResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -214,11 +217,36 @@ public class RulesEngineController {
 
     }
 
+    @RequestMapping(value = "/clone/{policy_uuid}", method = RequestMethod.GET)
+    public ResponseEntity clonePolicy(@PathVariable("policy_uuid") String policy_uuid
+    ) {
+
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logsFormat.createLogInfo("I", timestamp.toString(), "Clone a policy", "duplicate a policy with uuid" + policy_uuid, "200");
+
+        String parent_policy = this.getPolicy(policy_uuid);
+
+        JSONObject parent_policy_descriptor = new JSONObject(parent_policy);
+        JSONObject policy_descriptor = parent_policy_descriptor.getJSONObject("pld");
+
+        String parent_name = policy_descriptor.getString("name");
+        String child_name = "Copy-of-" + parent_name;
+        policy_descriptor.put("name", child_name);
+
+        ResponseEntity responseone = this.createPolicyDescriptor(policy_descriptor.toString());
+
+        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED, responseone);
+        return buildResponseEntity(response, HttpStatus.OK);
+
+    }
+
     //GET a policy
     @RequestMapping(value = "/{policy_uuid}", method = RequestMethod.GET)
     public String getPolicy(@PathVariable("policy_uuid") String policy_uuid
     ) {
-        log.info("Fetch a policy with uuid" + policy_uuid);
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logsFormat.createLogInfo("I", timestamp.toString(), "Get a policy", "Fetch a policy with uuid" + policy_uuid, "200");
+
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -258,7 +286,7 @@ public class RulesEngineController {
                 }
 
                 //fetch ns_uuid
-                log.info("Fetch ns_uuid for current policy");
+                logsFormat.createLogInfo("I", timestamp.toString(), "Fetch ns", "Fetch ns_uuid for current policy" + policy_uuid, "200");
 
                 JSONObject pld = policy_descriptor.getJSONObject("pld");
 
@@ -273,8 +301,7 @@ public class RulesEngineController {
 
                 ResponseEntity<String> response1 = restTemplate.exchange(services_url_complete, HttpMethod.GET, entity, String.class);
 
-                log.info("invoke the " + services_url_complete);
-
+                //log.info("invoke the " + services_url_complete);
                 JSONArray network_services = new JSONArray(response1.getBody());
 
                 if (network_services.length() > 0) {
@@ -298,7 +325,9 @@ public class RulesEngineController {
     @RequestMapping(value = "", method = RequestMethod.PUT)
     public ResponseEntity updatePolicyDescriptor(@RequestBody String tobject
     ) {
-        log.info("Update a policy descriptor");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logsFormat.createLogInfo("I", timestamp.toString(), "Update policy", "Update a policy descriptor", "200");
+
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
@@ -313,7 +342,7 @@ public class RulesEngineController {
             //TODO update locally
             //rulesEngineService.savePolicyDescriptor(tobject, policy_uuid);
         } catch (Exception e) {
-            log.info(e.getMessage());
+            logsFormat.createLogError("E", timestamp.toString(), "Error while updating policy", e.getMessage(), "500");
             PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_UPDATED_FAILURE, "Check connection with tng-cat");
             return buildResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -328,7 +357,9 @@ public class RulesEngineController {
     public ResponseEntity deletePolicyDescriptor(@PathVariable("policy_uuid") String policy_uuid
     ) {
 
-        log.info("Delete the policy descriptor");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logsFormat.createLogInfo("I", timestamp.toString(), "delete policy", "Request deletion of policy descriptor", "200");
+
         RestTemplate restTemplate = new RestTemplate();
 
         Gson gson = new Gson();
@@ -338,7 +369,8 @@ public class RulesEngineController {
         List<RuntimePolicyRecord> runtimePolicyRecord = runtimePolicyRecordRepository.findByPolicyid(policy_uuid);
 
         if (runtimePolicyRecord.size() > 0) {
-            log.info(Message.POLICY_DELETED_FORBIDEN);
+            logsFormat.createLogError("E", timestamp.toString(), "Error while deleting a policy", Message.POLICY_DELETED_FORBIDEN, "");
+
             PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DELETED_FORBIDEN, policy_uuid);
             return buildResponseEntity(response, HttpStatus.OK);
         }
@@ -385,11 +417,11 @@ public class RulesEngineController {
         RuntimePolicy rp;
 
         if (!runtimepolicy.isPresent()) {
-            log.info("create new runtime policy object");
+            //log.info("create new runtime policy object");
             rp = new RuntimePolicy();
             rp.setPolicyid(policy_uuid);
         } else {
-            log.info("update runtime policy object");
+            //log.info("update runtime policy object");
             rp = runtimepolicy.get();
         }
 
@@ -427,6 +459,8 @@ public class RulesEngineController {
     public ResponseEntity bindRuntimePolicyWithSla(@RequestBody RuntimePolicy tobject, @PathVariable("policy_uuid") String policy_uuid
     ) {
         PolicyRestResponse response;
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+
         if (!cataloguesConnector.checkifPolicyDescriptorExists(policy_uuid)) {
             response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.POLICY_NOT_EXISTS, null);
             return buildResponseEntity(response, HttpStatus.NOT_FOUND);
@@ -441,11 +475,11 @@ public class RulesEngineController {
         RuntimePolicy rp;
 
         if (!runtimepolicy.isPresent()) {
-            log.info("create new runtime policy object");
+            //log.info("create new runtime policy object");
             rp = new RuntimePolicy();
             rp.setPolicyid(policy_uuid);
         } else {
-            log.info("update runtime policy object");
+            //log.info("update runtime policy object");
             rp = runtimepolicy.get();
         }
 
@@ -464,11 +498,13 @@ public class RulesEngineController {
 
         if (existing_runtimepolicy_list.size() > 0 && existing_runtimepolicy_list.get(0).getSlaid() != null) {
             response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ALREADY_BINDED, "");
-            log.info(Message.POLICY_ALREADY_BINDED);
+            logsFormat.createLogInfo("I", timestamp.toString(), "Bind Runtime Policy With Sla", Message.POLICY_ALREADY_BINDED, "200");
+
         } else {
             runtimePolicyRepository.save(rp);
             response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_METADATA_UPDATED, runtimepolicy);
-            log.info(Message.POLICY_METADATA_UPDATED);
+            logsFormat.createLogInfo("I", timestamp.toString(), "Bind Runtime Policy With Sla", Message.POLICY_METADATA_UPDATED, "200");
+
         }
 
         return buildResponseEntity(response, HttpStatus.OK);
@@ -483,7 +519,9 @@ public class RulesEngineController {
     @RequestMapping(value = "/placement", method = RequestMethod.POST)
     public ResponseEntity createPlacementPolicy(@RequestBody String tobject
     ) {
-        log.info("Create placement policy");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logsFormat.createLogInfo("I", timestamp.toString(), "Create placement policy", "", "200");
+
         HttpHeaders responseHeaders = new HttpHeaders();
         Gson gson = new Gson();
         placementPolicyRepository.deleteAll();
@@ -523,7 +561,10 @@ public class RulesEngineController {
     //GET a list of all placement policies
     @RequestMapping(value = "/placement", method = RequestMethod.GET)
     public ResponseEntity listPlacementPolicies() {
-        log.info("Fetch placement policy");
+
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logsFormat.createLogInfo("I", timestamp.toString(), "Fetch placement policy", "", "200");
+
         List<PlacementPolicy> placementPolicies = placementPolicyRepository.findAll();
 
         ResponseEntity responseEntity;
@@ -544,7 +585,8 @@ public class RulesEngineController {
     //GET a list of all recommended actions
     @RequestMapping(value = "/actions", method = RequestMethod.GET)
     public String listActions() {
-        log.info("Fetch list of Actions");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logsFormat.createLogInfo("I", timestamp.toString(), "Fetch list of Actions", "", "200");
         List<RecommendedAction> recommendedActions = recommendedActionRepository.findAll();
         Gson gson = new Gson();
 
@@ -555,7 +597,9 @@ public class RulesEngineController {
     @RequestMapping(value = "/deactivate/{nsr_id}", method = RequestMethod.GET)
     public ResponseEntity deactivate(@PathVariable("nsr_id") String nsr_id
     ) {
-        log.info("remove knowledgebase");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logsFormat.createLogInfo("I", timestamp.toString(), "Deactivate policy", "Deactivate runtme policy for nsr_id " + nsr_id, "200");
+
         rulesEngineService.removeKnowledgebase("s" + nsr_id.replaceAll("-", ""));
 
         Optional<RuntimePolicyRecord> runtimePolicyRecord = runtimePolicyRecordRepository.findByNsrid(nsr_id);
@@ -593,6 +637,7 @@ public class RulesEngineController {
         final static String POLICY_ACTIVATED = "Policy is succesfully activated";
         final static String POLICY_DEACTIVATED = "Policy is succesfully deactivated";
         final static String POLICY_CREATED = "Policy is succesfully created";
+        final static String POLICY_CLONED = "Policy is succesfully cloned";
         final static String POLICY_DELETED = "Policy is succesfully deleted";
         final static String POLICY_CREATED_FAILURE = "Policy failed to be created at catalogues";
         final static String POLICY_DELETED_FAILURE = "Policy failed to be deleted at catalogues";
