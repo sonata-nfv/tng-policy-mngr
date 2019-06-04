@@ -34,6 +34,7 @@
 package eu.tng.policymanager;
 
 import com.google.gson.Gson;
+import eu.tng.policymanager.Messaging.LogsFormat;
 import eu.tng.policymanager.repository.dao.PlacementPolicyRepository;
 import eu.tng.policymanager.repository.dao.RecommendedActionRepository;
 import eu.tng.policymanager.repository.dao.RuntimePolicyRecordRepository;
@@ -44,6 +45,7 @@ import eu.tng.policymanager.repository.domain.RuntimePolicy;
 import eu.tng.policymanager.repository.domain.RuntimePolicyRecord;
 import eu.tng.policymanager.response.BasicResponseCode;
 import eu.tng.policymanager.response.PolicyRestResponse;
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +88,9 @@ public class RulesEngineController {
     private static final Logger log = LoggerFactory.getLogger(RulesEngineController.class);
 
     @Autowired
+    LogsFormat logsFormat;
+
+    @Autowired
     RulesEngineService rulesEngineService;
 
     @Autowired
@@ -124,7 +129,10 @@ public class RulesEngineController {
     //GET healthcheck for runtime policies
     @RequestMapping(value = "/pings", method = RequestMethod.GET)
     public String pings() {
-        log.info("ping policy manager");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+
+        logsFormat.createLog("I", timestamp.toString(), "healthcheck", "ping policy manager", "200");
+
         return "{ \"alive_now\": \"" + new Date() + "\"}";
     }
 
