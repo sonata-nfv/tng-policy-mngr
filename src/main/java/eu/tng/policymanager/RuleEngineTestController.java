@@ -154,7 +154,7 @@ public class RuleEngineTestController {
         return true;
     }
 
-    //deactivate an enforced policy
+    //activate an enforced policy
     @RequestMapping(value = "/activate/{nsr_id}/{runtimepolicy_id}", method = RequestMethod.GET)
     public boolean activate(@PathVariable("nsr_id") String nsr_id, @PathVariable("runtimepolicy_id") String runtimepolicy_id) {
 
@@ -194,4 +194,5 @@ public class RuleEngineTestController {
         }
 
     }
+    
 }
