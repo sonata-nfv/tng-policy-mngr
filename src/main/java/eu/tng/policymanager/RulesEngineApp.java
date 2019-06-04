@@ -34,6 +34,7 @@
 package eu.tng.policymanager;
 
 import eu.tng.policymanager.Messaging.DeployedNSListener;
+import eu.tng.policymanager.Messaging.LogsFormat;
 import eu.tng.policymanager.Messaging.MonitoringListener;
 import eu.tng.policymanager.config.DroolsConfig;
 import eu.tng.policymanager.repository.PolicyYamlFile;
@@ -86,7 +87,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 //@EnableJms
 public class RulesEngineApp {
 
-    private static Logger log = LoggerFactory.getLogger(RulesEngineApp.class);
+    //private static Logger log = LoggerFactory.getLogger(RulesEngineApp.class);
 
     public static final String RUNTIME_ACTIONS_QUEUE = "service.instance.scale";
     public final static String MONITORING_QUEUE = "son.monitoring.PLC";
@@ -97,14 +98,19 @@ public class RulesEngineApp {
     public static void main(String[] args) {
 
         ApplicationContext ctx = SpringApplication.run(RulesEngineApp.class, args);
-        String[] beanNames = ctx.getBeanDefinitionNames();
-        Arrays.sort(beanNames);
+        //String[] beanNames = ctx.getBeanDefinitionNames();
+        //Arrays.sort(beanNames);
 
     }
-
+    
     @Bean
     public PolicyYamlFile policyYamlFile() {
         return new PolicyYamlFile();
+    }
+
+    @Bean
+    public LogsFormat logsFormat() {
+        return new LogsFormat();
     }
 
     @Bean
