@@ -45,6 +45,7 @@ import eu.tng.policymanager.repository.domain.RuntimePolicy;
 import eu.tng.policymanager.repository.domain.RuntimePolicyRecord;
 import eu.tng.policymanager.response.BasicResponseCode;
 import eu.tng.policymanager.response.PolicyRestResponse;
+import eu.tng.policymanager.rules.generation.Util;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
@@ -611,6 +612,34 @@ public class RulesEngineController {
 
         PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DEACTIVATED, true);
         return buildResponseEntity(response, HttpStatus.OK);
+    }
+
+    //activate an enforced policy
+    @RequestMapping(value = "/activate/{nsr_id}/{runtimepolicy_id}", method = RequestMethod.GET)
+    public boolean activate(@PathVariable("nsr_id") String nsr_id, @PathVariable("runtimepolicy_id") String runtimepolicy_id) {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        //1. Fech yml file from catalogues
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> response;
+        try {
+            response = restTemplate.exchange(policies_url + "/" + runtimepolicy_id, HttpMethod.GET, entity, String.class);
+        } catch (HttpClientErrorException e) {
+            logsFormat.createLogError("E", timestamp.toString(), "Activate policy", "The runtime policy " + runtimepolicy_id + " does not exist at catalogues. Message : "
+                    + e.getMessage(), "200");
+            return false;
+        }
+
+        JSONObject policydescriptorRaw = new JSONObject(response.getBody());
+        //log.info("response" + policydescriptorRaw.toString());
+
+        JSONObject pld = policydescriptorRaw.getJSONObject("pld");
+
+        String policyAsYaml = Util.jsonToYaml(pld);
+        rulesEngineService.addNewKnowledgebase(nsr_id, runtimepolicy_id, policyAsYaml);
+        return true;
     }
 
     ResponseEntity buildResponseEntity(PolicyRestResponse response, HttpStatus httpstatus) {
