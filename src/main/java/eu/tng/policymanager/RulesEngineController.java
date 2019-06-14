@@ -87,7 +87,6 @@ import org.springframework.web.client.RestTemplate;
 @RequestMapping("/api/v1")
 public class RulesEngineController {
 
-    //private static final Logger log = LoggerFactory.getLogger(RulesEngineController.class);
     @Autowired
     LogsFormat logsFormat;
 
@@ -105,9 +104,6 @@ public class RulesEngineController {
 
     @Value("${tng.cat.network.services}")
     private String services_url;
-
-    @Value("${tng.gtk.vims}")
-    private String vims_url;
 
     @Autowired
     RuntimePolicyRepository runtimePolicyRepository;
@@ -552,26 +548,11 @@ public class RulesEngineController {
 
         if (placementpolicy_object.has("datacenters") && policy.equalsIgnoreCase("Prioritise")) {
 
-            RestTemplate restTemplate = new RestTemplate();
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-
             JSONArray datacenters = placementpolicy_object.getJSONArray("datacenters");
 
             String[] datacenters_tosave = new String[datacenters.length()];
 
             for (int i = 0; i < datacenters.length(); i++) {
-
-                ResponseEntity<String> response = restTemplate.exchange(vims_url + "/" + datacenters.get(i), HttpMethod.GET, entity, String.class);
-
-                if (response.getStatusCode().is4xxClientError()) {
-                    logsFormat.createLogError("E", timestamp.toString(), "Error in placement policy creation", Message.PLACEMENT_POLICY_CREATED_FAILURE, "400");
-                    PolicyRestResponse response1 = new PolicyRestResponse(BasicResponseCode.INVALID, Message.PLACEMENT_POLICY_CREATED_FAILURE, "Datacenter with uuid " + datacenters.get(i) + " does not exist");
-                    return buildResponseEntity(response1, HttpStatus.BAD_REQUEST);
-
-                }
-
                 datacenters_tosave[i] = (String) datacenters.get(i);
             }
 
