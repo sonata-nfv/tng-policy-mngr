@@ -88,7 +88,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class RulesEngineApp {
 
     //private static Logger log = LoggerFactory.getLogger(RulesEngineApp.class);
-
     public static final String RUNTIME_ACTIONS_QUEUE = "service.instance.scale";
     public final static String MONITORING_QUEUE = "son.monitoring.PLC";
 
@@ -102,7 +101,7 @@ public class RulesEngineApp {
         //Arrays.sort(beanNames);
 
     }
-    
+
     @Bean
     public PolicyYamlFile policyYamlFile() {
         return new PolicyYamlFile();

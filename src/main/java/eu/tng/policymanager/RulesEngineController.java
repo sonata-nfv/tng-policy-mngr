@@ -87,7 +87,6 @@ import org.springframework.web.client.RestTemplate;
 @RequestMapping("/api/v1")
 public class RulesEngineController {
 
-    //private static final Logger log = LoggerFactory.getLogger(RulesEngineController.class);
     @Autowired
     LogsFormat logsFormat;
 
@@ -96,9 +95,6 @@ public class RulesEngineController {
 
     @Autowired
     CataloguesConnector cataloguesConnector;
-
-    @Autowired
-    InfraConnector infraConnector;
 
     @Value("${tng.cat.policies}")
     private String policies_url;
@@ -552,22 +548,11 @@ public class RulesEngineController {
 
         if (placementpolicy_object.has("datacenters") && policy.equalsIgnoreCase("Prioritise")) {
 
-            RestTemplate restTemplate = new RestTemplate();
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-
             JSONArray datacenters = placementpolicy_object.getJSONArray("datacenters");
 
             String[] datacenters_tosave = new String[datacenters.length()];
 
             for (int i = 0; i < datacenters.length(); i++) {
-
-                if (!infraConnector.checkifVIMExists((String) datacenters.get(i))) {
-                    PolicyRestResponse response1 = new PolicyRestResponse(BasicResponseCode.INVALID, Message.PLACEMENT_POLICY_CREATED_FAILURE, "Datacenter with uuid " + datacenters.get(i) + " does not exist");
-                    return buildResponseEntity(response1, HttpStatus.BAD_REQUEST);
-                }
-
                 datacenters_tosave[i] = (String) datacenters.get(i);
             }
 
