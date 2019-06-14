@@ -7,6 +7,8 @@ package eu.tng.policymanager;
 
 import eu.tng.policymanager.repository.dao.RecommendedActionRepository;
 import eu.tng.policymanager.rules.generation.RepositoryUtil;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Logger;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +28,16 @@ public class TestPolicyActions {
     @Autowired
     RecommendedActionRepository recommendedActionRepository;
 
+    
     //@Test
+    public void testListOfPlacementPolicies() {
+        String policy = "Fill First";
+        List<String> myList = Arrays.asList("Prioritise", "Load Balanced", "Fill First");
+        boolean containselement = myList.stream().anyMatch(str -> str.equals(policy));
+        System.out.println("containselement "+containselement);
+    }
+
+   //@Test
     public void testStringSubSring() {
         String nsr_id = "6a72ddc9-36e5-4055-8c58-d691b39d4cc6";
 

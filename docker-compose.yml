@@ -5,6 +5,7 @@ services:
     container_name: son-mongo
     ports:
         - 27017:27017
+    restart: always
   son-broker:
     image: rabbitmq:3
     ports:

@@ -47,6 +47,7 @@ import eu.tng.policymanager.response.BasicResponseCode;
 import eu.tng.policymanager.response.PolicyRestResponse;
 import eu.tng.policymanager.rules.generation.Util;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -104,6 +105,9 @@ public class RulesEngineController {
 
     @Value("${tng.cat.network.services}")
     private String services_url;
+
+    @Value("${tng.gtk.vims}")
+    private String vims_url;
 
     @Autowired
     RuntimePolicyRepository runtimePolicyRepository;
@@ -246,7 +250,7 @@ public class RulesEngineController {
     public String getPolicy(@PathVariable("policy_uuid") String policy_uuid
     ) {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        logsFormat.createLogInfo("I", timestamp.toString(), "Get a policy", "Fetch a policy with uuid" + policy_uuid, "200");
+        logsFormat.createLogInfo("I", timestamp.toString(), "Get a policy", "Fetch a policy with uuid: " + policy_uuid, "200");
 
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
@@ -287,8 +291,7 @@ public class RulesEngineController {
                 }
 
                 //fetch ns_uuid
-                logsFormat.createLogInfo("I", timestamp.toString(), "Fetch ns", "Fetch ns_uuid for current policy" + policy_uuid, "200");
-
+                //logsFormat.createLogInfo("I", timestamp.toString(), "Fetch ns", "Fetch ns_uuid for current policy" + policy_uuid, "200");
                 JSONObject pld = policy_descriptor.getJSONObject("pld");
 
                 //log.info("pld " + pld);
@@ -531,15 +534,44 @@ public class RulesEngineController {
         PlacementPolicy placementpolicy_tosave = new PlacementPolicy();
 
         String policy = placementpolicy_object.getString("policy");
+
+        //policy validation
+        List<String> myList = Arrays.asList("Prioritise", "Load Balanced", "Fill First");
+        boolean is_policy_valid = myList.stream().anyMatch(str -> str.equals(policy));
+
+        if (!is_policy_valid) {
+
+            logsFormat.createLogError("E", timestamp.toString(), "Error in placement policy creation", Message.PLACEMENT_POLICY_CREATED_FAILURE, "400");
+            PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.PLACEMENT_POLICY_CREATED_FAILURE, "Policy name is invalid");
+            return buildResponseEntity(response, HttpStatus.BAD_REQUEST);
+
+        }
+
         placementpolicy_tosave.setPolicy(policy);
         placementpolicy_tosave.setUuid(UUID.randomUUID());
 
-        if (placementpolicy_object.has("datacenters")) {
+        if (placementpolicy_object.has("datacenters") && policy.equalsIgnoreCase("Prioritise")) {
+
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
             JSONArray datacenters = placementpolicy_object.getJSONArray("datacenters");
 
             String[] datacenters_tosave = new String[datacenters.length()];
 
             for (int i = 0; i < datacenters.length(); i++) {
+
+                ResponseEntity<String> response = restTemplate.exchange(vims_url + "/" + datacenters.get(i), HttpMethod.GET, entity, String.class);
+
+                if (response.getStatusCode().is4xxClientError()) {
+                    logsFormat.createLogError("E", timestamp.toString(), "Error in placement policy creation", Message.PLACEMENT_POLICY_CREATED_FAILURE, "400");
+                    PolicyRestResponse response1 = new PolicyRestResponse(BasicResponseCode.INVALID, Message.PLACEMENT_POLICY_CREATED_FAILURE, "Datacenter with uuid " + datacenters.get(i) + " does not exist");
+                    return buildResponseEntity(response1, HttpStatus.BAD_REQUEST);
+
+                }
+
                 datacenters_tosave[i] = (String) datacenters.get(i);
             }
 
@@ -674,6 +706,7 @@ public class RulesEngineController {
         final static String POLICY_DELETION = "Policy failed to be deleted at catalogues";
         final static String POLICY_METADATA_UPDATED = "Policy metadata are sucesfully updated";
         final static String POLICY_ALREADY_BINDED = "Already exists a policy binded with the requested sla and nsid";
+        final static String PLACEMENT_POLICY_CREATED_FAILURE = "Placement Policy failed to be created due to invalid parameters";
         final static String MISSING_PARAMETER = "Bad Request. Missing parameters.";
         final static String POLICY_DEFAULT = "Policy is set as default";
         final static String POLICY_NOT_EXISTS = "Policy does not exist";
