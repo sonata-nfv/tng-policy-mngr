@@ -7,7 +7,14 @@ package eu.tng.policymanager;
 
 import eu.tng.policymanager.Exceptions.VNFDoesNotExistException;
 import eu.tng.policymanager.Messaging.LogsFormat;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Timestamp;
+import java.util.logging.Level;
 import org.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +48,9 @@ public class CataloguesConnector {
 
     @Value("${tng.cat.network.services}")
     private String services_url;
+
+    @Value("${tng.ia.vims}")
+    private String vims_url;
 
     public CataloguesConnector() {
     }
@@ -104,7 +114,6 @@ public class CataloguesConnector {
         ResponseEntity<String> response1 = restTemplate.exchange(vnfs_url_complete, HttpMethod.GET, entity, String.class);
 
         //log.info("invoke the " + vnfs_url_complete);
-
         JSONArray vnfs = new JSONArray(response1.getBody());
         if (vnfs.length() == 0) {
             throw new VNFDoesNotExistException("Vnf with name:" + name + " vendor:" + vendor + " version:" + version + " does not exist at the catalogues");
@@ -114,29 +123,29 @@ public class CataloguesConnector {
         return ns_uuid;
     }
 
-//    public boolean checkifVIMExists(String vim_uuid) {
-//        RestTemplate restTemplate = new RestTemplate();
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setContentType(MediaType.APPLICATION_JSON);
-//        HttpEntity<String> entity = new HttpEntity<>(headers);
-//        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-//        try {
-//            ResponseEntity<String> response1 = restTemplate.exchange(vims_url + "/" + vim_uuid, HttpMethod.GET, entity, String.class);
-//            System.out.println("url" + vims_url + "/" + vim_uuid);
-//            System.out.println("responce" + response1.getStatusCodeValue());
-//             System.out.println("body" + response1.getBody());
-//            if (response1.getStatusCodeValue()==404) {
-//                logsFormat.createLogError("E", timestamp.toString(), "Error in placement policy creation: " + vims_url + "/" + vim_uuid, "VIM with uuid " + vim_uuid + " does not exist", "400");
-//                return false;
-//            }
-//
-//        } catch (HttpClientErrorException e) {
-//
-//            logsFormat.createLogError("E", timestamp.toString(), "Error in placement policy creation: " + vims_url + "/" + vim_uuid, "VIM with uuid " + vim_uuid + " does not exist", "400");
-//            return false;
-//        }
-//        return true;
-//
-//    }
+    public boolean checkifVIMExists(String vim_uuid) {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        try {
+            URL obj = new URL(vims_url + "/" + vim_uuid);
+            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+            con.setRequestMethod("GET");
+
+            int responseCode = con.getResponseCode();
+
+            if (responseCode != 200) {
+                logsFormat.createLogError("E", timestamp.toString(), "Error in placement policy creation: " + vims_url + "/" + vim_uuid, "VIM with uuid " + vim_uuid + " does not exist", "404");
+                return false;
+            }
+
+        } catch (MalformedURLException ex) {
+            logsFormat.createLogError("E", timestamp.toString(), "Error in placement policy creation: " + vims_url + "/" + vim_uuid, "VIM with uuid " + vim_uuid + " does not exist", "404");
+            return false;
+        } catch (IOException ex) {
+            logsFormat.createLogError("E", timestamp.toString(), "Error in placement policy creation: " + vims_url + "/" + vim_uuid, "VIM with uuid " + vim_uuid + " does not exist", "404");
+            return false;
+        }
+        return true;
+
+    }
 
 }

@@ -520,8 +520,6 @@ public class RulesEngineController {
     public ResponseEntity createPlacementPolicy(@RequestBody String tobject
     ) {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        logsFormat.createLogInfo("I", timestamp.toString(), "Create placement policy", "", "200");
-
         HttpHeaders responseHeaders = new HttpHeaders();
         Gson gson = new Gson();
         placementPolicyRepository.deleteAll();
@@ -553,6 +551,12 @@ public class RulesEngineController {
             String[] datacenters_tosave = new String[datacenters.length()];
 
             for (int i = 0; i < datacenters.length(); i++) {
+
+                if (!cataloguesConnector.checkifVIMExists((String) datacenters.get(i))) {
+                    PolicyRestResponse response1 = new PolicyRestResponse(BasicResponseCode.INVALID, Message.PLACEMENT_POLICY_CREATED_FAILURE, "Datacenter with uuid " + datacenters.get(i) + " does not exist");
+                    return buildResponseEntity(response1, HttpStatus.BAD_REQUEST);
+                }
+
                 datacenters_tosave[i] = (String) datacenters.get(i);
             }
 
@@ -567,6 +571,7 @@ public class RulesEngineController {
         JSONObject placement_policy_to_send = new JSONObject(gson.toJson(placementpolicy));
         placement_policy_to_send.remove("id");
 
+        logsFormat.createLogInfo("I", timestamp.toString(), "Create placement policy", "", "200");
         ResponseEntity responseEntity = new ResponseEntity(placement_policy_to_send.toString(), responseHeaders, HttpStatus.OK);
         return responseEntity;
 
