@@ -604,7 +604,7 @@ public class RulesEngineController {
         JSONObject placement_policy_to_send = new JSONObject(gson.toJson(placementpolicy));
         placement_policy_to_send.remove("id");
 
-        logsFormat.createLogInfo("I", timestamp.toString(), "Create placement policy", "", "200");
+        logsFormat.createLogInfo("I", timestamp.toString(), "Create placement policy", placement_policy_to_send.toString(), "200");
         //ResponseEntity responseEntity = new ResponseEntity(placement_policy_to_send.toString(), responseHeaders, HttpStatus.OK);
         //return responseEntity;
         return buildPlainResponse(placement_policy_to_send.toString(), HttpStatus.OK);
@@ -616,11 +616,8 @@ public class RulesEngineController {
     public ResponseEntity listPlacementPolicies() {
 
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        logsFormat.createLogInfo("I", timestamp.toString(), "Fetch placement policy", "", "200");
 
         List<PlacementPolicy> placementPolicies = placementPolicyRepository.findAll();
-
-        ResponseEntity responseEntity;
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(MediaType.APPLICATION_JSON);
 
@@ -629,6 +626,7 @@ public class RulesEngineController {
 
             JSONObject placement_policy = new JSONObject(gson.toJson(placementPolicies.get(0)));
             placement_policy.remove("id");
+            logsFormat.createLogInfo("I", timestamp.toString(), "Fetch placement policy", placement_policy.toString(), "200");
             return new ResponseEntity(placement_policy.toString(), responseHeaders, HttpStatus.OK);
         } else {
             return new ResponseEntity(new JSONObject().toString(), responseHeaders, HttpStatus.OK);
