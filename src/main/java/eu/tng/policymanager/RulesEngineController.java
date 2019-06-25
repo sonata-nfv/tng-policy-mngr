@@ -213,8 +213,41 @@ public class RulesEngineController {
             return buildResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED, responseone);
-        return buildResponseEntity(response, HttpStatus.OK);
+        //PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED, responseone);
+        return this.buildPlainResponse(responseone, HttpStatus.OK);
+
+    }
+    
+    @RequestMapping(value = "/ui", method = RequestMethod.POST)
+    public ResponseEntity createPolicyDescriptorFromUI(@RequestBody String tobject
+    ) {
+        //save to catalogues
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logsFormat.createLogInfo("I", timestamp.toString(), "Create a Policy", "Request creation of Policy", "200");
+        logsFormat.createLogInfo("I", timestamp.toString(), "Submitted policy format from UI", tobject, "200");
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> httpEntity = new HttpEntity<>(tobject, httpHeaders);
+
+        String responseone = null;
+        try {
+            responseone = restTemplate.postForObject(policies_url, httpEntity, String.class);
+
+            JSONObject policyDescriptor = new JSONObject(responseone);
+            String policy_uuid = policyDescriptor.getString("uuid");
+
+            //save locally
+            rulesEngineService.savePolicyDescriptor(tobject, policy_uuid);
+
+        } catch (Exception e) {
+            logsFormat.createLogError("E", timestamp.toString(), "Error in policy creation", e.getMessage(), "200");
+            PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
+                    + ". Check if policy vendor or version are null");
+            return buildResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return this.buildPlainResponse(responseone, HttpStatus.OK);
 
     }
 
@@ -572,8 +605,9 @@ public class RulesEngineController {
         placement_policy_to_send.remove("id");
 
         logsFormat.createLogInfo("I", timestamp.toString(), "Create placement policy", "", "200");
-        ResponseEntity responseEntity = new ResponseEntity(placement_policy_to_send.toString(), responseHeaders, HttpStatus.OK);
-        return responseEntity;
+        //ResponseEntity responseEntity = new ResponseEntity(placement_policy_to_send.toString(), responseHeaders, HttpStatus.OK);
+        //return responseEntity;
+        return buildPlainResponse(placement_policy_to_send.toString(), HttpStatus.OK);
 
     }
 
@@ -672,6 +706,15 @@ public class RulesEngineController {
 
     }
 
+    ResponseEntity buildPlainResponse(String response, HttpStatus httpstatus) {
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Content-Length", String.valueOf(response.length()));
+        ResponseEntity responseEntity = new ResponseEntity(response, responseHeaders, httpstatus);
+        return responseEntity;
+
+    }
+
     /**
      * Inner class containing all the static messages which will be used in an
      * EntropyRestResponse.
@@ -684,6 +727,7 @@ public class RulesEngineController {
         final static String POLICY_ACTIVATED = "Policy is succesfully activated";
         final static String POLICY_DEACTIVATED = "Policy is succesfully deactivated";
         final static String POLICY_CREATED = "Policy is succesfully created";
+        final static String PLACEMENT_POLICY_CREATED = "Placement Policy is succesfully created";
         final static String POLICY_CLONED = "Policy is succesfully cloned";
         final static String POLICY_DELETED = "Policy is succesfully deleted";
         final static String POLICY_CREATED_FAILURE = "Policy failed to be created at catalogues";
