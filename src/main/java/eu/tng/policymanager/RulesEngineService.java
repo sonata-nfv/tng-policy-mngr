@@ -171,7 +171,6 @@ public class RulesEngineService {
     public void searchForGeneratedActions() {
 
         //logger.info("Search for actions");
-
         ConcurrentHashMap map = kieUtil.seeThreadMap();
         for (Object key : map.keySet()) {
             //System.out.println("factSessionName " + key.toString());
@@ -220,7 +219,8 @@ public class RulesEngineService {
                         try {
                             //get vnf_id by vnf_name , vendor, version
                             String vnfd_id = cataloguesConnector.getVnfId(vnfs_url, doactionsubclass.getVnf_name(), doactionsubclass.getVendor(), doactionsubclass.getVersion());
-                            elasticity_action_msg.put("vnfd_id", vnfd_id);
+                            //elasticity_action_msg.put("vnfd_id", vnfd_id);
+                            elasticity_action_msg.put("vnfd_uuid", vnfd_id); 
 
                             if (doactionsubclass.getScaling_type().equals(ScalingType.removevnf) && doactionsubclass.getCriterion().equalsIgnoreCase("random")) {
                                 String vnfr_id = repositoryConnector.get_vnfr_id_to_remove_random(doactionsubclass.getService_instance_id(), vnfd_id);
@@ -228,7 +228,8 @@ public class RulesEngineService {
                                     logger.info("Elasticity action was prevented from been generated.");
                                     return;
                                 }
-                                elasticity_action_msg.put("vnf_id", vnfr_id);
+                                //elasticity_action_msg.put("vnf_id", vnfr_id);
+                                elasticity_action_msg.put("vnf_uuid", vnfr_id); 
                             }
 
                         } catch (VNFDoesNotExistException | NSDoesNotExistException | VNFRDoesNotExistException ex) {
@@ -236,8 +237,11 @@ public class RulesEngineService {
                         }
 
                         elasticity_action_msg.put("scaling_type", doactionsubclass.getScaling_type());
-                        elasticity_action_msg.put("service_instance_id", doactionsubclass.getService_instance_id());
-                        elasticity_action_msg.put("value", doactionsubclass.getValue());
+                        //elasticity_action_msg.put("service_instance_id", doactionsubclass.getService_instance_id());
+                        elasticity_action_msg.put("service_instance_uuid", doactionsubclass.getService_instance_id());
+
+                        //elasticity_action_msg.put("value", doactionsubclass.getValue());
+                        elasticity_action_msg.put("number_of_instances", doactionsubclass.getValue());
 
                         //JSONArray constraints = new JSONArray();
                         ///HashMap constraint = new HashMap();
@@ -398,8 +402,7 @@ public class RulesEngineService {
         // Find all DoAction facts and 1st generation child classes of DoAction.
         ObjectFilter doActionFilter = new ObjectFilter() {
             @Override
-            public
-                    boolean accept(Object object) {
+            public boolean accept(Object object) {
                 if (Action.class
                         .equals(object.getClass())) {
 
@@ -455,10 +458,9 @@ public class RulesEngineService {
         for (FactHandle handle : allHandles) {
             msg += "    " + kieSession.getObject(handle) + "\n";
         }
-        if (!msg.equalsIgnoreCase("")){
-             System.out.println("\nAll facts:\n"+msg);
+        if (!msg.equalsIgnoreCase("")) {
+            System.out.println("\nAll facts:\n" + msg);
         }
-       
 
         EntryPoint monitoringstream = kieSession.getEntryPoint("MonitoringStream");
         Collection<FactHandle> allHandles1 = monitoringstream.getFactHandles();
@@ -468,9 +470,9 @@ public class RulesEngineService {
         for (FactHandle handle : allHandles1) {
             msg1 += "    " + monitoringstream.getObject(handle) + "\n";
         }
-        
-        if (!msg1.equalsIgnoreCase("")){
-             System.out.println("\nAll facts of stream:\n"+msg1);
+
+        if (!msg1.equalsIgnoreCase("")) {
+            System.out.println("\nAll facts of stream:\n" + msg1);
         }
 
     }
@@ -690,7 +692,7 @@ public class RulesEngineService {
                 + "   System.out.println(\"Retracting ElasticityAction: \" + $e2.getService_instance_id());\n"
                 + "   retract($e2);\n"
                 + "end";
-          
+
         System.out.println(created_rules);
         return created_rules;
 
