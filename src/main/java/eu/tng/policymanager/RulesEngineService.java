@@ -258,7 +258,7 @@ public class RulesEngineService {
                             Duration duration = Duration.between(now, recent_date);
                             long diff = Math.abs(duration.toMinutes());
                             logger.info("Duration between last created action and now " + diff);
-                            if (diff < 3) {
+                            if (diff < 10) {
                                 return;
                             }
 
