@@ -241,7 +241,7 @@ public class RulesEngineService {
                         elasticity_action_msg.put("service_instance_uuid", doactionsubclass.getService_instance_id());
 
                         //elasticity_action_msg.put("value", doactionsubclass.getValue());
-                        elasticity_action_msg.put("number_of_instances", doactionsubclass.getValue());
+                        elasticity_action_msg.put("number_of_instances", Integer.parseInt(doactionsubclass.getValue()));
 
                         //JSONArray constraints = new JSONArray();
                         ///HashMap constraint = new HashMap();
