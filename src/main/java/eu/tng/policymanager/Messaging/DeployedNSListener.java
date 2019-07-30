@@ -229,7 +229,12 @@ public class DeployedNSListener {
 
                                 logger.info("vnfr_object--> " + vnfr_object);
 
-                                JSONArray prometheous_vnfs = compose_monitoring_rules_os(nsr_id, vnfr_object, monitoringRules);
+                                JSONArray prometheous_vnfs = new JSONArray();
+                                if (vnfr_object.has("virtual_deployment_units")) {
+                                    prometheous_vnfs = compose_monitoring_rules_os(nsr_id, vnfr_object, monitoringRules);
+                                } else if (vnfr_object.has("cloudnative_deployment_units")) {
+                                    prometheous_vnfs = compose_monitoring_rules_k8s(nsr_id, vnfr_object, monitoringRules);
+                                }
 
                                 prometheous_rules.put("vnfs", prometheous_vnfs);
 
@@ -340,6 +345,85 @@ public class DeployedNSListener {
                 prometheus_vdus.put(prometheus_vdu);
 
             }
+
+        }
+
+        prometheus_vnf.put("vdus", prometheus_vdus);
+        prometheous_vnfs.put(prometheus_vnf);
+
+        return prometheous_vnfs;
+
+    }
+
+    private JSONArray compose_monitoring_rules_k8s(String nsr_id, JSONObject vnfr_object, List<MonitoringRule> monitoringRules) {
+
+        JSONArray prometheous_vnfs = new JSONArray();
+
+        JSONObject prometheus_vnf = new JSONObject();
+
+        String vnfr_id = vnfr_object.getString("id"); //or descriptor_reference to ask
+        prometheus_vnf.put("nvfid", vnfr_id);
+
+        JSONArray prometheus_vdus = new JSONArray();
+        JSONArray cloudnative_deployment_units = vnfr_object.getJSONArray("cloudnative_deployment_units");
+
+        for (int j = 0; j < cloudnative_deployment_units.length(); j++) {
+
+            JSONObject cloudnative_deployment_unit = cloudnative_deployment_units.getJSONObject(j);
+
+            logger.log(Level.INFO, "cloudnative_deployment_unit--> {0}", cloudnative_deployment_unit);
+
+            String vdu_reference = cloudnative_deployment_unit.getString("cdu_reference");
+
+            JSONObject prometheus_vdu = new JSONObject();
+            String vc_id = vdu_reference.split(":")[1];
+            prometheus_vdu.put("vdu_id", vc_id);
+
+            //add prometheus rules
+            JSONArray prometheus_rules = new JSONArray();
+
+            for (MonitoringRule monitoringRule : monitoringRules) {
+
+                logger.info("MonitoringRule--> " + monitoringRule.toString());
+
+                //Formatted like this : <vnf_name>:<vdu_id>-<record_id>
+                String policy_vdu_reference = monitoringRule.getName().split(":")[0]
+                        + ":" + monitoringRule.getName().split(":")[1]
+                        + "-" + vnfr_id;
+
+                logger.info("policy_vdu_reference--> " + policy_vdu_reference);
+                logger.info("vdu_reference--> " + vdu_reference);
+
+                if (vdu_reference.equals(policy_vdu_reference)) {
+
+                    JSONObject prometheus_rule = new JSONObject();
+
+                    String rule_prefix = nsr_id.substring(0, Math.min(nsr_id.length(), 8));
+                    String rule_name = monitoringRule.getName().replace(":", "_").replace("-", "_") + "_" + rule_prefix;
+
+                    if (rule_name.length() > 60) {
+                        logger.info("Monitoring rule name is too large.it must not be more than 50 characters");
+                        rule_name = rule_name.substring(0, Math.min(rule_name.length(), 59));
+                    }
+
+                    prometheus_rule.put("name", rule_name);
+
+                    logger.info("rule name-->" + rule_name);
+
+                    prometheus_rule.put("duration", monitoringRule.getDuration() + monitoringRule.getDuration_unit());
+                    prometheus_rule.put("description", monitoringRule.getDescription());
+                    prometheus_rule.put("summary", "");
+                    prometheus_rule.put("notification_type", new JSONObject("{\"id\": 2,\"type\":\"rabbitmq\"}"));
+                    logger.info("monitoringRule condition " + monitoringRule.getCondition());
+
+                    prometheus_rule.put("condition", monitoringRule.getCondition() + "{container_name=\"" + vc_id + "\"} " + monitoringRule.getThreshold());
+
+                    prometheus_rules.put(prometheus_rule);
+                }
+            }
+
+            prometheus_vdu.put("rules", prometheus_rules);
+            prometheus_vdus.put(prometheus_vdu);
 
         }
 
