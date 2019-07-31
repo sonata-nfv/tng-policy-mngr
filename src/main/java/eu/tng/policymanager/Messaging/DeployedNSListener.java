@@ -219,6 +219,8 @@ public class DeployedNSListener {
                             //3. construct prometheus rules
                             JSONObject prometheous_rules = new JSONObject();
                             prometheous_rules.put("plc_cnt", nsr_id);
+                            prometheous_rules.put("sonata_service_id", nsr_id);
+                            
 
                             //parse newDeployedGraph
                             JSONArray vnfrs = newDeployedGraph.getJSONArray("vnfrs");
@@ -241,7 +243,10 @@ public class DeployedNSListener {
                                 logger.info("prometheous_rules " + prometheous_rules);
 
                                 // Create PLC rules to son-monitor
-                                String monitoring_url = "http://" + monitoring_manager + "/api/v1/policymng/rules/service/" + nsr_id + "/configuration";
+                                //String monitoring_url = "http://" + monitoring_manager + "/api/v1/policymng/rules/service/" + nsr_id + "/configuration";
+                                String monitoring_url = "http://" + monitoring_manager + "/api/v2/policies/monitoring-rules";
+
+                                
                                 logger.info("monitoring_manager " + monitoring_url);
                                 try {
                                     String monitoring_response = dopostcall(monitoring_url, prometheous_rules);
@@ -273,7 +278,7 @@ public class DeployedNSListener {
         JSONObject prometheus_vnf = new JSONObject();
 
         String vnfr_id = vnfr_object.getString("id"); //or descriptor_reference to ask
-        prometheus_vnf.put("nvfid", vnfr_id);
+        prometheus_vnf.put("vnf_id", vnfr_id);
 
         JSONArray prometheus_vdus = new JSONArray();
         JSONArray virtual_deployment_units = vnfr_object.getJSONArray("virtual_deployment_units");
@@ -362,7 +367,7 @@ public class DeployedNSListener {
         JSONObject prometheus_vnf = new JSONObject();
 
         String vnfr_id = vnfr_object.getString("id"); //or descriptor_reference to ask
-        prometheus_vnf.put("nvfid", vnfr_id);
+        prometheus_vnf.put("vnf_id", vnfr_id);
 
         JSONArray prometheus_vdus = new JSONArray();
         JSONArray cloudnative_deployment_units = vnfr_object.getJSONArray("cloudnative_deployment_units");
