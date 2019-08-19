@@ -217,7 +217,7 @@ public class RulesEngineController {
         return this.buildPlainResponse(responseone, HttpStatus.OK);
 
     }
-    
+
     @RequestMapping(value = "/ui", method = RequestMethod.POST)
     public ResponseEntity createPolicyDescriptorFromUI(@RequestBody String tobject
     ) {
@@ -642,6 +642,14 @@ public class RulesEngineController {
         Gson gson = new Gson();
 
         return gson.toJson(recommendedActions);
+    }
+
+    @RequestMapping(value = "/actions/counter", method = RequestMethod.GET)
+    public int num_of_actions() {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logsFormat.createLogInfo("I", timestamp.toString(), "Fetch list of Actions", "", "200");
+        long num_action = recommendedActionRepository.count();
+        return (int)num_action;
     }
 
     //deactivate an enforced policy
