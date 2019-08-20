@@ -17,6 +17,7 @@ tng-policy-mngr supports its own swagger endpoint at http://<ip_adress>/swagger-
 | Action | HTTP Method | Endpoint |
 | --------------- | ------- | -------------------------------------------- |
 | GET a list of all Runtime policies | `GET` |`/api/v1`|
+| GET a number of all Runtime policies | `GET` |`/api/v1/counter`|
 | GET a list of all Runtime policies matching a specific network service | `GET` |`/api/v1?ns_uuid={value}`|
 | Create a Runtime Policy | `POST` |`/api/v1`|
 | GET a Runtime policy | `GET` |`/api/v1/{policy_uuid}`|
@@ -25,6 +26,7 @@ tng-policy-mngr supports its own swagger endpoint at http://<ip_adress>/swagger-
 | Bind a Runtime Policy to an SLA | `PATCH` |`/api/v1/bind/{policy_uuid}`|
 | Define a Runtime Policy as default | `PATCH` |`/api/v1/default/{policy_uuid}`|
 | GET a list of all Recommended Actions | `GET` |`/api/v1/actions`|
+| GET a number of all Recommended Actions | `GET` |`/api/v1/actions/counter`|
 | Create the Placement Policy | `POST` |`/api/v1/placement`|
 | GET the Placement policy | `GET` |`/api/v1/placement`|
 | Pings to policy manager | `GET` |`/api/v1/pings`|
