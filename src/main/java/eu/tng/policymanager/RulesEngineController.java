@@ -50,6 +50,7 @@ import eu.tng.policymanager.rules.generation.Util;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -184,7 +185,23 @@ public class RulesEngineController {
         //return policieslist_toreturn.toString();
     }
 
-    //TODO: clean java headers!!!!!!!!!!!!!!!
+    //get number of existing policies
+    @RequestMapping(value = "/counter", method = RequestMethod.GET)
+    public int num_of_policies() {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logsFormat.createLogInfo("I", timestamp.toString(), "Fetch number of policies", "", "200");
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(policies_url, HttpMethod.GET, entity, String.class);
+
+        JSONArray policieslist = new JSONArray(response.getBody());
+        
+        return policieslist.length();
+    }
+
     //Create a Policy
     @RequestMapping(value = "", method = RequestMethod.POST)
     public ResponseEntity createPolicyDescriptor(@RequestBody String tobject
@@ -732,9 +749,9 @@ public class RulesEngineController {
     @RequestMapping(value = "/actions/counter", method = RequestMethod.GET)
     public int num_of_actions() {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        logsFormat.createLogInfo("I", timestamp.toString(), "Fetch list of Actions", "", "200");
-        long num_action = recommendedActionRepository.count();
-        return (int) num_action;
+        logsFormat.createLogInfo("I", timestamp.toString(), "Fetch number of Actions", "", "200");
+        long num_actions = recommendedActionRepository.count();
+        return (int) num_actions;
     }
 
     //deactivate an enforced policy
