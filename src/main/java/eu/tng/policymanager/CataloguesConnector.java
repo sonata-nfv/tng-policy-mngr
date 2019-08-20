@@ -5,6 +5,7 @@
  */
 package eu.tng.policymanager;
 
+import eu.tng.policymanager.Exceptions.NSDoesNotExistException;
 import eu.tng.policymanager.Exceptions.VNFDoesNotExistException;
 import eu.tng.policymanager.Messaging.LogsFormat;
 import java.io.BufferedReader;
@@ -121,6 +122,30 @@ public class CataloguesConnector {
 
         String ns_uuid = vnfs.getJSONObject(0).getString("uuid");
         return ns_uuid;
+    }
+
+    String getNSid(String services_url, String name, String vendor, String version) throws NSDoesNotExistException {
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        String vnfs_url_complete = services_url
+                + "?name=" + name
+                + "&vendor=" + vendor
+                + "&version=" + version;
+
+        ResponseEntity<String> response1 = restTemplate.exchange(vnfs_url_complete, HttpMethod.GET, entity, String.class);
+
+        //log.info("invoke the " + vnfs_url_complete);
+        JSONArray vnfs = new JSONArray(response1.getBody());
+        if (vnfs.length() == 0) {
+            throw new NSDoesNotExistException("NS with name:" + name + " vendor:" + vendor + " version:" + version + " does not exist at the catalogues");
+        }
+
+        String ns_uuid = vnfs.getJSONObject(0).getString("uuid");
+        return ns_uuid;
+
     }
 
     public boolean checkifVIMExists(String vim_uuid) {
