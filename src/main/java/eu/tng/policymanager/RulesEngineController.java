@@ -34,6 +34,7 @@
 package eu.tng.policymanager;
 
 import com.google.gson.Gson;
+import eu.tng.policymanager.Exceptions.NSDoesNotExistException;
 import eu.tng.policymanager.Messaging.LogsFormat;
 import eu.tng.policymanager.repository.dao.PlacementPolicyRepository;
 import eu.tng.policymanager.repository.dao.RecommendedActionRepository;
@@ -53,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.logging.Level;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -218,6 +220,7 @@ public class RulesEngineController {
 
     }
 
+    //create a policy via the ui
     @RequestMapping(value = "/ui", method = RequestMethod.POST)
     public ResponseEntity createPolicyDescriptorFromUI(@RequestBody String tobject
     ) {
@@ -225,22 +228,104 @@ public class RulesEngineController {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         logsFormat.createLogInfo("I", timestamp.toString(), "Create a Policy", "Request creation of Policy", "200");
         logsFormat.createLogInfo("I", timestamp.toString(), "Submitted policy format from UI", tobject, "200");
+
+        JSONObject policyjson = new JSONObject(tobject);
+        policyjson.put("descriptor_schema", "https://raw.githubusercontent.com/sonata-nfv/tng-schema/master/policy-descriptor/policy-schema.yml");
+
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
 
-        HttpEntity<String> httpEntity = new HttpEntity<>(tobject, httpHeaders);
+        JSONArray monitoring_rules = policyjson.getJSONArray("monitoring_rules");
+        for (int i = 0; i < monitoring_rules.length(); i++) {
+
+            JSONObject monitoring_rule = monitoring_rules.getJSONObject(i);
+
+            //check if > or < creates problem
+            String monitoring_rule_name = monitoring_rule.getString("name");
+
+            monitoring_rule_name = defineRuleOperator(monitoring_rule_name);
+            monitoring_rule.put("name", monitoring_rule_name);
+
+        }
+
+        JSONArray policyRules = policyjson.getJSONArray("policyRules");
+
+        for (int i = 0; i < policyRules.length(); i++) {
+
+            JSONObject policy_rule = policyRules.getJSONObject(i);
+
+            //check if > or < creates problem
+            JSONObject policy_rules_conditions = policy_rule.getJSONObject("conditions");
+            JSONArray policy_condition_rules = policy_rules_conditions.getJSONArray("rules");
+
+            for (int j = 0; j < policy_condition_rules.length(); j++) {
+                JSONObject policy_condition_rule = policy_condition_rules.getJSONObject(j);
+
+                String rule_id = policy_condition_rule.getString("id");
+                policy_condition_rule.put("id", rule_id + ".LogMetric");
+
+                String rule_field = policy_condition_rule.getString("field");
+                policy_condition_rule.put("field", rule_field + ".LogMetric");
+
+                policy_condition_rule.put("type", "string");
+                policy_condition_rule.put("input", "text");
+                policy_condition_rule.put("operator", "equal");
+
+                String rule_value = policy_condition_rule.getString("value");
+                rule_value = defineRuleOperator(rule_value);
+                rule_value = rule_value.replace(":", "_").replace("-", "_");
+                policy_condition_rule.put("value", rule_value);
+
+            }
+
+            JSONArray policy_rules_actions = policy_rule.getJSONArray("actions");
+            for (int k = 0; k < policy_rules_actions.length(); k++) {
+                JSONObject policy_rules_action = policy_rules_actions.getJSONObject(k);
+                if (policy_rules_action.getString("action_object").equalsIgnoreCase("ElasticityAction")) {
+                    policy_rules_action.put("action_type", "ScalingType");
+                }
+
+            }
+
+        }
 
         String responseone = null;
-        try {
-            responseone = restTemplate.postForObject(policies_url, httpEntity, String.class);
+        HttpEntity<String> httpEntity = new HttpEntity<>(policyjson.toString(), httpHeaders);
 
+        System.out.println("final policy json " + policyjson.toString());
+        try {
+
+            responseone = restTemplate.postForObject(policies_url, httpEntity, String.class);
+            System.out.println("i am here");
             JSONObject policyDescriptor = new JSONObject(responseone);
             String policy_uuid = policyDescriptor.getString("uuid");
 
+            if (policyjson.has("default_policy")) {
+                if (policyjson.getBoolean("default_policy")) {
+
+                    JSONObject ns_json = policyjson.getJSONObject("network_service");
+                    String ns_uuid;
+                    try {
+                        ns_uuid = cataloguesConnector.getNSid(services_url, ns_json.getString("name"), ns_json.getString("vendor"), ns_json.getString("version"));
+                    } catch (NSDoesNotExistException ex) {
+                        logsFormat.createLogError("E", timestamp.toString(), "Error in policy creation", ex.getMessage(), "200");
+                        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
+                                + ". Network service does not exist on catalogues");
+                        return buildResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                    RuntimePolicy rp = new RuntimePolicy();
+                    rp.setDefaultPolicy(true);
+                    rp.setPolicyid(policy_uuid);
+                    rp.setNsid(ns_uuid);
+                    runtimePolicyRepository.save(rp);
+
+                }
+
+            }
+
             //save locally
             rulesEngineService.savePolicyDescriptor(tobject, policy_uuid);
-
         } catch (Exception e) {
             logsFormat.createLogError("E", timestamp.toString(), "Error in policy creation", e.getMessage(), "200");
             PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
@@ -649,7 +734,7 @@ public class RulesEngineController {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         logsFormat.createLogInfo("I", timestamp.toString(), "Fetch list of Actions", "", "200");
         long num_action = recommendedActionRepository.count();
-        return (int)num_action;
+        return (int) num_action;
     }
 
     //deactivate an enforced policy
@@ -698,6 +783,19 @@ public class RulesEngineController {
         String policyAsYaml = Util.jsonToYaml(pld);
         rulesEngineService.addNewKnowledgebase(nsr_id, runtimepolicy_id, policyAsYaml);
         return true;
+    }
+
+    String defineRuleOperator(String monitoring_rule_name) {
+
+        if (monitoring_rule_name.contains(">")) {
+            monitoring_rule_name = monitoring_rule_name.replaceAll(">", "more");
+        } else if (monitoring_rule_name.contains("<")) {
+            monitoring_rule_name = monitoring_rule_name.replaceAll("<", "less");
+        } else {
+            monitoring_rule_name = monitoring_rule_name.replaceAll("=", "less");
+        }
+
+        return monitoring_rule_name;
     }
 
     ResponseEntity buildResponseEntity(PolicyRestResponse response, HttpStatus httpstatus) {
