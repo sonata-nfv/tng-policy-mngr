@@ -15,5 +15,6 @@ public enum BasicResponseCode implements ResponseCode {
     INVALID,
     EXCEPTION,
     PERMISSION,
-    UNKNOWN
+    UNKNOWN,
+    REJECTED
 }

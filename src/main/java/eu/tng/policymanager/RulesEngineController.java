@@ -227,9 +227,9 @@ public class RulesEngineController {
 
         } catch (Exception e) {
             logsFormat.createLogError("E", timestamp.toString(), "Error in policy creation", e.getMessage(), "200");
-            PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
+            PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.REJECTED, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
                     + ". Check if policy vendor or version are null");
-            return buildResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return buildResponseEntity(response, HttpStatus.PRECONDITION_FAILED);
         }
 
         //PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED, responseone);
@@ -327,9 +327,9 @@ public class RulesEngineController {
                         ns_uuid = cataloguesConnector.getNSid(services_url, ns_json.getString("name"), ns_json.getString("vendor"), ns_json.getString("version"));
                     } catch (NSDoesNotExistException ex) {
                         logsFormat.createLogError("E", timestamp.toString(), "Error in policy creation", ex.getMessage(), "200");
-                        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
+                        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.REJECTED, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
                                 + ". Network service does not exist on catalogues");
-                        return buildResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
+                        return buildResponseEntity(response, HttpStatus.PRECONDITION_FAILED);
                     }
                     RuntimePolicy rp = new RuntimePolicy();
                     rp.setDefaultPolicy(true);
@@ -506,8 +506,8 @@ public class RulesEngineController {
         if (runtimePolicyRecord.size() > 0) {
             logsFormat.createLogError("E", timestamp.toString(), "Error while deleting a policy", Message.POLICY_DELETED_FORBIDEN, "");
 
-            PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DELETED_FORBIDEN, policy_uuid);
-            return buildResponseEntity(response, HttpStatus.OK);
+            PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.REJECTED, Message.POLICY_DELETED_FORBIDEN, policy_uuid);
+            return buildResponseEntity(response, HttpStatus.PRECONDITION_FAILED);
         }
 
         try {
