@@ -187,7 +187,7 @@ public class RulesEngineController {
 
     //get number of existing policies
     @RequestMapping(value = "/counter", method = RequestMethod.GET)
-    public int num_of_policies() {
+    public String num_of_policies() {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         logsFormat.createLogInfo("I", timestamp.toString(), "Fetch number of policies", "", "200");
         RestTemplate restTemplate = new RestTemplate();
@@ -199,7 +199,7 @@ public class RulesEngineController {
 
         JSONArray policieslist = new JSONArray(response.getBody());
         
-        return policieslist.length();
+        return String.valueOf(policieslist.length());
     }
 
     //Create a Policy
@@ -747,11 +747,11 @@ public class RulesEngineController {
     }
 
     @RequestMapping(value = "/actions/counter", method = RequestMethod.GET)
-    public int num_of_actions() {
+    public String num_of_actions() {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         logsFormat.createLogInfo("I", timestamp.toString(), "Fetch number of Actions", "", "200");
         long num_actions = recommendedActionRepository.count();
-        return (int) num_actions;
+        return String.valueOf(num_actions);
     }
 
     //deactivate an enforced policy
