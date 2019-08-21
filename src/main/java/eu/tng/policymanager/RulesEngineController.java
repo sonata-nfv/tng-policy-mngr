@@ -533,13 +533,11 @@ public class RulesEngineController {
         return buildResponseEntity(response, HttpStatus.OK);
     }
 
-    // Bind a Policy to an SLA
     // Define a Policy as default
     @RequestMapping(value = "/default/{policy_uuid}", method = RequestMethod.PATCH)
     public ResponseEntity updateRuntimePolicyasDefault(@RequestBody RuntimePolicy tobject, @PathVariable("policy_uuid") String policy_uuid
     ) {
         PolicyRestResponse response;
-        String 
 
         if (!cataloguesConnector.checkifPolicyDescriptorExists(policy_uuid)) {
             response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.POLICY_NOT_EXISTS, null);
@@ -599,13 +597,16 @@ public class RulesEngineController {
     ) {
         PolicyRestResponse response;
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        
+        String ns_uuid = tobject.getNsid();
+        String sla_uuid = tobject.getSlaid();
 
-        if (!cataloguesConnector.checkifPolicyDescriptorExists(policy_uuid)) {
+        if (!cataloguesConnector.checkifPolicyDescriptorExistsForNS(policy_uuid,ns_uuid)) {
             response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.POLICY_NOT_EXISTS, null);
             return buildResponseEntity(response, HttpStatus.NOT_FOUND);
         }
 
-        if (tobject.getSlaid() != null && !cataloguesConnector.checkifSlaDescriptorExists(tobject.getSlaid())) {
+        if (tobject.getSlaid() != null && !cataloguesConnector.checkifSlaDescriptorExistsForNS(sla_uuid,ns_uuid)) {
             response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.SLA_NOT_EXISTS, null);
             return buildResponseEntity(response, HttpStatus.NOT_FOUND);
         }
@@ -633,7 +634,7 @@ public class RulesEngineController {
         rp.setNsid(tobject.getNsid());
         rp.setSlaid(tobject.getSlaid());
 
-        List<RuntimePolicy> existing_runtimepolicy_list = runtimePolicyRepository.findBySlaidAndNsid(tobject.getSlaid(), tobject.getNsid());
+        List<RuntimePolicy> existing_runtimepolicy_list = runtimePolicyRepository.findBySlaidAndNsid(sla_uuid, ns_uuid);
 
         if (existing_runtimepolicy_list.size() > 0 && existing_runtimepolicy_list.get(0).getSlaid() != null) {
             response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ALREADY_BINDED, "");

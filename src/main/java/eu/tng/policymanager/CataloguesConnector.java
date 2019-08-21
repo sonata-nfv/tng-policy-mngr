@@ -70,8 +70,38 @@ public class CataloguesConnector {
         return true;
 
     }
+    
+        public boolean checkifPolicyDescriptorExistsForNS(String policy_uuid,String ns_uuid) {
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        try {
+            restTemplate.exchange(policies_url + "/" + policy_uuid, HttpMethod.GET, entity, String.class);
+        } catch (HttpClientErrorException e) {
+            log.info("HttpClientErrorException " + e.getMessage());
+            return false;
+        }
+        return true;
+
+    }
 
     public boolean checkifSlaDescriptorExists(String sla_uuid) {
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        try {
+            restTemplate.exchange(slas_url + "/" + sla_uuid, HttpMethod.GET, entity, String.class);
+        } catch (HttpClientErrorException e) {
+            log.info("HttpClientErrorException " + e.getMessage());
+            return false;
+        }
+        return true;
+
+    }
+    
+     public boolean checkifSlaDescriptorExistsForNS(String sla_uuid,String ns_uuid) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
