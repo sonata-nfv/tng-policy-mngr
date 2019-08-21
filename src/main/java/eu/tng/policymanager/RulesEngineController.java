@@ -50,22 +50,16 @@ import eu.tng.policymanager.rules.generation.Util;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -120,15 +114,6 @@ public class RulesEngineController {
     @Autowired
     RecommendedActionRepository recommendedActionRepository;
 
-//    @Autowired
-//    private RabbitTemplate template;
-//
-//    @Qualifier("runtimeActionsQueue")
-//    @Autowired
-//    private Queue queue;
-//
-//    @Autowired
-//    private TopicExchange exchange;
     //GET healthcheck for runtime policies
     @RequestMapping(value = "/pings", method = RequestMethod.GET)
     public String pings() {
@@ -146,13 +131,6 @@ public class RulesEngineController {
 
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         logsFormat.createLogInfo("I", timestamp.toString(), "Fetch all policies", "", "200");
-//        if (queryParameters.containsKey("ns_uuid")) {
-//            log.info("Fetch policies with query filter " + queryParameters);
-//        } else {
-//            log.info("Fetch all policies");
-//            
-//        }
-
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -166,7 +144,9 @@ public class RulesEngineController {
         for (int i = 0; i < policieslist.length(); i++) {
 
             JSONObject policy = policieslist.getJSONObject(i);
-            String enriched_policy = this.getPolicy(policy.getString("uuid"));
+            ResponseEntity enriched_policy_response = this.getPolicy(policy.getString("uuid"));
+            String enriched_policy = enriched_policy_response.getBody().toString();
+
             JSONObject enriched_policyJSON = new JSONObject(enriched_policy);
             if (queryParameters.containsKey("ns_uuid")) {
 
@@ -362,7 +342,8 @@ public class RulesEngineController {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         logsFormat.createLogInfo("I", timestamp.toString(), "Clone a policy", "duplicate a policy with uuid" + policy_uuid, "200");
 
-        String parent_policy = this.getPolicy(policy_uuid);
+        ResponseEntity parent_policy_response = this.getPolicy(policy_uuid);
+        String parent_policy = parent_policy_response.getBody().toString();
 
         JSONObject parent_policy_descriptor = new JSONObject(parent_policy);
         JSONObject policy_descriptor = parent_policy_descriptor.getJSONObject("pld");
@@ -380,7 +361,7 @@ public class RulesEngineController {
 
     //GET a policy
     @RequestMapping(value = "/{policy_uuid}", method = RequestMethod.GET)
-    public String getPolicy(@PathVariable("policy_uuid") String policy_uuid
+    public ResponseEntity getPolicy(@PathVariable("policy_uuid") String policy_uuid
     ) {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         logsFormat.createLogInfo("I", timestamp.toString(), "Get a policy", "Fetch a policy with uuid: " + policy_uuid, "200");
@@ -430,31 +411,20 @@ public class RulesEngineController {
                 //log.info("pld " + pld);
                 JSONObject network_service = pld.getJSONObject("network_service");
 
-                //log.info("network_service " + network_service);
-                String services_url_complete = services_url
-                        + "?name=" + network_service.getString("name")
-                        + "&version=" + network_service.getString("version")
-                        + "&vendor=" + network_service.getString("vendor");
-
-                ResponseEntity<String> response1 = restTemplate.exchange(services_url_complete, HttpMethod.GET, entity, String.class);
-
-                //log.info("invoke the " + services_url_complete);
-                JSONArray network_services = new JSONArray(response1.getBody());
-
-                if (network_services.length() > 0) {
-                    String ns_uuid = network_services.getJSONObject(0).getString("uuid");
-                    policy_descriptor.put("ns_uuid", ns_uuid);
-                }
-
-                return policy_descriptor.toString();
+                String ns_uuid = cataloguesConnector.getNSid(services_url, network_service.getString("name"), network_service.getString("vendor"), network_service.getString("version"));
+                policy_descriptor.put("ns_uuid", ns_uuid);
+                return buildPlainResponse(policy_descriptor.toString(), HttpStatus.OK);
 
             }
         } catch (HttpClientErrorException e) {
-            return "{\"error\": \"The PLD ID " + policy_uuid + " does not exist at catalogues. Message : "
-                    + e.getMessage() + "\"}";
-        }
 
-        return "{\"warning\": \"The PLD ID " + policy_uuid + " does not exist at catalogues.\"}";
+            return buildPlainResponse("{\"error\": \"The PLD ID " + policy_uuid + " does not exist at catalogues. Message : "
+                    + e.getMessage() + "\"}", HttpStatus.NOT_FOUND);
+
+        } catch (NSDoesNotExistException ex) {
+            return buildPlainResponse("{\"error\": \"The network service mentioned at policy " + policy_uuid + " does not exist at catalogues.\"}", HttpStatus.NOT_FOUND);
+        }
+        return buildPlainResponse("{\"warning\": \"The PLD ID " + policy_uuid + " does not exist at catalogues.\"}", HttpStatus.NOT_FOUND);
 
     }
 
@@ -597,17 +567,17 @@ public class RulesEngineController {
     ) {
         PolicyRestResponse response;
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        
+
         String ns_uuid = tobject.getNsid();
         String sla_uuid = tobject.getSlaid();
 
-        if (!cataloguesConnector.checkifPolicyDescriptorExistsForNS(policy_uuid,ns_uuid)) {
-            response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.POLICY_NOT_EXISTS, null);
+        if (!cataloguesConnector.checkifPolicyDescriptorExistsForNS(policy_uuid, ns_uuid)) {
+            response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.POLICY_NOT_EXISTS_FOR_NS, null);
             return buildResponseEntity(response, HttpStatus.NOT_FOUND);
         }
 
-        if (tobject.getSlaid() != null && !cataloguesConnector.checkifSlaDescriptorExistsForNS(sla_uuid,ns_uuid)) {
-            response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.SLA_NOT_EXISTS, null);
+        if (tobject.getSlaid() != null && !cataloguesConnector.checkifSlaDescriptorExists(sla_uuid)) {
+            response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.SLA_NOT_EXISTS_FOR_NS, null);
             return buildResponseEntity(response, HttpStatus.NOT_FOUND);
         }
 
@@ -866,7 +836,9 @@ public class RulesEngineController {
         final static String MISSING_PARAMETER = "Bad Request. Missing parameters.";
         final static String POLICY_DEFAULT = "Policy is set as default";
         final static String POLICY_NOT_EXISTS = "Policy does not exist";
+        final static String POLICY_NOT_EXISTS_FOR_NS = "Policy does not exist for requested network service";
         final static String SLA_NOT_EXISTS = "Sla does not exist";
+        final static String SLA_NOT_EXISTS_FOR_NS = "Sla does not exist for requested network service";
         final static String NS_NOT_EXISTS = "Network service does not exist";
         final static String POLICY_UPDATED = "Policy is succesfully updated";
         final static String POLICY_UPDATED_FAILURE = "Policy failed to be updated at catalogues";

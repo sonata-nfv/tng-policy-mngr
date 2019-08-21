@@ -27,4 +27,5 @@ ENV REPO tng-rep:4012
 ENV IA ia-nbi:8083
 
 
+
 CMD ["java","-jar","tng-policy-mngr-1.5.0.jar"]

@@ -17,6 +17,7 @@ import java.net.URL;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +63,10 @@ public class CataloguesConnector {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
         try {
-            restTemplate.exchange(policies_url + "/" + policy_uuid, HttpMethod.GET, entity, String.class);
+            ResponseEntity<String> response = restTemplate.exchange(policies_url + "/" + policy_uuid, HttpMethod.GET, entity, String.class);
+            if (response.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                return false;
+            }
         } catch (HttpClientErrorException e) {
             log.info("HttpClientErrorException " + e.getMessage());
             return false;
@@ -70,19 +74,40 @@ public class CataloguesConnector {
         return true;
 
     }
-    
-        public boolean checkifPolicyDescriptorExistsForNS(String policy_uuid,String ns_uuid) {
+
+    public boolean checkifPolicyDescriptorExistsForNS(String policy_uuid, String ns_uuid) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
         try {
-            restTemplate.exchange(policies_url + "/" + policy_uuid, HttpMethod.GET, entity, String.class);
+            ResponseEntity<String> response = restTemplate.exchange(policies_url + "/" + policy_uuid, HttpMethod.GET, entity, String.class);
+            if (response.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                return false;
+            }
+            JSONObject policy_descriptor = new JSONObject(response.getBody());
+            JSONObject pld_json = policy_descriptor.getJSONObject("pld");
+            JSONObject ns_json = pld_json.getJSONObject("network_service");
+
+            String services_url_complete = services_url
+                    + "?name=" + ns_json.getString("name")
+                    + "&vendor=" + ns_json.getString("vendor")
+                    + "&version=" + ns_json.getString("version");
+
+            ResponseEntity<String> response1 = restTemplate.exchange(services_url_complete, HttpMethod.GET, entity, String.class);
+
+            JSONArray network_services = new JSONArray(response1.getBody());
+
+            String policy_ns_uuid = network_services.getJSONObject(0).getString("uuid");
+
+            if (policy_ns_uuid.equalsIgnoreCase(ns_uuid)) {
+                return true;
+            }
         } catch (HttpClientErrorException e) {
             log.info("HttpClientErrorException " + e.getMessage());
             return false;
         }
-        return true;
+        return false;
 
     }
 
@@ -100,20 +125,28 @@ public class CataloguesConnector {
         return true;
 
     }
-    
-     public boolean checkifSlaDescriptorExistsForNS(String sla_uuid,String ns_uuid) {
+
+    public boolean checkifSlaDescriptorExistsForNS(String sla_uuid, String ns_uuid) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
         try {
-            restTemplate.exchange(slas_url + "/" + sla_uuid, HttpMethod.GET, entity, String.class);
+            ResponseEntity<String> sla_response = restTemplate.exchange(slas_url + "/" + sla_uuid, HttpMethod.GET, entity, String.class);
+
+            JSONObject sla_descriptor = new JSONObject(sla_response.getBody());
+            String sla_ns_uuid = sla_descriptor.getJSONObject("slad")
+                    .getJSONObject("sla_template").getJSONObject("service")
+                    .getString("ns_uuid");
+            if (sla_ns_uuid.equalsIgnoreCase(ns_uuid)) {
+                return true;
+            }
+
         } catch (HttpClientErrorException e) {
             log.info("HttpClientErrorException " + e.getMessage());
             return false;
         }
         return true;
-
     }
 
     public boolean checkifNSDescriptorExists(String ns_uuid) {
@@ -160,12 +193,12 @@ public class CataloguesConnector {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        String vnfs_url_complete = services_url
+        String services_url_complete = services_url
                 + "?name=" + name
                 + "&vendor=" + vendor
                 + "&version=" + version;
 
-        ResponseEntity<String> response1 = restTemplate.exchange(vnfs_url_complete, HttpMethod.GET, entity, String.class);
+        ResponseEntity<String> response1 = restTemplate.exchange(services_url_complete, HttpMethod.GET, entity, String.class);
 
         //log.info("invoke the " + vnfs_url_complete);
         JSONArray vnfs = new JSONArray(response1.getBody());
