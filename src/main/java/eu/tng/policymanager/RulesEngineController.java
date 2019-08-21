@@ -198,7 +198,7 @@ public class RulesEngineController {
         ResponseEntity<String> response = restTemplate.exchange(policies_url, HttpMethod.GET, entity, String.class);
 
         JSONArray policieslist = new JSONArray(response.getBody());
-        
+
         return String.valueOf(policieslist.length());
     }
 
@@ -311,6 +311,18 @@ public class RulesEngineController {
         HttpEntity<String> httpEntity = new HttpEntity<>(policyjson.toString(), httpHeaders);
 
         System.out.println("final policy json " + policyjson.toString());
+
+        JSONObject ns_json = policyjson.getJSONObject("network_service");
+        String ns_uuid;
+        try {
+            ns_uuid = cataloguesConnector.getNSid(services_url, ns_json.getString("name"), ns_json.getString("vendor"), ns_json.getString("version"));
+        } catch (NSDoesNotExistException ex) {
+            logsFormat.createLogError("E", timestamp.toString(), "Error in policy creation", ex.getMessage(), "200");
+            PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.REJECTED, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
+                    + ". Network service does not exist on catalogues");
+            return buildResponseEntity(response, HttpStatus.PRECONDITION_FAILED);
+        }
+
         try {
 
             responseone = restTemplate.postForObject(policies_url, httpEntity, String.class);
@@ -321,16 +333,6 @@ public class RulesEngineController {
             if (policyjson.has("default_policy")) {
                 if (policyjson.getBoolean("default_policy")) {
 
-                    JSONObject ns_json = policyjson.getJSONObject("network_service");
-                    String ns_uuid;
-                    try {
-                        ns_uuid = cataloguesConnector.getNSid(services_url, ns_json.getString("name"), ns_json.getString("vendor"), ns_json.getString("version"));
-                    } catch (NSDoesNotExistException ex) {
-                        logsFormat.createLogError("E", timestamp.toString(), "Error in policy creation", ex.getMessage(), "200");
-                        PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.REJECTED, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
-                                + ". Network service does not exist on catalogues");
-                        return buildResponseEntity(response, HttpStatus.PRECONDITION_FAILED);
-                    }
                     RuntimePolicy rp = new RuntimePolicy();
                     rp.setDefaultPolicy(true);
                     rp.setPolicyid(policy_uuid);
@@ -345,9 +347,9 @@ public class RulesEngineController {
             rulesEngineService.savePolicyDescriptor(tobject, policy_uuid);
         } catch (Exception e) {
             logsFormat.createLogError("E", timestamp.toString(), "Error in policy creation", e.getMessage(), "200");
-            PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
+            PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.REJECTED, Message.POLICY_CREATED_FAILURE, "Failed : HTTP error code : " + responseone
                     + ". Check if policy vendor or version are null");
-            return buildResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return buildResponseEntity(response, HttpStatus.PRECONDITION_FAILED);
         }
         return this.buildPlainResponse(responseone, HttpStatus.OK);
 
@@ -531,7 +533,6 @@ public class RulesEngineController {
         return buildResponseEntity(response, HttpStatus.OK);
     }
 
-    // Bind a Policy to an SLA
     // Define a Policy as default
     @RequestMapping(value = "/default/{policy_uuid}", method = RequestMethod.PATCH)
     public ResponseEntity updateRuntimePolicyasDefault(@RequestBody RuntimePolicy tobject, @PathVariable("policy_uuid") String policy_uuid
@@ -548,6 +549,7 @@ public class RulesEngineController {
             return buildResponseEntity(response, HttpStatus.NOT_FOUND);
         }
 
+        //check if nsid is associated with sla and policy
         Optional<RuntimePolicy> runtimepolicy = runtimePolicyRepository.findByPolicyid(policy_uuid);
         RuntimePolicy rp;
 
@@ -595,13 +597,16 @@ public class RulesEngineController {
     ) {
         PolicyRestResponse response;
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        
+        String ns_uuid = tobject.getNsid();
+        String sla_uuid = tobject.getSlaid();
 
-        if (!cataloguesConnector.checkifPolicyDescriptorExists(policy_uuid)) {
+        if (!cataloguesConnector.checkifPolicyDescriptorExistsForNS(policy_uuid,ns_uuid)) {
             response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.POLICY_NOT_EXISTS, null);
             return buildResponseEntity(response, HttpStatus.NOT_FOUND);
         }
 
-        if (tobject.getSlaid() != null && !cataloguesConnector.checkifSlaDescriptorExists(tobject.getSlaid())) {
+        if (tobject.getSlaid() != null && !cataloguesConnector.checkifSlaDescriptorExistsForNS(sla_uuid,ns_uuid)) {
             response = new PolicyRestResponse(BasicResponseCode.INVALID, Message.SLA_NOT_EXISTS, null);
             return buildResponseEntity(response, HttpStatus.NOT_FOUND);
         }
@@ -629,7 +634,7 @@ public class RulesEngineController {
         rp.setNsid(tobject.getNsid());
         rp.setSlaid(tobject.getSlaid());
 
-        List<RuntimePolicy> existing_runtimepolicy_list = runtimePolicyRepository.findBySlaidAndNsid(tobject.getSlaid(), tobject.getNsid());
+        List<RuntimePolicy> existing_runtimepolicy_list = runtimePolicyRepository.findBySlaidAndNsid(sla_uuid, ns_uuid);
 
         if (existing_runtimepolicy_list.size() > 0 && existing_runtimepolicy_list.get(0).getSlaid() != null) {
             response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ALREADY_BINDED, "");
