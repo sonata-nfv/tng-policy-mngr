@@ -749,7 +749,7 @@ public class RulesEngineController {
         return buildResponseEntity(response, HttpStatus.OK);
     }
 
-    //activate an enforced policy
+    //activate an enforced policy given the nsr_id and the runtime policy id
     @RequestMapping(value = "/activate/{nsr_id}/{runtimepolicy_id}", method = RequestMethod.GET)
     public ResponseEntity activate(@PathVariable("nsr_id") String nsr_id, @PathVariable("runtimepolicy_id") String runtimepolicy_id) {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
