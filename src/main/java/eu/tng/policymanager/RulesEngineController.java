@@ -751,8 +751,9 @@ public class RulesEngineController {
 
     //activate an enforced policy
     @RequestMapping(value = "/activate/{nsr_id}/{runtimepolicy_id}", method = RequestMethod.GET)
-    public boolean activate(@PathVariable("nsr_id") String nsr_id, @PathVariable("runtimepolicy_id") String runtimepolicy_id) {
+    public ResponseEntity activate(@PathVariable("nsr_id") String nsr_id, @PathVariable("runtimepolicy_id") String runtimepolicy_id) {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logsFormat.createLogInfo("I", timestamp.toString(), "Activate policy", "Activate runtme policy for nsr_id " + nsr_id, "200");
         //1. Fech yml file from catalogues
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
@@ -764,7 +765,8 @@ public class RulesEngineController {
         } catch (HttpClientErrorException e) {
             logsFormat.createLogError("E", timestamp.toString(), "Activate policy", "The runtime policy " + runtimepolicy_id + " does not exist at catalogues. Message : "
                     + e.getMessage(), "200");
-            return false;
+            PolicyRestResponse return_response = new PolicyRestResponse(BasicResponseCode.REJECTED, Message.POLICY_NOT_EXISTS, false);
+            return buildResponseEntity(return_response, HttpStatus.NOT_FOUND);
         }
 
         JSONObject policydescriptorRaw = new JSONObject(response.getBody());
@@ -774,7 +776,8 @@ public class RulesEngineController {
 
         String policyAsYaml = Util.jsonToYaml(pld);
         rulesEngineService.addNewKnowledgebase(nsr_id, runtimepolicy_id, policyAsYaml);
-        return true;
+        PolicyRestResponse return_response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ACTIVATED, true);
+        return buildResponseEntity(return_response, HttpStatus.OK);
     }
 
     String defineRuleOperator(String monitoring_rule_name) {
