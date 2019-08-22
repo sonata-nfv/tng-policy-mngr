@@ -25,6 +25,7 @@ ENV CATALOGUE tng-cat:4011
 ENV MONITORING_MANAGER son-monitor-manager:8000
 ENV REPO tng-rep:4012
 ENV IA ia-nbi:8083
+ENV GATEKEEPER tng-gtk-sp:5000
 
 
 
