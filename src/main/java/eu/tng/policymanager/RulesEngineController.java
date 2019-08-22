@@ -36,6 +36,8 @@ package eu.tng.policymanager;
 import com.google.gson.Gson;
 import eu.tng.policymanager.Exceptions.NSDoesNotExistException;
 import eu.tng.policymanager.Messaging.LogsFormat;
+import eu.tng.policymanager.repository.MonitoringRule;
+import eu.tng.policymanager.repository.PolicyYamlFile;
 import eu.tng.policymanager.repository.dao.PlacementPolicyRepository;
 import eu.tng.policymanager.repository.dao.RecommendedActionRepository;
 import eu.tng.policymanager.repository.dao.RuntimePolicyRecordRepository;
@@ -47,6 +49,7 @@ import eu.tng.policymanager.repository.domain.RuntimePolicyRecord;
 import eu.tng.policymanager.response.BasicResponseCode;
 import eu.tng.policymanager.response.PolicyRestResponse;
 import eu.tng.policymanager.rules.generation.Util;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Date;
@@ -101,6 +104,12 @@ public class RulesEngineController {
 
     @Value("${tng.cat.network.services}")
     private String services_url;
+
+    @Value("${tng.gatekeeper}")
+    private String gatekeeper_url;
+
+    @Value("${monitoring.manager}")
+    private String monitoring_manager;
 
     @Autowired
     RuntimePolicyRepository runtimePolicyRepository;
@@ -775,7 +784,78 @@ public class RulesEngineController {
         JSONObject pld = policydescriptorRaw.getJSONObject("pld");
 
         String policyAsYaml = Util.jsonToYaml(pld);
-        rulesEngineService.addNewKnowledgebase(nsr_id, runtimepolicy_id, policyAsYaml);
+        boolean is_enforcement_succesfull = rulesEngineService.addNewKnowledgebase("s" + nsr_id.replaceAll("-", ""), runtimepolicy_id, policyAsYaml);
+        if (is_enforcement_succesfull) {
+
+            //submit monitoring-rules to son-broker
+            //fecth monitoring rules from policy
+            // update dbpolicy mongo repo
+            RuntimePolicyRecord policyrecord = new RuntimePolicyRecord();
+            policyrecord.setNsrid(nsr_id);
+            policyrecord.setPolicyid(runtimepolicy_id);
+            runtimePolicyRecordRepository.save(policyrecord);
+
+            PolicyYamlFile policyyml = PolicyYamlFile.readYaml(policyAsYaml);
+
+            //2. create hashmap with monitoring rules
+            List<MonitoringRule> monitoringRules = policyyml.getMonitoring_rules();
+
+            //3. construct prometheus rules
+            JSONObject prometheous_rules = new JSONObject();
+            prometheous_rules.put("plc_cnt", nsr_id);
+            prometheous_rules.put("sonata_service_id", nsr_id);
+
+            ResponseEntity<String> services_response = restTemplate.exchange(gatekeeper_url + "/services/" + nsr_id, HttpMethod.GET, entity, String.class);
+
+            JSONObject service_json = new JSONObject(services_response.getBody());
+
+            //parse network service record
+            JSONArray vnfrs = service_json.getJSONArray("network_functions");
+
+            for (int i = 0; i < vnfrs.length(); i++) {
+
+                JSONObject vnfr_info = vnfrs.getJSONObject(i);
+
+                String vnfr_uuid = vnfr_info.getString("vnfr_id");
+
+                ResponseEntity<String> vnfr_response = restTemplate.exchange(gatekeeper_url + "/functions/" + vnfr_uuid, HttpMethod.GET, entity, String.class);
+
+                JSONObject vnfr_object = new JSONObject(vnfr_response.getBody());
+                vnfr_object.put("id", vnfr_uuid);
+
+                System.out.println("vnfr_object--> " + vnfr_object);
+
+                JSONArray prometheous_vnfs = new JSONArray();
+                if (vnfr_object.has("virtual_deployment_units")) {
+                    prometheous_vnfs = Util.compose_monitoring_rules_os(nsr_id, vnfr_object, monitoringRules);
+                } else if (vnfr_object.has("cloudnative_deployment_units")) {
+                    prometheous_vnfs = Util.compose_monitoring_rules_k8s(nsr_id, vnfr_object, monitoringRules);
+                }
+
+                prometheous_rules.put("vnfs", prometheous_vnfs);
+                
+                System.out.println("prometheous_vnfs ---->"+prometheous_vnfs);
+                // Create PLC rules to son-monitor
+                String monitoring_url = "http://" + monitoring_manager + "/api/v2/policies/monitoring-rules";
+                logsFormat.createLogInfo("I", timestamp.toString(), "Submit monitoring rules to monitoring manager",
+                        "POST CALL: " + monitoring_url + " with payload: " + prometheous_rules, "200");
+
+                try {
+                    String monitoring_response = Util.sendPrometheusRulesToMonitoringManager(monitoring_url, prometheous_rules);
+                    logsFormat.createLogInfo("I", timestamp.toString(), "Monitoring Manager response after submiting prometheus rules",
+                            monitoring_response, "200");
+                } catch (IOException ex) {
+                    logsFormat.createLogInfo("E", timestamp.toString(), "Communication problem with Monitoring Manager",
+                            "Policy Enforcement was not succesful", "500");
+                }
+
+            }
+
+        } else {
+            logsFormat.createLogInfo("E", timestamp.toString(), "Error in policy enforcement function",
+                    "Policy Enforcement was not succesful", "500");
+        }
+
         PolicyRestResponse return_response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_ACTIVATED, true);
         return buildResponseEntity(return_response, HttpStatus.OK);
     }
