@@ -133,8 +133,8 @@ public class RulesEngineService {
 
     private final KieUtil kieUtil;
 
-    @Autowired
-    LogsFormat logsFormat;
+//    @Autowired
+//    LogsFormat logsFormat;
 
     @Autowired
     private RabbitTemplate template;
@@ -164,7 +164,7 @@ public class RulesEngineService {
     @Autowired
     public RulesEngineService(KieUtil kieUtil) {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        logsFormat.createLogInfo("I", timestamp.toString(), "Rule Engine Session initializing...", "", "200");
+        //logsFormat.createLogInfo("I", timestamp.toString(), "Rule Engine Session initializing...", "", "200");
         this.kieServices = KieServices.Factory.get();
         this.kieFileSystem = kieServices.newKieFileSystem();
         this.kieModuleModel = kieServices.newKieModuleModel();
@@ -232,7 +232,7 @@ public class RulesEngineService {
                             if (doactionsubclass.getScaling_type().equals(ScalingType.removevnf) && doactionsubclass.getCriterion().equalsIgnoreCase("random")) {
                                 String vnfr_id = repositoryConnector.get_vnfr_id_to_remove_random(doactionsubclass.getService_instance_id(), vnfd_id);
                                 if (vnfr_id == null) {
-                                    logsFormat.createLogInfo("I", timestamp.toString(), "Elasticity action was prevented from been generated.", "vnfr_id is null", "200");
+                                    //logsFormat.createLogInfo("I", timestamp.toString(), "Elasticity action was prevented from been generated.", "vnfr_id is null", "200");
                                     return;
                                 }
                                 //elasticity_action_msg.put("vnf_id", vnfr_id);
@@ -283,7 +283,7 @@ public class RulesEngineService {
                             return m;
                         });
 
-                        logsFormat.createLogInfo("I", timestamp.toString(), " [x] Sent to topic '" + elasticity_action_msg_as_yml + "'", "", "200");
+                        //logsFormat.createLogInfo("I", timestamp.toString(), " [x] Sent to topic '" + elasticity_action_msg_as_yml + "'", "", "200");
 
                     }
 
@@ -332,7 +332,7 @@ public class RulesEngineService {
 
         if (kieBuilder.getResults()
                 .hasMessages(Level.ERROR)) {
-            logsFormat.createLogInfo("E", timestamp.toString(), "Error with new kieModuleModel", kieBuilder.getResults().toString(), "200");
+            //logsFormat.createLogInfo("E", timestamp.toString(), "Error with new kieModuleModel", kieBuilder.getResults().toString(), "200");
         }
 
         kieContainer = kieServices.newKieContainer(releaseId2);
@@ -370,7 +370,7 @@ public class RulesEngineService {
 
         //System.out.println("Ιnsert monitoredComponent to session  " + monitoredComponent.toString());
         //logger.info(monitoringStream.getEntryPointId() + "  -------  " + monitoringStream.getFactCount());
-        logsFormat.createLogInfo("I", timestamp.toString(), "Ιnsert monitoredComponent " + monitoredComponent.toString() + " to session " + factSessionName, "", "200");
+        //logsFormat.createLogInfo("I", timestamp.toString(), "Ιnsert monitoredComponent " + monitoredComponent.toString() + " to session " + factSessionName, "", "200");
 
         monitoringStream.insert(monitoredComponent);
 
@@ -465,7 +465,7 @@ public class RulesEngineService {
             msg += "    " + kieSession.getObject(handle) + "\n";
         }
         if (!msg.equalsIgnoreCase("")) {
-            logsFormat.createLogInfo("I", timestamp.toString(), "All facts: ", msg, "200");
+            //logsFormat.createLogInfo("I", timestamp.toString(), "All facts: ", msg, "200");
 
         }
 
@@ -478,7 +478,7 @@ public class RulesEngineService {
         }
 
         if (!msg1.equalsIgnoreCase("")) {
-            logsFormat.createLogInfo("I", timestamp.toString(), "All facts of stream: ", msg1, "200");
+            //logsFormat.createLogInfo("I", timestamp.toString(), "All facts of stream: ", msg1, "200");
 
         }
 
@@ -532,7 +532,7 @@ public class RulesEngineService {
             //logger.info("Writing rules at: " + current_dir + "/" + RULESPACKAGE + "/" + knowledgebasename + "/" + knowledgebasename + ".drl");
             kieFileSystem.write(ResourceFactory.newFileResource(current_dir + "/" + RULESPACKAGE + "/" + knowledgebasename + "/" + knowledgebasename + ".drl"));
         } catch (Exception ex) {
-            logsFormat.createLogInfo("E", timestamp.toString(), "Error during the creation of production memory:" + ex.getMessage(), "", "200");
+            //logsFormat.createLogInfo("E", timestamp.toString(), "Error during the creation of production memory:" + ex.getMessage(), "", "200");
         }
     }//EoM 
 
@@ -563,13 +563,13 @@ public class RulesEngineService {
         String factKnowledgebase = "GSGKnowledgeBase_gsg" + gnsid;
 
         if ("null".equals(policyname) || policyname == null) {
-            logsFormat.createLogInfo("W", timestamp.toString(), "NS is deploed with none policy assigned", "", "200");
+            //logsFormat.createLogInfo("W", timestamp.toString(), "NS is deploed with none policy assigned", "", "200");
 
             return true;
         }
 
         if (kiebases.contains(factKnowledgebase)) {
-            logsFormat.createLogInfo("W", timestamp.toString(), "Knowledge base already added " + factKnowledgebase, "", "200");
+            //logsFormat.createLogInfo("W", timestamp.toString(), "Knowledge base already added " + factKnowledgebase, "", "200");
 
             //updateToVersion();
             return true;
@@ -603,7 +603,7 @@ public class RulesEngineService {
 
         if (kieBuilder.getResults()
                 .hasMessages(Level.ERROR)) {
-            logsFormat.createLogInfo("E", timestamp.toString(), "Error with new kieModuleModel", kieBuilder.getResults().toString(), "200");
+            //logsFormat.createLogInfo("E", timestamp.toString(), "Error with new kieModuleModel", kieBuilder.getResults().toString(), "200");
         }
 
         kieContainer = kieServices.newKieContainer(releaseId2);
@@ -782,7 +782,7 @@ public class RulesEngineService {
             String factKnowledgebase = "GSGKnowledgeBase_gsg" + nsr_id;
 
             if (!kiebases.contains(factKnowledgebase)) {
-                logsFormat.createLogInfo("W", timestamp.toString(), "Knowledge base already removed " + factKnowledgebase, "", "200");
+                //logsFormat.createLogInfo("W", timestamp.toString(), "Knowledge base already removed " + factKnowledgebase, "", "200");
 
                 return;
             }
@@ -806,14 +806,14 @@ public class RulesEngineService {
 
             if (kieBuilder.getResults()
                     .hasMessages(Level.ERROR)) {
-                logsFormat.createLogInfo("E", timestamp.toString(), "Error with new kieModuleModel", kieBuilder.getResults().toString(), "200");
+                //logsFormat.createLogInfo("E", timestamp.toString(), "Error with new kieModuleModel", kieBuilder.getResults().toString(), "200");
 
             }
 
             kieContainer = kieServices.newKieContainer(releaseId2);
 
         } catch (IOException ex) {
-            logsFormat.createLogInfo("E", timestamp.toString(), "Error with removeKnowledgebase function", ex.getMessage(), "200");
+            //logsFormat.createLogInfo("E", timestamp.toString(), "Error with removeKnowledgebase function", ex.getMessage(), "200");
 
         }
 
