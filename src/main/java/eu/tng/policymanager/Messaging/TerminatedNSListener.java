@@ -6,6 +6,7 @@
 package eu.tng.policymanager.Messaging;
 
 import eu.tng.policymanager.RulesEngineApp;
+import eu.tng.policymanager.rules.generation.Util;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.logging.Level;
@@ -29,7 +30,8 @@ public class TerminatedNSListener {
 
         try {
             String terminatedNSasYaml = new String(message, StandardCharsets.UTF_8);
-            logsFormat.createLogInfo("I", timestamp.toString(), "NS Termination Message received", terminatedNSasYaml, "200");
+            String jsonobject = Util.convertYamlToJson(terminatedNSasYaml);
+            logsFormat.createLogInfo("I", timestamp.toString(), "NS Termination Message received", jsonobject, "200");
         } catch (Exception e) {
             logsFormat.createLogInfo("E", timestamp.toString(), "Ignoring message from NS_TERMINATION_QUEUE", e.getMessage(), "200");
         }
