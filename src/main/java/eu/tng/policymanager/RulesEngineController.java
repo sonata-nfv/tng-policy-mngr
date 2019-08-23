@@ -752,6 +752,8 @@ public class RulesEngineController {
         //todo : check if exists before delete
         if (runtimePolicyRecord.isPresent()) {
             runtimePolicyRecordRepository.delete(runtimePolicyRecord.get());
+        } else {
+            logsFormat.createLogInfo("I", timestamp.toString(), "Runtime policy is already deactivated", "Runtime policy is already deactivated for nsr_id " + nsr_id, "200");
         }
 
         PolicyRestResponse response = new PolicyRestResponse(BasicResponseCode.SUCCESS, Message.POLICY_DEACTIVATED, true);
@@ -833,8 +835,8 @@ public class RulesEngineController {
                 }
 
                 prometheous_rules.put("vnfs", prometheous_vnfs);
-                
-                System.out.println("prometheous_vnfs ---->"+prometheous_vnfs);
+
+                System.out.println("prometheous_vnfs ---->" + prometheous_vnfs);
                 // Create PLC rules to son-monitor
                 String monitoring_url = "http://" + monitoring_manager + "/api/v2/policies/monitoring-rules";
                 logsFormat.createLogInfo("I", timestamp.toString(), "Submit monitoring rules to monitoring manager",
