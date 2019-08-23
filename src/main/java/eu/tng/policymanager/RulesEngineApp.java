@@ -95,8 +95,8 @@ public class RulesEngineApp {
     public final static String NS_INSTATIATION_QUEUE = "policies.service.instances.create";
     public final static String NS_INSTATIATION_TOPIC = "service.instances.create";
 
-    public final static String NS_TERMINATION_QUEUE = "policies.service.instances.terminate";
-    public final static String NS_TERMINATION_TOPIC = "service.instances.terminate";
+    public final static String NS_TERMINATION_QUEUE = "policies.service.instance.terminate";
+    public final static String NS_TERMINATION_TOPIC = "service.instance.terminate";
 
     public static void main(String[] args) {
 
