@@ -84,11 +84,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
 @EnableMongoRepositories("eu.tng.policymanager.repository.dao")
 @EnableScheduling
-//@SpringBootApplication
-//@EnableJms
 public class RulesEngineApp {
 
-    //private static Logger log = LoggerFactory.getLogger(RulesEngineApp.class);
     public static final String RUNTIME_ACTIONS_QUEUE = "service.instance.scale";
     public final static String MONITORING_QUEUE = "son.monitoring.PLC";
 

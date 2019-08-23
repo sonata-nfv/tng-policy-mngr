@@ -825,7 +825,7 @@ public class RulesEngineController {
                 JSONObject vnfr_object = new JSONObject(vnfr_response.getBody());
                 vnfr_object.put("id", vnfr_uuid);
 
-                System.out.println("vnfr_object--> " + vnfr_object);
+                //System.out.println("vnfr_object--> " + vnfr_object);
 
                 JSONArray prometheous_vnfs = new JSONArray();
                 if (vnfr_object.has("virtual_deployment_units")) {
