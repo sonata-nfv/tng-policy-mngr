@@ -223,7 +223,7 @@ public class RulesEngineApp {
 
     @Bean
     Binding bindingNSTerminationQueue(TopicExchange exchange) {
-        return BindingBuilder.bind(nsInstantiationQueue()).to(exchange).with(NS_TERMINATION_TOPIC);
+        return BindingBuilder.bind(nsTerminationQueue()).to(exchange).with(NS_TERMINATION_TOPIC);
     }
 
     @Qualifier("nsTerminationlistenerAdapter")
@@ -239,7 +239,7 @@ public class RulesEngineApp {
             @Qualifier("nsTerminationlistenerAdapter") MessageListenerAdapter listenerAdapter) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        container.setQueueNames(nsInstantiationQueue().getName());
+        container.setQueueNames(nsTerminationQueue().getName());
         container.setMessageListener(listenerAdapter);
         return container;
     }

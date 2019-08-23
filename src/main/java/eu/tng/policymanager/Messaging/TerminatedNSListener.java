@@ -26,9 +26,9 @@ public class TerminatedNSListener {
     @RabbitListener(queues = RulesEngineApp.NS_TERMINATION_QUEUE)
     public void terminatedNSMessageReceived(byte[] message) {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        String terminatedNSasYaml = new String(message, StandardCharsets.UTF_8);
 
         try {
+            String terminatedNSasYaml = new String(message, StandardCharsets.UTF_8);
             logsFormat.createLogInfo("I", timestamp.toString(), "NS Termination Message received", terminatedNSasYaml, "200");
         } catch (Exception e) {
             logsFormat.createLogInfo("E", timestamp.toString(), "Problem in receiving NS Termination Message", e.getMessage(), "200");
