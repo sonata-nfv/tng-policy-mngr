@@ -37,6 +37,7 @@ import com.google.gson.Gson;
 import eu.tng.policymanager.Exceptions.NSDoesNotExistException;
 import eu.tng.policymanager.Exceptions.VNFDoesNotExistException;
 import eu.tng.policymanager.Exceptions.VNFRDoesNotExistException;
+import eu.tng.policymanager.Messaging.LogsFormat;
 import eu.tng.policymanager.facts.RuleActionType;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
 import eu.tng.policymanager.facts.action.Action;
@@ -65,6 +66,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -115,7 +117,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 @Service
 public class RulesEngineService {
 
-    private static final Logger logger = Logger.getLogger(RulesEngineService.class.getName());
+    //private static final Logger logger = Logger.getLogger(RulesEngineService.class.getName());
     private static final String rulesPackage = "rules";
     private static final String current_dir = System.getProperty("user.dir");
     ReleaseId releaseId = KieServices.Factory.get().newReleaseId("eu.tng", "policymanager", "1.0");
@@ -130,6 +132,9 @@ public class RulesEngineService {
     KieContainer kieContainer;
 
     private final KieUtil kieUtil;
+
+    @Autowired
+    LogsFormat logsFormat;
 
     @Autowired
     private RabbitTemplate template;
@@ -158,7 +163,8 @@ public class RulesEngineService {
 
     @Autowired
     public RulesEngineService(KieUtil kieUtil) {
-        logger.info("Rule Engine Session initializing...");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logsFormat.createLogInfo("I", timestamp.toString(), "Rule Engine Session initializing...", "", "200");
         this.kieServices = KieServices.Factory.get();
         this.kieFileSystem = kieServices.newKieFileSystem();
         this.kieModuleModel = kieServices.newKieModuleModel();
@@ -169,6 +175,7 @@ public class RulesEngineService {
 //fireAllRules every 5 minutes 1min== 60000
     @Scheduled(fixedRate = 6000)
     public void searchForGeneratedActions() {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
         //logger.info("Search for actions");
         ConcurrentHashMap map = kieUtil.seeThreadMap();
@@ -220,16 +227,16 @@ public class RulesEngineService {
                             //get vnf_id by vnf_name , vendor, version
                             String vnfd_id = cataloguesConnector.getVnfId(vnfs_url, doactionsubclass.getVnf_name(), doactionsubclass.getVendor(), doactionsubclass.getVersion());
                             //elasticity_action_msg.put("vnfd_id", vnfd_id);
-                            elasticity_action_msg.put("vnfd_uuid", vnfd_id); 
+                            elasticity_action_msg.put("vnfd_uuid", vnfd_id);
 
                             if (doactionsubclass.getScaling_type().equals(ScalingType.removevnf) && doactionsubclass.getCriterion().equalsIgnoreCase("random")) {
                                 String vnfr_id = repositoryConnector.get_vnfr_id_to_remove_random(doactionsubclass.getService_instance_id(), vnfd_id);
                                 if (vnfr_id == null) {
-                                    logger.info("Elasticity action was prevented from been generated.");
+                                    logsFormat.createLogInfo("I", timestamp.toString(), "Elasticity action was prevented from been generated.", "vnfr_id is null", "200");
                                     return;
                                 }
                                 //elasticity_action_msg.put("vnf_id", vnfr_id);
-                                elasticity_action_msg.put("vnf_uuid", vnfr_id); 
+                                elasticity_action_msg.put("vnf_uuid", vnfr_id);
                             }
 
                         } catch (VNFDoesNotExistException | NSDoesNotExistException | VNFRDoesNotExistException ex) {
@@ -249,7 +256,7 @@ public class RulesEngineService {
                         //constraints.put(constraint);
                         //elasticity_action_msg.put("constraints", constraints);
                         //check if exists a recent recommended Action for the specific service 
-                        logger.info("check if exists a recent recommended Action for the specific service" + nsrid);
+                        //logger.info("check if exists a recent recommended Action for the specific service" + nsrid);
                         Optional<RecommendedAction> recent_action = recommendedActionRepository.findTopByNsridOrderByInDateTimeDesc(nsrid);
 
                         if (recent_action.isPresent()) {
@@ -257,7 +264,7 @@ public class RulesEngineService {
                             LocalDateTime now = LocalDateTime.now();
                             Duration duration = Duration.between(now, recent_date);
                             long diff = Math.abs(duration.toMinutes());
-                            logger.info("Duration between last created action and now " + diff);
+                            //logger.info("Duration between last created action and now " + diff);
                             if (diff < 10) {
                                 return;
                             }
@@ -276,7 +283,8 @@ public class RulesEngineService {
                             return m;
                         });
 
-                        System.out.println(" [x] Sent to topic '" + elasticity_action_msg_as_yml + "'");
+                        logsFormat.createLogInfo("I", timestamp.toString(), " [x] Sent to topic '" + elasticity_action_msg_as_yml + "'", "", "200");
+
                     }
 
                 }
@@ -306,6 +314,7 @@ public class RulesEngineService {
     }
 
     public KieContainer lanchKieContainerTR() {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
         Double newversion = Double.parseDouble(releaseId.getVersion()) + 0.1;
         ReleaseId releaseId2 = kieServices.newReleaseId("eu.tng", "policymanager", newversion.toString());
@@ -315,7 +324,7 @@ public class RulesEngineService {
         kieFileSystem.generateAndWritePomXML(releaseId2);
 
         kieFileSystem.writeKModuleXML(kieModuleModel.toXML());
-        logger.log(java.util.logging.Level.INFO, "kieModuleModel--ToXML\n{0}", kieModuleModel.toXML());
+        //logger.log(java.util.logging.Level.INFO, "kieModuleModel--ToXML\n{0}", kieModuleModel.toXML());
 
         this.loadRulesFromFile();
 
@@ -323,7 +332,7 @@ public class RulesEngineService {
 
         if (kieBuilder.getResults()
                 .hasMessages(Level.ERROR)) {
-            throw new RuntimeException("Build Errors:\n" + kieBuilder.getResults().toString());
+            logsFormat.createLogInfo("E", timestamp.toString(), "Error with new kieModuleModel", kieBuilder.getResults().toString(), "200");
         }
 
         kieContainer = kieServices.newKieContainer(releaseId2);
@@ -333,21 +342,21 @@ public class RulesEngineService {
     }
 
     protected void createFact(MonitoringMessageTO monitoringMessageTO) {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
         String factKnowledgebase = "GSGKnowledgeBase_gsg" + monitoringMessageTO.getGsgid();
 
         Collection<String> kiebases = kieContainer.getKieBaseNames();
 
         if (!kiebases.contains(factKnowledgebase)) {
-            logger.log(java.util.logging.Level.WARNING, "Missing Knowledge base {0}", factKnowledgebase);
+            //logger.log(java.util.logging.Level.WARNING, "Missing Knowledge base {0}", factKnowledgebase);
             return;
         }
 
         String factSessionName = "RulesEngineSession_gsg" + monitoringMessageTO.getGsgid();
         KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
 
-        logger.info("FactCount " + kieSession.getFactCount() + " to session " + factSessionName);
-
+        //logger.info("FactCount " + kieSession.getFactCount() + " to session " + factSessionName);
         EntryPoint monitoringStream = kieSession.getEntryPoint("MonitoringStream");
 
         MonitoredComponent monitoredComponent = new MonitoredComponent(monitoringMessageTO.getNodeid(),
@@ -359,8 +368,9 @@ public class RulesEngineService {
                 monitoringMessageTO.getVnfd_id(),
                 monitoringMessageTO.getVim_id());
 
-        System.out.println("Ιnsert monitoredComponent to session  " + monitoredComponent.toString());
-        logger.info(monitoringStream.getEntryPointId() + "  -------  " + monitoringStream.getFactCount());
+        //System.out.println("Ιnsert monitoredComponent to session  " + monitoredComponent.toString());
+        //logger.info(monitoringStream.getEntryPointId() + "  -------  " + monitoringStream.getFactCount());
+        logsFormat.createLogInfo("I", timestamp.toString(), "Ιnsert monitoredComponent " + monitoredComponent.toString() + " to session " + factSessionName, "", "200");
 
         monitoringStream.insert(monitoredComponent);
 
@@ -373,24 +383,20 @@ public class RulesEngineService {
         Collection<String> kiebases = kieContainer.getKieBaseNames();
 
         if (!kiebases.contains(factKnowledgebase)) {
-            logger.log(java.util.logging.Level.WARNING, "Missing Knowledge base {0}", factKnowledgebase);
+            //logger.log(java.util.logging.Level.WARNING, "Missing Knowledge base {0}", factKnowledgebase);
             return;
         }
 
         String factSessionName = "RulesEngineSession_gsg" + logMetric.getNsrid().replaceAll("-", "");
         KieSession kieSession = (KieSession) kieUtil.seeThreadMap().get(factSessionName);
 
-        //String clean_nsr_id = logMetric.getNsrid().substring(1);
-        //logMetric.setNsrid(clean_nsr_id);
-        System.out.println("Ιnsert logmetric fact: " + logMetric.toString());
-
+        //System.out.println("Ιnsert logmetric fact: " + logMetric.toString());
         //kieSession.insert(logMetric);
         EntryPoint monitoringStream = kieSession.getEntryPoint("MonitoringStream");
 
-        logger.info("monitoringStream entrypoint " + monitoringStream.getEntryPointId());
-
+        //logger.info("monitoringStream entrypoint " + monitoringStream.getEntryPointId());
         monitoringStream.insert(logMetric);
-        logger.info("monitoringStream fact count " + monitoringStream.getFactCount());
+        //logger.info("monitoringStream fact count " + monitoringStream.getFactCount());
 
     }
 
@@ -439,10 +445,9 @@ public class RulesEngineService {
 
         }
 
-        if (facts.size() > 0) {
-            logger.log(java.util.logging.Level.INFO, "Num of created facts{0}", facts.size());
-        }
-
+//        if (facts.size() > 0) {
+//            logger.log(java.util.logging.Level.INFO, "Num of created facts{0}", facts.size());
+//        }
         return facts;
     }
 
@@ -451,6 +456,7 @@ public class RulesEngineService {
      */
     @SuppressWarnings("unused")
     private void printFactsMessage(KieSession kieSession) {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         Collection<FactHandle> allHandles = kieSession.getFactHandles();
 
         //String msg = "\nAll facts:\n";
@@ -459,20 +465,21 @@ public class RulesEngineService {
             msg += "    " + kieSession.getObject(handle) + "\n";
         }
         if (!msg.equalsIgnoreCase("")) {
-            System.out.println("\nAll facts:\n" + msg);
+            logsFormat.createLogInfo("I", timestamp.toString(), "All facts: ", msg, "200");
+
         }
 
         EntryPoint monitoringstream = kieSession.getEntryPoint("MonitoringStream");
         Collection<FactHandle> allHandles1 = monitoringstream.getFactHandles();
 
-        //String msg1 = "\nAll facts of stream:\n";
         String msg1 = "";
         for (FactHandle handle : allHandles1) {
             msg1 += "    " + monitoringstream.getObject(handle) + "\n";
         }
 
         if (!msg1.equalsIgnoreCase("")) {
-            System.out.println("\nAll facts of stream:\n" + msg1);
+            logsFormat.createLogInfo("I", timestamp.toString(), "All facts of stream: ", msg1, "200");
+
         }
 
     }
@@ -503,7 +510,10 @@ public class RulesEngineService {
     }
 
     private void loadRulesFromFile() {
-        logger.info("Loading Rules from File to production memory");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+
+        //logsFormat.createLogInfo("I", timestamp.toString(), "Loading Rules from File to production memory", "", "200");
+
         String knowledgebasename = "gsgpilotTranscodingService";
         String drlPath4deployment = "/rules/gsgpilotTranscodingService/gsgpilotTranscodingService.drl";
         try {
@@ -513,16 +523,16 @@ public class RulesEngineService {
             //1st add default rules
             data += getRulesFromFile();
 
-            logger.info("rules : " + data);
+            //logger.info("rules : " + data);
 
             Files.createDirectories(policyPackagePath);
             FileOutputStream out = new FileOutputStream(current_dir + "/" + drlPath4deployment);
             out.write(data.getBytes());
             out.close();
-            logger.info("Writing rules at: " + current_dir + "/" + RULESPACKAGE + "/" + knowledgebasename + "/" + knowledgebasename + ".drl");
+            //logger.info("Writing rules at: " + current_dir + "/" + RULESPACKAGE + "/" + knowledgebasename + "/" + knowledgebasename + ".drl");
             kieFileSystem.write(ResourceFactory.newFileResource(current_dir + "/" + RULESPACKAGE + "/" + knowledgebasename + "/" + knowledgebasename + ".drl"));
         } catch (Exception ex) {
-            logger.warning("Error during the creation of production memory:" + ex.getMessage());
+            logsFormat.createLogInfo("E", timestamp.toString(), "Error during the creation of production memory:" + ex.getMessage(), "", "200");
         }
     }//EoM 
 
@@ -547,25 +557,23 @@ public class RulesEngineService {
      Add a new knowledge base & session & corresponding rules so as to update kieModule
      */
     public boolean addNewKnowledgebase(String gnsid, String policyname, String policyfile) {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
         Collection<String> kiebases = kieContainer.getKieBaseNames();
         String factKnowledgebase = "GSGKnowledgeBase_gsg" + gnsid;
 
         if ("null".equals(policyname) || policyname == null) {
-            logger.log(java.util.logging.Level.WARNING, "Grounded Service graph is deploed with none policy assigned");
+            logsFormat.createLogInfo("W", timestamp.toString(), "NS is deploed with none policy assigned", "", "200");
+
             return true;
         }
 
         if (kiebases.contains(factKnowledgebase)) {
-            logger.log(java.util.logging.Level.WARNING, "Knowledge base {0} already added", factKnowledgebase);
+            logsFormat.createLogInfo("W", timestamp.toString(), "Knowledge base already added " + factKnowledgebase, "", "200");
+
             //updateToVersion();
             return true;
         }
-//        File f = new File(current_dir + "/" + POLICY_DESCRIPTORS_PACKAGE + "/" + policyname + ".yml");
-//        if (!f.exists() && !f.isDirectory()) {
-//            logger.log(java.util.logging.Level.WARNING, "Policy with name {0} does not exist at Catalogues", policyname);
-//            return false;
-//        }
 
         String knowledgebasename = "gsg" + gnsid;
 
@@ -587,7 +595,7 @@ public class RulesEngineService {
         kieFileSystem.generateAndWritePomXML(releaseId2);
 
         kieFileSystem.writeKModuleXML(kieModuleModel.toXML());
-        logger.log(java.util.logging.Level.INFO, "kieModuleModel--ToXML\n{0}", kieModuleModel.toXML());
+        //logger.log(java.util.logging.Level.INFO, "kieModuleModel--ToXML\n{0}", kieModuleModel.toXML());
 
         addPolicyRules(gnsid, policyname, policyfile);
 
@@ -595,7 +603,7 @@ public class RulesEngineService {
 
         if (kieBuilder.getResults()
                 .hasMessages(Level.ERROR)) {
-            throw new RuntimeException("Build Errors:\n" + kieBuilder.getResults().toString());
+            logsFormat.createLogInfo("E", timestamp.toString(), "Error with new kieModuleModel", kieBuilder.getResults().toString(), "200");
         }
 
         kieContainer = kieServices.newKieContainer(releaseId2);
@@ -766,6 +774,7 @@ public class RulesEngineService {
      Remove a new knowledge base & session & corresponding rules so as to update kieModule
      */
     public void removeKnowledgebase(String nsr_id) {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         try {
 
             Collection<String> kiebases = kieContainer.getKieBaseNames();
@@ -773,14 +782,15 @@ public class RulesEngineService {
             String factKnowledgebase = "GSGKnowledgeBase_gsg" + nsr_id;
 
             if (!kiebases.contains(factKnowledgebase)) {
-                logger.log(java.util.logging.Level.WARNING, "Knowledge base {0} already removed", factKnowledgebase);
+                logsFormat.createLogInfo("W", timestamp.toString(), "Knowledge base already removed " + factKnowledgebase, "", "200");
+
                 return;
             }
 
             String knowledgebasename = "gsg" + nsr_id;
             kieModuleModel.removeKieBaseModel("GSGKnowledgeBase_" + knowledgebasename);
             kieFileSystem.writeKModuleXML(kieModuleModel.toXML());
-            logger.log(java.util.logging.Level.INFO, "kieModuleModel--ToXML\n{0}", kieModuleModel.toXML());
+            //logger.log(java.util.logging.Level.INFO, "kieModuleModel--ToXML\n{0}", kieModuleModel.toXML());
 
             //TODO remove policy rules
             String current_dir = System.getProperty("user.dir");
@@ -796,13 +806,15 @@ public class RulesEngineService {
 
             if (kieBuilder.getResults()
                     .hasMessages(Level.ERROR)) {
-                throw new RuntimeException("Build Errors:\n" + kieBuilder.getResults().toString());
+                logsFormat.createLogInfo("E", timestamp.toString(), "Error with new kieModuleModel", kieBuilder.getResults().toString(), "200");
+
             }
 
             kieContainer = kieServices.newKieContainer(releaseId2);
 
         } catch (IOException ex) {
-            Logger.getLogger(RulesEngineService.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            logsFormat.createLogInfo("E", timestamp.toString(), "Error with removeKnowledgebase function", ex.getMessage(), "200");
+
         }
 
     }
