@@ -39,13 +39,7 @@ import eu.tng.policymanager.Messaging.MonitoringListener;
 import eu.tng.policymanager.Messaging.TerminatedNSListener;
 import eu.tng.policymanager.config.DroolsConfig;
 import eu.tng.policymanager.repository.PolicyYamlFile;
-
-import java.util.Arrays;
-
 import org.springframework.amqp.core.Queue;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.TopicExchange;
