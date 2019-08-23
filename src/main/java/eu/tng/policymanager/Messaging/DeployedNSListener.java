@@ -44,6 +44,7 @@ import eu.tng.policymanager.repository.domain.RuntimePolicyRecord;
 import eu.tng.policymanager.rules.generation.Util;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -70,7 +71,9 @@ import org.springframework.web.client.RestTemplate;
 @Component
 public class DeployedNSListener {
 
-    private static final Logger logger = Logger.getLogger(DeployedNSListener.class.getName());
+    //private static final Logger logger = Logger.getLogger(DeployedNSListener.class.getName());
+    @Autowired
+    LogsFormat logsFormat;
 
     @Autowired
     RulesEngineService rulesEngineService;
@@ -90,22 +93,20 @@ public class DeployedNSListener {
     //private static final String current_dir = System.getProperty("user.dir");
     @RabbitListener(queues = RulesEngineApp.NS_INSTATIATION_QUEUE)
     public void deployedNSMessageReceived(byte[] message) {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
-        logger.log(Level.INFO, "A new message has been received");
-        
-        String deployedNSasYaml = new String(message, StandardCharsets.UTF_8);
-        
         try {
+            String deployedNSasYaml = new String(message, StandardCharsets.UTF_8);
             enforceRuntimePolicy(deployedNSasYaml);
+            logsFormat.createLogInfo("I", timestamp.toString(), "NS Creation Message received", deployedNSasYaml, "200");
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Exception message {0}", e.getMessage());
+            logsFormat.createLogInfo("E", timestamp.toString(), "Ignoring message from NS_INSTATIATION_QUEUE", e.getMessage(), "200");
         }
 
     }
 
-
-
     private void enforceRuntimePolicy(String deployedNSasYaml) {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
         String jsonobject = Util.convertYamlToJson(deployedNSasYaml);
         JSONObject newDeployedGraph = new JSONObject(jsonobject);
@@ -120,10 +121,8 @@ public class DeployedNSListener {
 
                     String ns_id = newDeployedGraph.getJSONObject("nsr").getString("descriptor_reference");
 
-                    logger.log(Level.INFO, "status {0} for nsr_id {1}", new Object[]{status, ns_id});
-
-                    logger.log(Level.INFO, "A new service is Deployed: {0}", deployedNSasYaml);
-
+                    //logger.log(Level.INFO, "status {0} for nsr_id {1}", new Object[]{status, ns_id});
+                    //logger.log(Level.INFO, "A new service is Deployed: {0}", deployedNSasYaml);
                     String nsr_id = newDeployedGraph.getJSONObject("nsr").getString("id");
                     RuntimePolicy runtimepolicy = null;
 
@@ -133,7 +132,7 @@ public class DeployedNSListener {
 
                         if (!sla_id.equals(null)) {
 
-                            logger.log(Level.INFO, "Check for policy  binded with SLA {0} and NS {1}", new Object[]{sla_id.toString(), ns_id});
+                            logsFormat.createLogInfo("I", timestamp.toString(), "Enforce Runtime Policy", "Check for policy  binded with SLA " + sla_id.toString() + " and NS " + ns_id, "200");
 
                             List<RuntimePolicy> p_list = runtimePolicyRepository.findBySlaidAndNsid(sla_id.toString(), ns_id);
 
@@ -143,7 +142,7 @@ public class DeployedNSListener {
 
                         } else {
 
-                            logger.log(Level.INFO, "Check for default policy for ns {0}", ns_id);
+                            logsFormat.createLogInfo("I", timestamp.toString(), "Enforce Runtime Policy", "Check for default policy for ns " + ns_id, "200");
 
                             Optional<RuntimePolicy> plc = runtimePolicyRepository.findByNsidAndDefaultPolicyTrue(ns_id);
                             if (plc.isPresent()) {
@@ -153,7 +152,7 @@ public class DeployedNSListener {
                         }
 
                     } else {
-                        logger.log(Level.INFO, "Check for default policy for ns {0}", ns_id);
+                        logsFormat.createLogInfo("I", timestamp.toString(), "Enforce Runtime Policy", "Check for default policy for ns " + ns_id, "200");
                         runtimepolicy = runtimePolicyRepository.findByNsidAndDefaultPolicyTrue(ns_id).get();
                     }
 
@@ -170,19 +169,19 @@ public class DeployedNSListener {
                         try {
                             response = restTemplate.exchange(policies_url + "/" + runtimepolicy_id, HttpMethod.GET, entity, String.class);
                         } catch (HttpClientErrorException e) {
-                            logger.warning("{\"error\": \"The PLD ID " + runtimepolicy_id + " does not exist at catalogues. Message : "
-                                    + e.getMessage() + "\"}");
+                            logsFormat.createLogInfo("E", timestamp.toString(), "Enforce Runtime Policy", "The runtime policy " + runtimepolicy_id + " does not exist at catalogues. Message : " + e.getMessage(), "200");
                             return;
                         }
 
                         JSONObject policydescriptorRaw = new JSONObject(response.getBody());
-                        logger.info("response" + policydescriptorRaw.toString());
+                        //logger.info("response" + policydescriptorRaw.toString());
 
                         JSONObject pld = policydescriptorRaw.getJSONObject("pld");
 
                         String policyAsYaml = Util.jsonToYaml(pld);
 
-                        logger.log(Level.INFO, "Activate policy for NSR {0}", nsr_id);
+                        logsFormat.createLogInfo("I", timestamp.toString(), "Enforce Runtime Policy", "Activate policy for NSR " + nsr_id, "200");
+
                         boolean is_enforcement_succesfull = rulesEngineService.addNewKnowledgebase("s" + nsr_id.replaceAll("-", ""), runtimepolicy.getPolicyid(), policyAsYaml);
 
                         if (is_enforcement_succesfull) {
@@ -204,7 +203,6 @@ public class DeployedNSListener {
                             JSONObject prometheous_rules = new JSONObject();
                             prometheous_rules.put("plc_cnt", nsr_id);
                             prometheous_rules.put("sonata_service_id", nsr_id);
-                            
 
                             //parse newDeployedGraph
                             JSONArray vnfrs = newDeployedGraph.getJSONArray("vnfrs");
@@ -213,8 +211,7 @@ public class DeployedNSListener {
 
                                 JSONObject vnfr_object = vnfrs.getJSONObject(i);
 
-                                logger.info("vnfr_object--> " + vnfr_object);
-
+                                //logger.info("vnfr_object--> " + vnfr_object);
                                 JSONArray prometheous_vnfs = new JSONArray();
                                 if (vnfr_object.has("virtual_deployment_units")) {
                                     prometheous_vnfs = Util.compose_monitoring_rules_os(nsr_id, vnfr_object, monitoringRules);
@@ -222,19 +219,17 @@ public class DeployedNSListener {
                                     prometheous_vnfs = Util.compose_monitoring_rules_k8s(nsr_id, vnfr_object, monitoringRules);
                                 }
 
-                                prometheous_rules.put("vnfs", prometheous_vnfs);
-
-                                logger.info("prometheous_rules " + prometheous_rules);
-
                                 // Create PLC rules to son-monitor
                                 //String monitoring_url = "http://" + monitoring_manager + "/api/v1/policymng/rules/service/" + nsr_id + "/configuration";
                                 String monitoring_url = "http://" + monitoring_manager + "/api/v2/policies/monitoring-rules";
 
-                                
-                                logger.info("monitoring_manager " + monitoring_url);
+                                logsFormat.createLogInfo("I", timestamp.toString(), "Submit monitoring rules to monitoring manager",
+                                        "POST CALL: " + monitoring_url + " with payload: " + prometheous_rules, "200");
+
                                 try {
                                     String monitoring_response = Util.sendPrometheusRulesToMonitoringManager(monitoring_url, prometheous_rules);
-                                    logger.info("monitoring_response " + monitoring_response);
+                                    logsFormat.createLogInfo("I", timestamp.toString(), "Monitoring Manager response after submiting prometheus rules",
+                                            monitoring_response, "200");
                                 } catch (IOException ex) {
                                     Logger.getLogger(DeployedNSListener.class.getName()).log(Level.SEVERE, null, ex);
                                 }
@@ -242,7 +237,7 @@ public class DeployedNSListener {
                             }
 
                         } else {
-                            logger.log(Level.INFO, "NSR " + nsr_id + " is deployed withoun any policy");
+                            logsFormat.createLogInfo("I", timestamp.toString(), "NSR " + nsr_id + " is deployed withoun any policy", "", "200");
 
                         }
 
@@ -254,6 +249,5 @@ public class DeployedNSListener {
         }
 
     }
-
 
 }
