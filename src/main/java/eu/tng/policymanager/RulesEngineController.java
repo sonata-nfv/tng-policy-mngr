@@ -724,7 +724,7 @@ public class RulesEngineController {
     public String listActions() {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         logsFormat.createLogInfo("I", timestamp.toString(), "Fetch list of Actions", "", "200");
-        List<RecommendedAction> recommendedActions = recommendedActionRepository.findAll();
+        List<RecommendedAction> recommendedActions = recommendedActionRepository.findAllByOrderByInDateTimeDesc();
         Gson gson = new Gson();
 
         return gson.toJson(recommendedActions);
