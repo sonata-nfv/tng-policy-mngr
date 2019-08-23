@@ -36,6 +36,7 @@ package eu.tng.policymanager;
 import eu.tng.policymanager.Messaging.DeployedNSListener;
 import eu.tng.policymanager.Messaging.LogsFormat;
 import eu.tng.policymanager.Messaging.MonitoringListener;
+import eu.tng.policymanager.Messaging.TerminatedNSListener;
 import eu.tng.policymanager.config.DroolsConfig;
 import eu.tng.policymanager.repository.PolicyYamlFile;
 
@@ -94,6 +95,9 @@ public class RulesEngineApp {
     public final static String NS_INSTATIATION_QUEUE = "policies.service.instances.create";
     public final static String NS_INSTATIATION_TOPIC = "service.instances.create";
 
+    public final static String NS_TERMINATION_QUEUE = "policies.service.instances.terminate";
+    public final static String NS_TERMINATION_TOPIC = "service.instances.terminate";
+
     public static void main(String[] args) {
 
         ApplicationContext ctx = SpringApplication.run(RulesEngineApp.class, args);
@@ -143,25 +147,6 @@ public class RulesEngineApp {
         return BindingBuilder.bind(runtimeActionsQueue()).to(exchange).with(runtimeActionsQueue().getName());
     }
 
-//    @Qualifier("listenerAdapter1")
-//    @Bean
-//    MessageListenerAdapter listenerAdapter1(RuntimeActionsListener receiver) {
-//
-//        MessageListenerAdapter msgadapter = new MessageListenerAdapter(receiver, "expertSystemMessageReceived");
-//        msgadapter.setMessageConverter(jackson2JsonMessageConverter());
-//        return msgadapter;
-//    }
-//
-//    @Qualifier("container1")
-//    @Bean
-//    SimpleMessageListenerContainer container1(ConnectionFactory connectionFactory,
-//            @Qualifier("listenerAdapter1") MessageListenerAdapter listenerAdapter) {
-//        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
-//        container.setConnectionFactory(connectionFactory);
-//        container.setQueueNames(RUNTIME_ACTIONS_QUEUE);
-//        container.setMessageListener(listenerAdapter);
-//        return container;
-//    }
     // Configure connection with rabbit mq for prometheus alerts Queue
     @Bean
     public Queue monitoringAlerts() {
@@ -222,6 +207,36 @@ public class RulesEngineApp {
     @Bean
     SimpleMessageListenerContainer nsInstantiationcontainer(ConnectionFactory connectionFactory,
             @Qualifier("nsInstantiationlistenerAdapter") MessageListenerAdapter listenerAdapter) {
+        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        container.setQueueNames(nsInstantiationQueue().getName());
+        container.setMessageListener(listenerAdapter);
+        return container;
+    }
+
+    // Configure connection with rabbit mq for NS termination Queue
+    @Bean
+    public Queue nsTerminationQueue() {
+        return new Queue(NS_TERMINATION_QUEUE, false);
+        //return QueueBuilder.durable(NS_INSTATIATION_QUEUE).build();
+    }
+
+    @Bean
+    Binding bindingNSTerminationQueue(TopicExchange exchange) {
+        return BindingBuilder.bind(nsInstantiationQueue()).to(exchange).with(NS_TERMINATION_TOPIC);
+    }
+
+    @Qualifier("nsTerminationlistenerAdapter")
+    @Bean
+    MessageListenerAdapter nsTerminationlistenerAdapter(TerminatedNSListener receiver) {
+        MessageListenerAdapter msgadapter = new MessageListenerAdapter(receiver, "terminatedNSMessageReceived");
+        return msgadapter;
+    }
+
+    @Qualifier("nsTerminationcontainer")
+    @Bean
+    SimpleMessageListenerContainer nsTerminationcontainer(ConnectionFactory connectionFactory,
+            @Qualifier("nsTerminationlistenerAdapter") MessageListenerAdapter listenerAdapter) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         container.setQueueNames(nsInstantiationQueue().getName());
