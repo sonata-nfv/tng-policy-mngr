@@ -213,11 +213,14 @@ public class DeployedNSListener {
 
                                 //logger.info("vnfr_object--> " + vnfr_object);
                                 JSONArray prometheous_vnfs = new JSONArray();
+
                                 if (vnfr_object.has("virtual_deployment_units")) {
                                     prometheous_vnfs = Util.compose_monitoring_rules_os(nsr_id, vnfr_object, monitoringRules);
                                 } else if (vnfr_object.has("cloudnative_deployment_units")) {
                                     prometheous_vnfs = Util.compose_monitoring_rules_k8s(nsr_id, vnfr_object, monitoringRules);
                                 }
+
+                                prometheous_rules.put("vnfs", prometheous_vnfs);
 
                                 // Create PLC rules to son-monitor
                                 //String monitoring_url = "http://" + monitoring_manager + "/api/v1/policymng/rules/service/" + nsr_id + "/configuration";
