@@ -12,26 +12,7 @@ The Policy Manager is the entity of the service platform responsible for runtime
 
 ## Documentation - APIs 
 
-Policy Manager APIs can be found here  [here](https://sonata-nfv.github.io/tng-doc/?urls.primaryName=5GTANGO%20POLICY%20MANAGER%20REST%20API)
-Following table shows the API endpoints of the Policy Manager.
-tng-policy-mngr supports its own swagger endpoint at http://<ip_adress>/swagger-ui.html
-
-| Action | HTTP Method | Endpoint |
-| --------------- | ------- | -------------------------------------------- |
-| GET a list of all Runtime policies | `GET` |`/api/v1`|
-| GET a number of all Runtime policies | `GET` |`/api/v1/counter`|
-| GET a list of all Runtime policies matching a specific network service | `GET` |`/api/v1?ns_uuid={value}`|
-| Create a Runtime Policy | `POST` |`/api/v1`|
-| GET a Runtime policy | `GET` |`/api/v1/{policy_uuid}`|
-| Update a Runtime Policy | `PUT` |`/api/v1`|
-| Delete a Runtime Policy | `DELETE` |`/api/v1/{policy_uuid}`|
-| Bind a Runtime Policy to an SLA | `PATCH` |`/api/v1/bind/{policy_uuid}`|
-| Define a Runtime Policy as default | `PATCH` |`/api/v1/default/{policy_uuid}`|
-| GET a list of all Recommended Actions | `GET` |`/api/v1/actions`|
-| GET a number of all Recommended Actions | `GET` |`/api/v1/actions/counter`|
-| Create the Placement Policy | `POST` |`/api/v1/placement`|
-| GET the Placement policy | `GET` |`/api/v1/placement`|
-| Pings to policy manager | `GET` |`/api/v1/pings`|
+Policy Manager APIs can be found here  [here](https://sonata-nfv.github.io/tng-doc/?urls.primaryName=5GTANGO%20POLICY%20MANAGER%20REST%20API) and also at the [wiki page](https://github.com/sonata-nfv/tng-policy-mngr/wiki/API-reference) of the tng-policy-mngr component
 
 ## Development
 
