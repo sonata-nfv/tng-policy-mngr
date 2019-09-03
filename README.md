@@ -10,7 +10,7 @@ Policies in 5GTANGO are considering deployment and operational aspects of networ
 
 The Policy Manager is the entity of the service platform responsible for runtime policies enforcement over the deployed network services. Policies enforcement regard mainly elasticity actions (scaling in and out VNFs), events identification and triggering of relevant alerts as well as security actions (e.g. application of a firewall rule). It consists of a set of components supporting the formulation of the policies and their enforcement, including the interfaces for interaction with the 5GTANGO monitoring framework,the message broker for publication and consumption of monitoring data, alerts and suggested actions, the catalogue and repository databases,the gatekeeper and the MANO orchestration mechanisms.
 
-## APIs 
+## Api Reference 
 
 Policy Manager APIs can be found at the  [central API documentation of the SONATA orchestrator](https://sonata-nfv.github.io/tng-doc/?urls.primaryName=5GTANGO%20POLICY%20MANAGER%20REST%20API) and also at the [wiki page](https://github.com/sonata-nfv/tng-policy-mngr/wiki/API-reference) of the tng-policy-mngr component
 
