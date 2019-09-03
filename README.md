@@ -31,7 +31,6 @@ $ curl <host name>:8081/api/vi
  
 ### Installing from the Docker container
 In case you prefer a docker based development, you can run the following commands (bash shell):
-
 ``` 
   $docker-compose up --build -d
 ```
@@ -47,6 +46,8 @@ This setup is ideal in case you want to test and develop the tng-policy-mngr apa
 ## Developing
 
 To contribute to the development of this 5GTANGO component, you may use the very same development workflow as for any other 5GTANGO Github project. That is, you have to fork the repository and create pull requests.
+
+Have in mind that sample runtime policy descriptors can be found at [policy descriptor examples](https://github.com/sonata-nfv/tng-schema/tree/master/policy-descriptor/examples) based at [policy descriptor schema](https://github.com/sonata-nfv/tng-schema/blob/master/policy-descriptor/policy-schema.yml).
 
 ###  Built With 
 
@@ -68,22 +69,32 @@ Developing this micro-service is straightforward with a low amount of necessary 
 Changes to the repository can be requested using [this](https://github.com/sonata-nfv/tng-policy-mngr/issues) repository's issues and [pull requests](https://github.com/sonata-nfv/tng-policy-mngr/pulls) mechanisms.
 
 ## Versioning
-The most up-to-date version is v4. For the versions available, see the link to tags on this repository.
+The most up-to-date version is v4. For the versions available, see the [link](https://github.com/sonata-nfv/tng-policy-mngr/releases) to tags on this repository.
+
+## Configuration
+
+The configuration of the micro-service is done through the following environment variables, defined in the Dockerfile:
+
+MONGO_DB, which defines the mongo database, where all necessary objects are stored in;
+HOST_BROKER, which defines the pub/sub framework where all asynchronous messages are exchanged;
+ENV CATALOGUE, which defines the Catalogue's URL, where test descriptors are fetched from;
+ENV MONITORING_MANAGER, which defines where the monitoring metrics are stored and how to fech them;
+ENV REPO, which defines the Repository's URL, where NS instances information is fetched from;
+ENV IA, which defines the Infrastracture Adapter where VIM information comes from;
+ENV GATEKEEPER, which defines the secure communication with the other microservices;
+
+## Tests
+Unit tests are automatically executed during the building of the microsevice. 
+Integration and functional tests involving this micro-service are defined in [tng-tests](https://github.com/sonata-nfv/tng-tests) repository.
+
+## Style guide
+Our style guide is really simple:
+
+* We try to follow a Clean Code philosophy in as much as possible, i.e., classes and methods should do one thing only, have the least number of parameters possible, etc.;
 
 ## Api Reference 
 
 Policy Manager APIs can be found at the  [central API documentation of the SONATA orchestrator](https://sonata-nfv.github.io/tng-doc/?urls.primaryName=5GTANGO%20POLICY%20MANAGER%20REST%20API) and also at the [wiki page](https://github.com/sonata-nfv/tng-policy-mngr/wiki/API-reference) of the tng-policy-mngr component
-
-
-
-
-
-#### Build and run tng-policy-mngr
-```bash
-docker-compose up --build -d
-```
-Sample runtime policy descriptors can be found at [policy descriptor examples](https://github.com/sonata-nfv/tng-schema/tree/master/policy-descriptor/examples) based at [policy descriptor schema](https://github.com/sonata-nfv/tng-schema/blob/master/policy-descriptor/policy-schema.yml).
-
 
 ## Licensing
 
