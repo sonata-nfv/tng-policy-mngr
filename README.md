@@ -33,11 +33,8 @@ To contribute to the development of this 5GTANGO component, you may use the very
 ```bash
 docker-compose up --build -d
 ```
-
 Sample runtime policy descriptors can be found at [policy descriptor examples](https://github.com/sonata-nfv/tng-schema/tree/master/policy-descriptor/examples) based at [policy descriptor schema](https://github.com/sonata-nfv/tng-schema/blob/master/policy-descriptor/policy-schema.yml).
 
-### CI Integration
-All pull requests are automatically tested by Jenkins and will only be accepted if no test is broken.
 
 ## Licensing
 
