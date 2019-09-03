@@ -36,11 +36,11 @@ In case you prefer a docker based development, you can run the following command
   $docker-compose up --build -d
 ```
 
-With these commands, you:
+With these commands, you:  
 
-Run the MongoDB container within the tango network;
-Run the RabbitMQ container within the tango network;
-Run the tng-policy-mngr container
+* Run the MongoDB container within the tango network;
+* Run the RabbitMQ container within the tango network;
+* Run the tng-policy-mngr container  
   
 This setup is ideal in case you want to test and develop the tng-policy-mngr apart from the rest of the sonata components.
 
