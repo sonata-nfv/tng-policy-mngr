@@ -25,8 +25,9 @@ $ java -jar -Dspring.profiles.active=yourProfile target/tng-policy-mngr-1.5.0.ja
 Note: See the [Configuration](https://github.com/sonata-nfv/tng-policy-mngr/#configuration) section below for other environment variables that can be used.
 
 Everything being fine, you'll have a server running on that session, on port 8081. You can access it by using curl, like in:
-
+```
 $ curl <host name>:8081/api/vi
+```
  
 ### Installing from the Docker container
 In case you prefer a docker based development, you can run the following commands (bash shell):
