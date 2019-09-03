@@ -4,9 +4,9 @@
 
 <p align="center"><img src="https://github.com/sonata-nfv/tng-api-gtw/wiki/images/sonata-5gtango-logo-500px.png" /></p>
 
-# 5GTango policy manager
+# 5GTango Policy Manager
 
-Policies in 5GTANGO are considering deployment and operational aspects of network services over programmable infrastructure. Operational or runtime policies regard the runtime adaptation of network service mechanisms in order to optimally support the overall performance achieved. A Policies Editor and Policies Manager are under development for this purpose supporting runtime policies definition and enforcement. Enforcement is going to be based on suggestion of actions produced by an inference engine taking into account the defined rules and real-time information provided by the set of active monitoring probes.
+Policies in 5GTANGO are considering deployment and operational aspects of network services over programmable infrastructure. Operational or runtime policies regard the runtime adaptation of network service mechanisms in order to optimally support the overall performance achieved.
 
 Every runtime runtime policy is defined upon a specific NS. Based on this, for each NS, a set of rules per policy can be defined. Each rule consists of the expressions part, denoting a set of conditions to be met and the actions part denoting actions upon the fulfillment of the conditions. The conditions may regard resources consumption aspects, software-specific aspects, status of a VNF or a NS, while the set of actions may regard resources allocation/disposal aspects, live migration and mobility aspects, horizontal scaling aspects and network functions management or activation aspects.
 
