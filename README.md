@@ -74,14 +74,14 @@ The most up-to-date version is v4. For the versions available, see the [link](ht
 ## Configuration
 
 The configuration of the micro-service is done through the following environment variables, defined in the Dockerfile:
-
-MONGO_DB, which defines the mongo database, where all necessary objects are stored in;
-HOST_BROKER, which defines the pub/sub framework where all asynchronous messages are exchanged;
-ENV CATALOGUE, which defines the Catalogue's URL, where test descriptors are fetched from;
-ENV MONITORING_MANAGER, which defines where the monitoring metrics are stored and how to fech them;
-ENV REPO, which defines the Repository's URL, where NS instances information is fetched from;
-ENV IA, which defines the Infrastracture Adapter where VIM information comes from;
-ENV GATEKEEPER, which defines the secure communication with the other microservices;
+  
+MONGO_DB, which defines the mongo database, where all necessary objects are stored in;  
+HOST_BROKER, which defines the pub/sub framework where all asynchronous messages are exchanged;  
+ENV CATALOGUE, which defines the Catalogue's URL, where test descriptors are fetched from;  
+ENV MONITORING_MANAGER, which defines where the monitoring metrics are stored and how to fech them;  
+ENV REPO, which defines the Repository's URL, where NS instances information is fetched from;  
+ENV IA, which defines the Infrastracture Adapter where VIM information comes from;  
+ENV GATEKEEPER, which defines the secure communication with the other microservices;  
 
 ## Tests
 Unit tests are automatically executed during the building of the microsevice. 
