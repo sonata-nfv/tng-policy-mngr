@@ -86,6 +86,9 @@ The configuration of the micro-service is done through the following environment
 ## Tests
 Unit tests are automatically executed during the building of the microsevice. 
 Integration and functional tests involving this micro-service are defined in [tng-tests](https://github.com/sonata-nfv/tng-tests) repository.
+Runtime policy integration tests can be found at:
+* [[policy lifecycle test upon k8s |https://github.com/sonata-nfv/tng-tests/tree/master/tests/SP/test_service_reconfiguration_k8s]]
+* [[policy lifecycle test upon openstack |https://github.com/sonata-nfv/tng-tests/tree/master/tests/SP/test_service_reconfiguration_os]]
 
 ## Style guide
 Our style guide is really simple:
