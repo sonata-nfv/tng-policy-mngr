@@ -52,4 +52,5 @@ The following lead developers are responsible for this repository and have admin
 
 ### Feedback-Chanel
 
-* Please use the GitHub issues to report bugs.
+* Please use the GitHub issues to report bugs or You may use the mailing list sonata-dev-list
+* Gitter room [![Join the chat at https://gitter.im/5gtango/tango-schema](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sonata-nfv/5gtango-sp)
