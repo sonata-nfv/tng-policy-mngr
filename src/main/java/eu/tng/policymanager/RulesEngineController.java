@@ -861,7 +861,7 @@ public class RulesEngineController {
 
     //get available policies to be activated or deactivated during a NS record lifetime
     @RequestMapping(value = "/records/{nsr_id}", method = RequestMethod.GET)
-    public ResponseEntity getPolicyStatusPerNSR(@PathVariable("nsr_id") String nsr_id
+    public String getPolicyStatusPerNSR(@PathVariable("nsr_id") String nsr_id
     ) {
 
         Optional<RuntimePolicyRecord> runtimepolicyrecordObject = runtimePolicyRecordRepository.findByNsrid(nsr_id);
@@ -869,23 +869,26 @@ public class RulesEngineController {
         JSONObject runtimePolicyInfo = new JSONObject();
         JSONObject policy = new JSONObject();
         if (runtimepolicyrecordObject.isPresent()) { //check if policy is enforced
+            System.out.println("I AM HERE ");
 
             RuntimePolicyRecord runtimePolicyRecord = runtimepolicyrecordObject.get();
             runtimePolicyInfo.put("enforced", true);
             runtimePolicyInfo.put("policy", this.getPolicyMetadata(runtimePolicyRecord.getPolicyid()));
 
         } else { //check if policy is exists as default or via an sla
+
             runtimePolicyInfo.put("enforced", false);
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> entity = new HttpEntity<>(headers);
-            ResponseEntity<String> response = restTemplate.exchange(gatekeeper_url + "/records/services/" + nsr_id, HttpMethod.GET, entity, String.class);
+            ResponseEntity<String> response = restTemplate.exchange(gatekeeper_url + "/services/" + nsr_id, HttpMethod.GET, entity, String.class);
             JSONObject myresponse = new JSONObject(response.getBody());
 
             String ns_uuid = myresponse.getString("descriptor_reference");
 
             if (myresponse.has("sla_id")) {
+
                 String sla_uuid = myresponse.getString("sla_id");
                 List<RuntimePolicy> runtimePolicyList = runtimePolicyRepository.findBySlaidAndNsid(sla_uuid, ns_uuid);
 
@@ -894,29 +897,27 @@ public class RulesEngineController {
                     RuntimePolicy runtimePolicy = runtimePolicyList.get(0);
 
                     runtimePolicyInfo.put("policy", this.getPolicyMetadata(runtimePolicy.getPolicyid()));
-                }else{ //there is no policy binded with this sla
+                } else { //there is no policy binded with this sla
                     runtimePolicyInfo.put("policy", policy);
+
                 }
             } else { //see if it has some default or has no policy at all
                 Optional<RuntimePolicy> runtimePolicyObject = runtimePolicyRepository.findByNsidAndDefaultPolicyTrue(ns_uuid);
 
                 if (runtimePolicyObject.isPresent()) {
+
                     RuntimePolicy runtimePolicy = runtimePolicyObject.get();
                     runtimePolicyInfo.put("policy", this.getPolicyMetadata(runtimePolicy.getPolicyid()));
 
                 } else {
+
                     runtimePolicyInfo.put("policy", policy);
                 }
 
             }
 
         }
-        Gson gson = new Gson();
-        String responseAsString = gson.toJson(runtimePolicyInfo);
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.set("Content-Length", String.valueOf(responseAsString.length()));
-        responseHeaders.setContentType(MediaType.APPLICATION_JSON);
-        return new ResponseEntity(new JSONObject().toString(), responseHeaders, HttpStatus.OK);
+        return runtimePolicyInfo.toString();
     }
 
     String defineRuleOperator(String monitoring_rule_name) {
