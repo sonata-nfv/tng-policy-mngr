@@ -297,7 +297,7 @@ public class RulesEngineController {
         String responseone = null;
         HttpEntity<String> httpEntity = new HttpEntity<>(policyjson.toString(), httpHeaders);
 
-        System.out.println("final policy json " + policyjson.toString());
+        //System.out.println("final policy json " + policyjson.toString());
 
         JSONObject ns_json = policyjson.getJSONObject("network_service");
         String ns_uuid;
@@ -313,7 +313,6 @@ public class RulesEngineController {
         try {
 
             responseone = restTemplate.postForObject(policies_url, httpEntity, String.class);
-            System.out.println("i am here");
             JSONObject policyDescriptor = new JSONObject(responseone);
             String policy_uuid = policyDescriptor.getString("uuid");
 
@@ -833,7 +832,7 @@ public class RulesEngineController {
 
                 prometheous_rules.put("vnfs", prometheous_vnfs);
 
-                System.out.println("prometheous_vnfs ---->" + prometheous_vnfs);
+                //System.out.println("prometheous_vnfs ---->" + prometheous_vnfs);
                 // Create PLC rules to son-monitor
                 String monitoring_url = "http://" + monitoring_manager + "/api/v2/policies/monitoring-rules";
                 logsFormat.createLogInfo("I", timestamp.toString(), "Submit monitoring rules to monitoring manager",
@@ -869,7 +868,6 @@ public class RulesEngineController {
         JSONObject runtimePolicyInfo = new JSONObject();
         JSONObject policy = new JSONObject();
         if (runtimepolicyrecordObject.isPresent()) { //check if policy is enforced
-            System.out.println("I AM HERE ");
 
             RuntimePolicyRecord runtimePolicyRecord = runtimepolicyrecordObject.get();
             runtimePolicyInfo.put("enforced", true);
@@ -957,7 +955,7 @@ public class RulesEngineController {
     JSONObject getPolicyMetadata(String policy_uuid) {
         JSONObject policy = new JSONObject();
         ResponseEntity runtimepolicyInfo = this.getPolicy(policy_uuid);
-        JSONObject policyAsJson = new JSONObject(runtimepolicyInfo.getBody());
+        JSONObject policyAsJson = new JSONObject(runtimepolicyInfo.getBody().toString());
         policy.put("policy_uuid", policy_uuid);
         policy.put("policy_name", policyAsJson.getJSONObject("pld").getString("name"));
         policy.put("policy_vendor", policyAsJson.getJSONObject("pld").getString("vendor"));
