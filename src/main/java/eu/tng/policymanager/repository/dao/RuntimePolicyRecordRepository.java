@@ -18,6 +18,6 @@ public interface RuntimePolicyRecordRepository extends MongoRepository<RuntimePo
 
     List<RuntimePolicyRecord> findByPolicyid(String policyid);
 
-    Optional<RuntimePolicyRecord> findByNsrid(String nsid);
+    Optional<RuntimePolicyRecord> findByNsrid(String nsrid);
 
 }
