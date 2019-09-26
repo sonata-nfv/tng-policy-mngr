@@ -295,6 +295,15 @@ public class RulesEngineController {
         }
 
         String responseone = null;
+
+        boolean default_policy = false;
+        if (policyjson.has("default_policy")) {
+            if (policyjson.getBoolean("default_policy")) {
+                default_policy = true;
+            }
+            policyjson.remove("default_policy");
+        }
+
         HttpEntity<String> httpEntity = new HttpEntity<>(policyjson.toString(), httpHeaders);
 
         //System.out.println("final policy json " + policyjson.toString());
@@ -315,17 +324,12 @@ public class RulesEngineController {
             JSONObject policyDescriptor = new JSONObject(responseone);
             String policy_uuid = policyDescriptor.getString("uuid");
 
-            if (policyjson.has("default_policy")) {
-                if (policyjson.getBoolean("default_policy")) {
-
-                    RuntimePolicy rp = new RuntimePolicy();
-                    rp.setDefaultPolicy(true);
-                    rp.setPolicyid(policy_uuid);
-                    rp.setNsid(ns_uuid);
-                    runtimePolicyRepository.save(rp);
-
-                }
-
+            if (default_policy) {
+                RuntimePolicy rp = new RuntimePolicy();
+                rp.setDefaultPolicy(true);
+                rp.setPolicyid(policy_uuid);
+                rp.setNsid(ns_uuid);
+                runtimePolicyRepository.save(rp);
             }
 
             //save locally
