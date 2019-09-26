@@ -252,6 +252,8 @@ public class CataloguesConnector {
         for (int i = 0; i < vnfds.length(); i++) {
 
             JSONObject vnf = vnfds.getJSONObject(i);
+            
+            ns_metrics.put(vnf.getString("vnf_name") + ":container_memory_usage_bytes");
 
             String services_url_complete = vnfs_url
                     + "?name=" + vnf.getString("vnf_name")
