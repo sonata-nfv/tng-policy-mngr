@@ -298,7 +298,6 @@ public class RulesEngineController {
         HttpEntity<String> httpEntity = new HttpEntity<>(policyjson.toString(), httpHeaders);
 
         //System.out.println("final policy json " + policyjson.toString());
-
         JSONObject ns_json = policyjson.getJSONObject("network_service");
         String ns_uuid;
         try {
@@ -917,20 +916,15 @@ public class RulesEngineController {
         }
         return runtimePolicyInfo.toString();
     }
-    
-     //get available policies to be activated or deactivated during a NS record lifetime
+
+    //get available policies to be activated or deactivated during a NS record lifetime
     @RequestMapping(value = "/monitoring_metrics/{nsr_id}", method = RequestMethod.GET)
     public JSONArray getNSMetrics(@PathVariable("nsr_id") String ns_id
     ) {
-    
-    return cataloguesConnector.getNSMetrics(ns_id);
-    
+
+        return cataloguesConnector.getNSMetrics(ns_id);
+
     }
-    
-     
-
-
-    
 
     String defineRuleOperator(String monitoring_rule_name) {
 
