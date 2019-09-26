@@ -295,10 +295,18 @@ public class RulesEngineController {
         }
 
         String responseone = null;
+
+        boolean default_policy = false;
+        if (policyjson.has("default_policy")) {
+            if (policyjson.getBoolean("default_policy")) {
+                default_policy = true;
+            }
+            policyjson.remove("default_policy");
+        }
+
         HttpEntity<String> httpEntity = new HttpEntity<>(policyjson.toString(), httpHeaders);
 
         //System.out.println("final policy json " + policyjson.toString());
-
         JSONObject ns_json = policyjson.getJSONObject("network_service");
         String ns_uuid;
         try {
@@ -316,17 +324,12 @@ public class RulesEngineController {
             JSONObject policyDescriptor = new JSONObject(responseone);
             String policy_uuid = policyDescriptor.getString("uuid");
 
-            if (policyjson.has("default_policy")) {
-                if (policyjson.getBoolean("default_policy")) {
-
-                    RuntimePolicy rp = new RuntimePolicy();
-                    rp.setDefaultPolicy(true);
-                    rp.setPolicyid(policy_uuid);
-                    rp.setNsid(ns_uuid);
-                    runtimePolicyRepository.save(rp);
-
-                }
-
+            if (default_policy) {
+                RuntimePolicy rp = new RuntimePolicy();
+                rp.setDefaultPolicy(true);
+                rp.setPolicyid(policy_uuid);
+                rp.setNsid(ns_uuid);
+                runtimePolicyRepository.save(rp);
             }
 
             //save locally
@@ -916,6 +919,15 @@ public class RulesEngineController {
 
         }
         return runtimePolicyInfo.toString();
+    }
+
+    //get available policies to be activated or deactivated during a NS record lifetime
+    @RequestMapping(value = "/monitoring_metrics/{nsr_id}", method = RequestMethod.GET)
+    public JSONArray getNSMetrics(@PathVariable("nsr_id") String ns_id
+    ) {
+
+        return cataloguesConnector.getNSMetrics(ns_id);
+
     }
 
     String defineRuleOperator(String monitoring_rule_name) {

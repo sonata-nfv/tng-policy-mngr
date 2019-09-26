@@ -8,14 +8,11 @@ package eu.tng.policymanager;
 import eu.tng.policymanager.Exceptions.NSDoesNotExistException;
 import eu.tng.policymanager.Exceptions.VNFDoesNotExistException;
 import eu.tng.policymanager.Messaging.LogsFormat;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Timestamp;
-import java.util.logging.Level;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -50,6 +47,9 @@ public class CataloguesConnector {
 
     @Value("${tng.cat.network.services}")
     private String services_url;
+
+    @Value("${tng.cat.vnfs}")
+    private String vnfs_url;
 
     @Value("${tng.ia.vims}")
     private String vims_url;
@@ -233,6 +233,73 @@ public class CataloguesConnector {
             return false;
         }
         return true;
+
+    }
+
+    public JSONArray getNSMetrics(String ns_uuid) {
+
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<String> nsdResponse = restTemplate.exchange(services_url + "/" + ns_uuid, HttpMethod.GET, entity, String.class);
+        JSONObject ns_descriptor = new JSONObject(nsdResponse.getBody());
+        JSONArray vnfds = ns_descriptor.getJSONObject("nsd").getJSONArray("network_functions");
+
+        JSONArray ns_metrics = new JSONArray();
+
+        for (int i = 0; i < vnfds.length(); i++) {
+
+            JSONObject vnf = vnfds.getJSONObject(i);
+
+            String services_url_complete = vnfs_url
+                    + "?name=" + vnf.getString("vnf_name")
+                    + "&vendor=" + vnf.getString("vnf_vendor")
+                    + "&version=" + vnf.getString("vnf_version");
+
+            ResponseEntity<String> response1 = restTemplate.exchange(services_url_complete, HttpMethod.GET, entity, String.class);
+
+            JSONArray vnfs_list = new JSONArray(response1.getBody());
+
+            if (vnfs_list.length() > 0) {
+                JSONObject vnf_descriptor = vnfs_list.getJSONObject(0);
+
+                JSONArray virtual_deployment_units = vnf_descriptor.getJSONObject("vnfd").getJSONArray("virtual_deployment_units");
+
+                for (int j = 0; j < virtual_deployment_units.length(); j++) {
+                    JSONObject virtual_deployment_unit = virtual_deployment_units.getJSONObject(j);
+
+                    if (virtual_deployment_unit.has("monitoring_parameters")) {
+
+                        JSONArray monitoring_parameters = virtual_deployment_unit.getJSONArray("monitoring_parameters");
+
+                        for (int k = 0; k < monitoring_parameters.length(); k++) {
+                            ns_metrics.put(vnf.getString("vnf_name") + ":" + monitoring_parameters.getJSONObject(k).getString("name"));
+                        }
+
+                    }
+
+                    if (virtual_deployment_unit.has("snmp_parameters")) {
+                        JSONObject snmp_parameters = virtual_deployment_unit.getJSONObject("snmp_parameters");
+
+                        JSONArray oids = snmp_parameters.getJSONArray("oids");
+
+                        for (int h = 0; h < oids.length(); h++) {
+
+                            JSONObject oid = oids.getJSONObject(h);
+
+                            ns_metrics.put(vnf.getString("vnf_name") + ":" + oid.getString("metric_name"));
+
+                        }
+                    }
+
+                }
+
+            }
+        }
+
+        return ns_metrics;
 
     }
 
