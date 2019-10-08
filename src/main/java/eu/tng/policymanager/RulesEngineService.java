@@ -37,7 +37,6 @@ import com.google.gson.Gson;
 import eu.tng.policymanager.Exceptions.NSDoesNotExistException;
 import eu.tng.policymanager.Exceptions.VNFDoesNotExistException;
 import eu.tng.policymanager.Exceptions.VNFRDoesNotExistException;
-import eu.tng.policymanager.Messaging.LogsFormat;
 import eu.tng.policymanager.facts.RuleActionType;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
 import eu.tng.policymanager.facts.action.Action;
@@ -48,6 +47,7 @@ import eu.tng.policymanager.facts.action.ElasticityAction;
 import eu.tng.policymanager.facts.action.NetworkManagementAction;
 import eu.tng.policymanager.facts.enums.ScalingType;
 import eu.tng.policymanager.facts.enums.Status;
+import eu.tng.policymanager.repository.Inertia;
 import eu.tng.policymanager.repository.PolicyRule;
 import eu.tng.policymanager.rules.generation.KieUtil;
 import eu.tng.policymanager.repository.PolicyYamlFile;
@@ -78,6 +78,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -133,9 +134,6 @@ public class RulesEngineService {
 
     private final KieUtil kieUtil;
 
-//    @Autowired
-//    LogsFormat logsFormat;
-
     @Autowired
     private RabbitTemplate template;
 
@@ -163,7 +161,7 @@ public class RulesEngineService {
 
     @Autowired
     public RulesEngineService(KieUtil kieUtil) {
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        //Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         //logsFormat.createLogInfo("I", timestamp.toString(), "Rule Engine Session initializing...", "", "200");
         this.kieServices = KieServices.Factory.get();
         this.kieFileSystem = kieServices.newKieFileSystem();
@@ -175,8 +173,7 @@ public class RulesEngineService {
 //fireAllRules every 5 minutes 1min== 60000
     @Scheduled(fixedRate = 6000)
     public void searchForGeneratedActions() {
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-
+        // Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         //logger.info("Search for actions");
         ConcurrentHashMap map = kieUtil.seeThreadMap();
         for (Object key : map.keySet()) {
@@ -265,7 +262,7 @@ public class RulesEngineService {
                             Duration duration = Duration.between(now, recent_date);
                             long diff = Math.abs(duration.toMinutes());
                             //logger.info("Duration between last created action and now " + diff);
-                            if (diff < 10) {
+                            if (diff < doactionsubclass.getInertia()) {
                                 return;
                             }
 
@@ -284,7 +281,6 @@ public class RulesEngineService {
                         });
 
                         //logsFormat.createLogInfo("I", timestamp.toString(), " [x] Sent to topic '" + elasticity_action_msg_as_yml + "'", "", "200");
-
                     }
 
                 }
@@ -371,7 +367,6 @@ public class RulesEngineService {
         //System.out.println("Ιnsert monitoredComponent to session  " + monitoredComponent.toString());
         //logger.info(monitoringStream.getEntryPointId() + "  -------  " + monitoringStream.getFactCount());
         //logsFormat.createLogInfo("I", timestamp.toString(), "Ιnsert monitoredComponent " + monitoredComponent.toString() + " to session " + factSessionName, "", "200");
-
         monitoringStream.insert(monitoredComponent);
 
     }
@@ -513,7 +508,6 @@ public class RulesEngineService {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
         //logsFormat.createLogInfo("I", timestamp.toString(), "Loading Rules from File to production memory", "", "200");
-
         String knowledgebasename = "gsgpilotTranscodingService";
         String drlPath4deployment = "/rules/gsgpilotTranscodingService/gsgpilotTranscodingService.drl";
         try {
@@ -524,7 +518,6 @@ public class RulesEngineService {
             data += getRulesFromFile();
 
             //logger.info("rules : " + data);
-
             Files.createDirectories(policyPackagePath);
             FileOutputStream out = new FileOutputStream(current_dir + "/" + drlPath4deployment);
             out.write(data.getBytes());
@@ -673,6 +666,18 @@ public class RulesEngineService {
 
 //                rhs_actions += "insertLogical( new " + action_object + "($m1.getNsrid(),\"" + ruleaction.getTarget() + "\","
 //                        + ruleaction.getAction_type() + "." + ruleaction.getName() + ",\"" + ruleaction.getValue() + "\",$m1.getVnfd_id(),$m1.getVim_id(),Status.not_send)); \n";
+                Inertia inertia = policyrule.getInertia();
+                int inertia_value = Integer.parseInt(inertia.getValue());
+                String inertia_unit = inertia.getDuration_unit();
+
+                long inertia_minutes = inertia_value;
+                if (inertia_unit.equalsIgnoreCase("s")) {
+                    inertia_minutes = TimeUnit.SECONDS.toMinutes(inertia_value);
+                } else if (inertia_unit.equalsIgnoreCase("h")) {
+                    inertia_minutes = TimeUnit.HOURS.toMinutes(inertia_value);
+
+                }
+
                 rhs_actions += "insertLogical( new " + action_object + "($m0.getNsrid(),"
                         + "\"" + ruleaction.getTarget().getName() + "\","
                         + "\"" + ruleaction.getTarget().getVendor() + "\","
@@ -680,6 +685,7 @@ public class RulesEngineService {
                         + ruleaction.getAction_type() + "." + ruleaction.getName() + ","
                         + "\"" + ruleaction.getValue() + "\","
                         + "\"" + ruleaction.getCriterion() + "\","
+                        + "\"" + inertia_minutes + "\","
                         + "Status.not_send)); \n";
 
             }
