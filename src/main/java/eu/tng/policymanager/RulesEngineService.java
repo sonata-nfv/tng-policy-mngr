@@ -37,7 +37,6 @@ import com.google.gson.Gson;
 import eu.tng.policymanager.Exceptions.NSDoesNotExistException;
 import eu.tng.policymanager.Exceptions.VNFDoesNotExistException;
 import eu.tng.policymanager.Exceptions.VNFRDoesNotExistException;
-import eu.tng.policymanager.Messaging.LogsFormat;
 import eu.tng.policymanager.facts.RuleActionType;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
 import eu.tng.policymanager.facts.action.Action;
@@ -133,9 +132,6 @@ public class RulesEngineService {
 
     private final KieUtil kieUtil;
 
-//    @Autowired
-//    LogsFormat logsFormat;
-
     @Autowired
     private RabbitTemplate template;
 
@@ -163,7 +159,7 @@ public class RulesEngineService {
 
     @Autowired
     public RulesEngineService(KieUtil kieUtil) {
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        //Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         //logsFormat.createLogInfo("I", timestamp.toString(), "Rule Engine Session initializing...", "", "200");
         this.kieServices = KieServices.Factory.get();
         this.kieFileSystem = kieServices.newKieFileSystem();
@@ -175,8 +171,7 @@ public class RulesEngineService {
 //fireAllRules every 5 minutes 1min== 60000
     @Scheduled(fixedRate = 6000)
     public void searchForGeneratedActions() {
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-
+        // Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         //logger.info("Search for actions");
         ConcurrentHashMap map = kieUtil.seeThreadMap();
         for (Object key : map.keySet()) {
@@ -265,7 +260,7 @@ public class RulesEngineService {
                             Duration duration = Duration.between(now, recent_date);
                             long diff = Math.abs(duration.toMinutes());
                             //logger.info("Duration between last created action and now " + diff);
-                            if (diff < 10) {
+                            if (diff < doactionsubclass.getInertia()) {
                                 return;
                             }
 
@@ -680,6 +675,7 @@ public class RulesEngineService {
                         + ruleaction.getAction_type() + "." + ruleaction.getName() + ","
                         + "\"" + ruleaction.getValue() + "\","
                         + "\"" + ruleaction.getCriterion() + "\","
+                        + "\"" + policyrule.getInertia() + "\","
                         + "Status.not_send)); \n";
 
             }

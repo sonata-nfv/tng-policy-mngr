@@ -18,12 +18,12 @@ public class ElasticityAction extends Action {
     String vendor;
     String version;
     String criterion;
-
+    int inertia;
     String vnfd_id;
     String vim_id;
     ScalingType scaling_type;
 
-    public ElasticityAction(String service_instance_id, String vnf_name, String vendor, String version, ScalingType scaling_type, String value, String criterion, Status status) {
+    public ElasticityAction(String service_instance_id, String vnf_name, String vendor, String version, ScalingType scaling_type, String value, String criterion, int inertia, Status status) {
         this.service_instance_id = service_instance_id;
         this.vnf_name = vnf_name;
         this.vendor = vendor;
@@ -31,6 +31,7 @@ public class ElasticityAction extends Action {
         this.scaling_type = scaling_type;
         this.value = value;
         this.criterion = criterion;
+        this.inertia = inertia;
         this.status = status;
     }
 
@@ -90,6 +91,14 @@ public class ElasticityAction extends Action {
         this.vim_id = vim_id;
     }
 
+    public int getInertia() {
+        return inertia;
+    }
+
+    public void setInertia(int inertia) {
+        this.inertia = inertia;
+    }
+
     @Override
     public String toString() {
         return "ElasticityAction: { vnf_name=\"" + vnf_name + "\""
@@ -101,6 +110,7 @@ public class ElasticityAction extends Action {
                 + ", vim_id=" + vim_id
                 + ", criterion=" + criterion
                 + ", status=" + status
+                + ", inertia=" + inertia
                 + ", scaling_type=\"" + scaling_type + "\"}";
     }
 
