@@ -92,7 +92,7 @@ public class DeployedNSListener {
         try {
             String deployedNSasYaml = new String(message, StandardCharsets.UTF_8);
             enforceRuntimePolicy(deployedNSasYaml);
-            logsFormat.createLogInfo("I", timestamp.toString(), "NS Creation Message received", deployedNSasYaml, "200");
+            logsFormat.createLogInfo("I", timestamp.toString(), "NS Creation Message received", Util.convertYamlToJson(deployedNSasYaml), "200");
         } catch (Exception e) {
             logsFormat.createLogInfo("E", timestamp.toString(), "Ignoring message from NS_INSTATIATION_QUEUE", e.getMessage(), "200");
         }

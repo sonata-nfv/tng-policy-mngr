@@ -39,7 +39,7 @@ rule "scaleOutAlert"
 when
  $m1 := LogMetric(vnf_name=="vnf1" && value== "mon_rule_vm_cpu_perc" ) from entry-point "MonitoringStream" 
 then
-    insertLogical( new ElasticityAction("s438920483","squid-vnf","eu.5gtango","0.1",ScalingType.addvnf,"1","random",Status.not_send));
+    insertLogical( new ElasticityAction("s438920483","squid-vnf","eu.5gtango","0.1",ScalingType.addvnf,"1","random",15,Status.not_send));
     System.out.println("insert test add elasticity action");
 end
 
@@ -48,7 +48,7 @@ rule "scaleInAlert"
 when
  $m1 := LogMetric(vnf_name=="vnf1" && value== "mon_rule_vm_cpu_perc1" ) from entry-point "MonitoringStream" 
 then
-    insertLogical( new ElasticityAction("s438920483","squid-vnf","eu.5gtango","0.1",ScalingType.removevnf,"1","random",Status.not_send));
+    insertLogical( new ElasticityAction("s438920483","squid-vnf","eu.5gtango","0.1",ScalingType.removevnf,"1","random",15,Status.not_send));
     System.out.println("insert test remove elasticity action");
 end
 
