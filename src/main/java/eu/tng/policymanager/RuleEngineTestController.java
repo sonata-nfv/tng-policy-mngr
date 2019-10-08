@@ -96,7 +96,7 @@ public class RuleEngineTestController {
         log.info("createAMockUpAction");
         RecommendedAction recommendedAction = new RecommendedAction();
 
-        ElasticityAction doactionsubclass = new ElasticityAction("fe01cf76-c333-4eea-93a5-9bf182649c8a", "squid-vnf", "eu.tango", "0.1", ScalingType.addvnf, "value_1", null, Status.send);
+        ElasticityAction doactionsubclass = new ElasticityAction("fe01cf76-c333-4eea-93a5-9bf182649c8a", "squid-vnf", "eu.tango", "0.1", ScalingType.addvnf, "value_1", null,10, Status.send);
 
         recommendedAction.setAction(doactionsubclass);
         recommendedAction.setInDateTime(new Date());
@@ -104,7 +104,7 @@ public class RuleEngineTestController {
         recommendedActionRepository.save(recommendedAction);
 
         RecommendedAction recommendedAction1 = new RecommendedAction();
-        ElasticityAction doactionsubclass1 = new ElasticityAction("fe01cf76-c910-4lkl-93a5-6bf182649c8a", "squid-vnf", "eu.tango", "0.1", ScalingType.removevnf, "value_1", "random", Status.send);
+        ElasticityAction doactionsubclass1 = new ElasticityAction("fe01cf76-c910-4lkl-93a5-6bf182649c8a", "squid-vnf", "eu.tango", "0.1", ScalingType.removevnf, "value_1", "random",10, Status.send);
 
         recommendedAction1.setAction(doactionsubclass1);
         recommendedAction1.setInDateTime(new Date());
