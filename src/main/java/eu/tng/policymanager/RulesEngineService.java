@@ -685,7 +685,7 @@ public class RulesEngineService {
                         + ruleaction.getAction_type() + "." + ruleaction.getName() + ","
                         + "\"" + ruleaction.getValue() + "\","
                         + "\"" + ruleaction.getCriterion() + "\","
-                        + "\"" + inertia_minutes + "\","
+                        + inertia_minutes + ","
                         + "Status.not_send)); \n";
 
             }
