@@ -37,12 +37,14 @@ import com.google.gson.Gson;
 import eu.tng.policymanager.Exceptions.NSDoesNotExistException;
 import eu.tng.policymanager.Exceptions.VNFDoesNotExistException;
 import eu.tng.policymanager.Exceptions.VNFRDoesNotExistException;
+import eu.tng.policymanager.Messaging.LogsFormat;
 import eu.tng.policymanager.facts.RuleActionType;
 import static eu.tng.policymanager.config.DroolsConfig.RULESPACKAGE;
 import eu.tng.policymanager.facts.action.Action;
 import eu.tng.policymanager.facts.action.ComponentResourceAllocationAction;
 import eu.tng.policymanager.facts.LogMetric;
 import eu.tng.policymanager.facts.MonitoredComponent;
+import eu.tng.policymanager.facts.action.AlertAction;
 import eu.tng.policymanager.facts.action.ElasticityAction;
 import eu.tng.policymanager.facts.action.NetworkManagementAction;
 import eu.tng.policymanager.facts.enums.ScalingType;
@@ -137,6 +139,9 @@ public class RulesEngineService {
     @Autowired
     private RabbitTemplate template;
 
+    @Autowired
+    LogsFormat logsFormat;
+
     @Qualifier("runtimeActionsQueue")
     @Autowired
     private Queue queue;
@@ -173,7 +178,7 @@ public class RulesEngineService {
 //fireAllRules every 5 minutes 1min== 60000
     @Scheduled(fixedRate = 6000)
     public void searchForGeneratedActions() {
-        // Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         //logger.info("Search for actions");
         ConcurrentHashMap map = kieUtil.seeThreadMap();
         for (Object key : map.keySet()) {
@@ -201,6 +206,70 @@ public class RulesEngineService {
                         NetworkManagementAction doactionsubclass = (NetworkManagementAction) doaction;
                         //template.convertAndSend(queue.getName(), doactionsubclass.toString());
                         System.out.println(" [x] Sent '" + gson.toJson(doactionsubclass) + "'");
+                    }
+
+                    // AlertAction
+                    if (doaction instanceof AlertAction) {
+                        AlertAction doactionsubclass = (AlertAction) doaction;
+
+                        String nsrid = doactionsubclass.getService_instance_id().substring(1);
+                        doactionsubclass.setService_instance_id(nsrid);
+
+                        //save Recommended action to policy repository
+                        RecommendedAction recommendedAction = new RecommendedAction();
+
+                        recommendedAction.setAction(doactionsubclass);
+                        recommendedAction.setInDateTime(new Date());
+                        recommendedAction.setNsrid(nsrid);
+
+                        JSONObject alert_action_msg = new JSONObject();
+                        JSONObject alert_action_payload = new JSONObject();
+
+                        alert_action_payload.put("vnf_name", doactionsubclass.getVnf_name());
+
+                        try {
+                            //get vnf_id by vnf_name , vendor, version
+                            String vnfd_id = cataloguesConnector.getVnfId(vnfs_url, doactionsubclass.getVnf_name(), doactionsubclass.getVendor(), doactionsubclass.getVersion());
+                            //elasticity_action_msg.put("vnfd_id", vnfd_id);
+                            alert_action_payload.put("vnfd_uuid", vnfd_id);
+
+                        } catch (VNFDoesNotExistException ex) {
+                            Logger.getLogger(RulesEngineService.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+                        }
+
+                        alert_action_payload.put("log_message", doactionsubclass.getLogMessage());
+                        alert_action_msg.put("service_instance_uuid", doactionsubclass.getService_instance_id());
+
+                        alert_action_payload.put("value", doactionsubclass.getValue());
+
+                        Optional<RecommendedAction> recent_action = recommendedActionRepository.findTopByNsridOrderByInDateTimeDesc(nsrid);
+
+                        if (recent_action.isPresent()) {
+                            LocalDateTime recent_date = recent_action.get().getInDateTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+                            LocalDateTime now = LocalDateTime.now();
+                            Duration duration = Duration.between(now, recent_date);
+                            long diff = Math.abs(duration.toMinutes());
+                            //logger.info("Duration between last created action and now " + diff);
+                            if (diff < doactionsubclass.getInertia()) {
+                                return;
+                            }
+
+                        }
+
+                        RecommendedAction newRecommendedAction = recommendedActionRepository.save(recommendedAction);
+                        doactionsubclass.setCorrelation_id(newRecommendedAction.getCorrelation_id());
+                        String correlation_id = doactionsubclass.getCorrelation_id();
+                        alert_action_payload.put("reconfiguration_payload", alert_action_payload);
+                        String elasticity_action_msg_as_yml = Util.jsonToYaml(alert_action_msg);
+
+                        template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg_as_yml, m -> {
+                            m.getMessageProperties().setAppId("tng-policy-mngr");
+                            m.getMessageProperties().setReplyTo(queue.getName());
+                            m.getMessageProperties().setCorrelationId(correlation_id);
+                            return m;
+                        });
+
+                        logsFormat.createLogInfo("I", timestamp.toString(), " [x] Sent to topic '" + elasticity_action_msg_as_yml + "'", "", "200");
                     }
 
                     if (doaction instanceof ElasticityAction) {
