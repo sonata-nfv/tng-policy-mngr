@@ -145,6 +145,10 @@ public class RulesEngineService {
     @Qualifier("runtimeActionsQueue")
     @Autowired
     private Queue queue;
+    
+    @Qualifier("reconfigureActionsQueue")
+    @Autowired
+    private Queue reconfigure_queue;
 
     @Autowired
     private TopicExchange exchange;
@@ -262,9 +266,9 @@ public class RulesEngineService {
                         alert_action_msg.put("reconfiguration_payload", alert_action_payload);
                         String alert_action_msg_as_yml = Util.jsonToYaml(alert_action_msg);
 
-                        template.convertAndSend(exchange.getName(), queue.getName(), alert_action_msg_as_yml, m -> {
+                        template.convertAndSend(exchange.getName(), reconfigure_queue.getName(), alert_action_msg_as_yml, m -> {
                             m.getMessageProperties().setAppId("tng-policy-mngr");
-                            m.getMessageProperties().setReplyTo(queue.getName());
+                            m.getMessageProperties().setReplyTo(reconfigure_queue.getName());
                             m.getMessageProperties().setCorrelationId(correlation_id);
                             return m;
                         });

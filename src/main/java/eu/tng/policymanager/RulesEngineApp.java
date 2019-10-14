@@ -81,6 +81,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class RulesEngineApp {
 
     public static final String RUNTIME_ACTIONS_QUEUE = "service.instance.scale";
+    public static final String RUNTIME_RECONFIGURE_ACTIONS_QUEUE = "service.instance.reconfigure";
+    
     public final static String MONITORING_QUEUE = "son.monitoring.PLC";
 
     public final static String NS_INSTATIATION_QUEUE = "policies.service.instances.create";
@@ -88,8 +90,6 @@ public class RulesEngineApp {
 
     public final static String NS_TERMINATION_QUEUE = "policies.service.instance.terminate";
     public final static String NS_TERMINATION_TOPIC = "service.instance.terminate";
-    
-    //todo create  "service.instance.reconfigure" topic
 
     public static void main(String[] args) {
 
@@ -138,6 +138,17 @@ public class RulesEngineApp {
     @Bean
     Binding binding1(TopicExchange exchange) {
         return BindingBuilder.bind(runtimeActionsQueue()).to(exchange).with(runtimeActionsQueue().getName());
+    }
+    
+    // Configure connection with rabbit mq for NS reconfigure runtime Actions Queue
+    @Bean
+    public Queue reconfigureActionsQueue() {
+        return new Queue(RUNTIME_RECONFIGURE_ACTIONS_QUEUE);
+    }
+
+    @Bean
+    Binding binding3(TopicExchange exchange) {
+        return BindingBuilder.bind(reconfigureActionsQueue()).to(exchange).with(reconfigureActionsQueue().getName());
     }
 
     // Configure connection with rabbit mq for prometheus alerts Queue
