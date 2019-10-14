@@ -23,6 +23,10 @@ public class Action {
     Status status;
     String correlation_id;
 
+    String action_object;
+    String action_type;
+    String name;
+
     public String getNs_id() {
         return ns_id;
     }
@@ -79,11 +83,38 @@ public class Action {
         this.correlation_id = correlation_id;
     }
 
+    public String getAction_object() {
+        return action_object;
+    }
+
+    public void setAction_object(String action_object) {
+        this.action_object = action_object;
+    }
+
+    public String getAction_type() {
+        return action_type;
+    }
+
+    public void setAction_type(String action_type) {
+        this.action_type = action_type;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     @Override
     public String toString() {
         return "Action: { valueType=\"" + valueType + "\""
                 + ", ns_id=" + ns_id
                 + ", service_instance_id=" + service_instance_id
+                + ", action_object=" + action_object
+                + ", action_type=" + action_type
+                + ", name=" + name
                 + ", value=" + value
                 + ",valueUnit=\"" + valueUnit
                 + ", status=" + status + "\"}";
@@ -101,6 +132,7 @@ public class Action {
         return this.value == that.value
                 && this.valueType.equals(that.valueType)
                 && this.valueUnit.equals(that.valueUnit)
+                && this.action_type.equals(that.action_type)
                 && this.ns_id.equals(that.ns_id)
                 && this.service_instance_id.equals(that.service_instance_id);
     }

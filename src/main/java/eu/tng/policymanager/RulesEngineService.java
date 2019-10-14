@@ -218,6 +218,9 @@ public class RulesEngineService {
 
                         String nsrid = doactionsubclass.getService_instance_id().substring(1);
                         doactionsubclass.setService_instance_id(nsrid);
+                        doactionsubclass.setAction_object("AlertAction");
+                        doactionsubclass.setAction_type("LogMessage");
+                        doactionsubclass.setName(doactionsubclass.getLogMessage().toString());
 
                         //save Recommended action to policy repository
                         RecommendedAction recommendedAction = new RecommendedAction();
@@ -281,6 +284,9 @@ public class RulesEngineService {
 
                         String nsrid = doactionsubclass.getService_instance_id().substring(1);
                         doactionsubclass.setService_instance_id(nsrid);
+                        doactionsubclass.setAction_object("ElasticityAction");
+                        doactionsubclass.setAction_type("scaling_type");
+                        doactionsubclass.setName(doactionsubclass.getScaling_type().toString());
 
                         //save Recommended action to policy repository
                         RecommendedAction recommendedAction = new RecommendedAction();
