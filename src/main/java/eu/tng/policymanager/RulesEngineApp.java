@@ -88,6 +88,8 @@ public class RulesEngineApp {
 
     public final static String NS_TERMINATION_QUEUE = "policies.service.instance.terminate";
     public final static String NS_TERMINATION_TOPIC = "service.instance.terminate";
+    
+    //todo create  "service.instance.reconfigure" topic
 
     public static void main(String[] args) {
 

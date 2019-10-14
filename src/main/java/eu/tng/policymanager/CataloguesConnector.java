@@ -252,8 +252,6 @@ public class CataloguesConnector {
         for (int i = 0; i < vnfds.length(); i++) {
 
             JSONObject vnf = vnfds.getJSONObject(i);
-            
-            ns_metrics.put(vnf.getString("vnf_name") + ":container_memory_usage_bytes");
 
             String services_url_complete = vnfs_url
                     + "?name=" + vnf.getString("vnf_name")
@@ -267,34 +265,79 @@ public class CataloguesConnector {
             if (vnfs_list.length() > 0) {
                 JSONObject vnf_descriptor = vnfs_list.getJSONObject(0);
 
-                JSONArray virtual_deployment_units = vnf_descriptor.getJSONObject("vnfd").getJSONArray("virtual_deployment_units");
+                if (vnf_descriptor.getJSONObject("vnfd").has("virtual_deployment_units")) {
+                    JSONArray virtual_deployment_units = vnf_descriptor.getJSONObject("vnfd").getJSONArray("virtual_deployment_units");
 
-                for (int j = 0; j < virtual_deployment_units.length(); j++) {
-                    JSONObject virtual_deployment_unit = virtual_deployment_units.getJSONObject(j);
+                    for (int j = 0; j < virtual_deployment_units.length(); j++) {
+                        JSONObject virtual_deployment_unit = virtual_deployment_units.getJSONObject(j);
 
-                    if (virtual_deployment_unit.has("monitoring_parameters")) {
+                        if (virtual_deployment_unit.has("monitoring_parameters")) {
 
-                        JSONArray monitoring_parameters = virtual_deployment_unit.getJSONArray("monitoring_parameters");
+                            JSONArray monitoring_parameters = virtual_deployment_unit.getJSONArray("monitoring_parameters");
 
-                        for (int k = 0; k < monitoring_parameters.length(); k++) {
-                            ns_metrics.put(vnf.getString("vnf_name") + ":" + monitoring_parameters.getJSONObject(k).getString("name"));
+                            for (int k = 0; k < monitoring_parameters.length(); k++) {
+                                ns_metrics.put(vnf.getString("vnf_name") + ":" + monitoring_parameters.getJSONObject(k).getString("name"));
+                            }
+
+                        }
+
+                        if (virtual_deployment_unit.has("snmp_parameters")) {
+                            JSONObject snmp_parameters = virtual_deployment_unit.getJSONObject("snmp_parameters");
+
+                            JSONArray oids = snmp_parameters.getJSONArray("oids");
+
+                            for (int h = 0; h < oids.length(); h++) {
+
+                                JSONObject oid = oids.getJSONObject(h);
+
+                                ns_metrics.put(vnf.getString("vnf_name") + ":" + oid.getString("metric_name"));
+
+                            }
+                        }
+
+                    }
+                    ns_metrics.put(vnf.getString("vnf_name") + ":cpu_util");
+                    ns_metrics.put(vnf.getString("vnf_name") + ":memory_usage");
+                    ns_metrics.put(vnf.getString("vnf_name") + ":network_outgoing_bytes_rate");
+                    ns_metrics.put(vnf.getString("vnf_name") + ":network_incoming_bytes_rate");
+
+                } else if (vnf_descriptor.getJSONObject("vnfd").has("cloudnative_deployment_units")) {
+
+                    JSONArray cloudnative_deployment_units = vnf_descriptor.getJSONObject("vnfd").getJSONArray("cloudnative_deployment_units");
+
+                    for (int j = 0; j < cloudnative_deployment_units.length(); j++) {
+                        JSONObject virtual_deployment_unit = cloudnative_deployment_units.getJSONObject(j);
+
+                        if (virtual_deployment_unit.has("monitoring_parameters")) {
+
+                            JSONArray monitoring_parameters = virtual_deployment_unit.getJSONArray("monitoring_parameters");
+
+                            for (int k = 0; k < monitoring_parameters.length(); k++) {
+                                ns_metrics.put(vnf.getString("vnf_name") + ":" + monitoring_parameters.getJSONObject(k).getString("name"));
+                            }
+
+                        }
+
+                        if (virtual_deployment_unit.has("snmp_parameters")) {
+                            JSONObject snmp_parameters = virtual_deployment_unit.getJSONObject("snmp_parameters");
+
+                            JSONArray oids = snmp_parameters.getJSONArray("oids");
+
+                            for (int h = 0; h < oids.length(); h++) {
+
+                                JSONObject oid = oids.getJSONObject(h);
+
+                                ns_metrics.put(vnf.getString("vnf_name") + ":" + oid.getString("metric_name"));
+
+                            }
                         }
 
                     }
 
-                    if (virtual_deployment_unit.has("snmp_parameters")) {
-                        JSONObject snmp_parameters = virtual_deployment_unit.getJSONObject("snmp_parameters");
-
-                        JSONArray oids = snmp_parameters.getJSONArray("oids");
-
-                        for (int h = 0; h < oids.length(); h++) {
-
-                            JSONObject oid = oids.getJSONObject(h);
-
-                            ns_metrics.put(vnf.getString("vnf_name") + ":" + oid.getString("metric_name"));
-
-                        }
-                    }
+                    ns_metrics.put(vnf.getString("vnf_name") + ":container_cpu_load_average_10s");
+                    ns_metrics.put(vnf.getString("vnf_name") + ":container_memory_usage_bytes");
+                    ns_metrics.put(vnf.getString("vnf_name") + ":container_network_receive_bytes_total");
+                    ns_metrics.put(vnf.getString("vnf_name") + ":container_network_transmit_bytes_total");
 
                 }
 
