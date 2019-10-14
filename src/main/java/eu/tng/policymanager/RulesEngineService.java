@@ -260,16 +260,16 @@ public class RulesEngineService {
                         doactionsubclass.setCorrelation_id(newRecommendedAction.getCorrelation_id());
                         String correlation_id = doactionsubclass.getCorrelation_id();
                         alert_action_msg.put("reconfiguration_payload", alert_action_payload);
-                        String elasticity_action_msg_as_yml = Util.jsonToYaml(alert_action_msg);
+                        String alert_action_msg_as_yml = Util.jsonToYaml(alert_action_msg);
 
-                        template.convertAndSend(exchange.getName(), queue.getName(), elasticity_action_msg_as_yml, m -> {
+                        template.convertAndSend(exchange.getName(), queue.getName(), alert_action_msg_as_yml, m -> {
                             m.getMessageProperties().setAppId("tng-policy-mngr");
                             m.getMessageProperties().setReplyTo(queue.getName());
                             m.getMessageProperties().setCorrelationId(correlation_id);
                             return m;
                         });
 
-                        logsFormat.createLogInfo("I", timestamp.toString(), " [x] Sent to topic '" + elasticity_action_msg_as_yml + "'", "", "200");
+                        logsFormat.createLogInfo("I", timestamp.toString(), " [x] Sent to topic '" + alert_action_msg_as_yml + "'", "", "200");
                     }
 
                     if (doaction instanceof ElasticityAction) {

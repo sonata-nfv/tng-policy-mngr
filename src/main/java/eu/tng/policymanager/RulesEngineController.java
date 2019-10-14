@@ -922,8 +922,8 @@ public class RulesEngineController {
     }
 
     //get available policies to be activated or deactivated during a NS record lifetime
-    @RequestMapping(value = "/monitoring_metrics/{nsr_id}", method = RequestMethod.GET)
-    public JSONArray getNSMetrics(@PathVariable("nsr_id") String ns_id
+    @RequestMapping(value = "/monitoring_metrics/{ns_id}", method = RequestMethod.GET)
+    public JSONArray getNSMetrics(@PathVariable("ns_id") String ns_id
     ) {
 
         return cataloguesConnector.getNSMetrics(ns_id);
