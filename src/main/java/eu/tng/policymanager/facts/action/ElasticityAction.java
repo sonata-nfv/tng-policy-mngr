@@ -5,8 +5,14 @@
  */
 package eu.tng.policymanager.facts.action;
 
+import com.google.gson.Gson;
 import eu.tng.policymanager.facts.enums.ScalingType;
 import eu.tng.policymanager.facts.enums.Status;
+import org.json.JSONObject;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.web.client.RestTemplate;
 
 /**
  *
@@ -33,6 +39,25 @@ public class ElasticityAction extends Action {
         this.criterion = criterion;
         this.inertia = inertia;
         this.status = status;
+        generateAction();
+    }
+
+    public void generateAction() {
+
+        Gson gson = new Gson();
+
+        String tobject = gson.toJson(this);
+
+        JSONObject elasticityAction = new JSONObject();
+        elasticityAction.put("ElasticityAction", tobject);
+
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> httpEntity = new HttpEntity<>(elasticityAction.toString(), httpHeaders);
+        restTemplate.postForObject("http://localhost:8081/api/v1/new_action", httpEntity, String.class);
+
     }
 
     public String getVnf_name() {

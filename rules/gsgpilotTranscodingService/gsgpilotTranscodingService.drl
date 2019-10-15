@@ -63,7 +63,7 @@ when
     $m1 := MonitoredComponent( name== "vnf2" && metric== "RAM" ) over window:time(10m)from entry-point "MonitoringStream" ,
         average( $m1.getValue() )  ) ) 
 then
-    insertLogical( new ComponentResourceAllocationAction("pilotTranscodingService","vnf1",InfrastructureType.ApplyFlavour,"3",Status.not_send));
+    insertLogical( new ElasticityAction("s438920483","squid-vnf","eu.5gtango","0.1",ScalingType.removevnf,"1","random",15,Status.not_send));
 end
 
 
@@ -81,10 +81,7 @@ when
         average( $m1.getValue() )  ) 
    ) 
 then
-    insertLogical( new NetworkManagementAction("pilotTranscodingService","VirtualLinkA",NetworkMechanismType.ProvideDedicatedBandwidth,"200")); 
-    //insertLogical( new Action("pilotTranscodingService","vnf1",RuleActionType.LifecycleManagement,"200","restart")); 
-    //insertLogical( new Action("pilotTranscodingService","vnf1",RuleActionType.Profile,"Green","setProfile")); 
-
+     insertLogical( new ElasticityAction("s438920483","squid-vnf","eu.5gtango","0.1",ScalingType.removevnf,"1","random",15,Status.not_send));
 end
 
 
