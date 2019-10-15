@@ -35,7 +35,10 @@ package eu.tng.policymanager;
 
 import com.google.gson.Gson;
 import eu.tng.policymanager.Exceptions.NSDoesNotExistException;
+import eu.tng.policymanager.Exceptions.VNFDoesNotExistException;
 import eu.tng.policymanager.Messaging.LogsFormat;
+import eu.tng.policymanager.facts.action.Action;
+import eu.tng.policymanager.facts.action.AlertAction;
 import eu.tng.policymanager.repository.MonitoringRule;
 import eu.tng.policymanager.repository.PolicyYamlFile;
 import eu.tng.policymanager.repository.dao.PlacementPolicyRepository;
@@ -51,12 +54,16 @@ import eu.tng.policymanager.response.PolicyRestResponse;
 import eu.tng.policymanager.rules.generation.Util;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -927,6 +934,21 @@ public class RulesEngineController {
     ) {
 
         return cataloguesConnector.getNSMetrics(ns_id);
+
+    }
+
+    //Create a Policy
+    @RequestMapping(value = "/new_action", method = RequestMethod.POST)
+    public ResponseEntity newAction(@RequestBody String tobject
+    ) {
+        //save to catalogues
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logsFormat.createLogInfo("I", timestamp.toString(), "New Action is generated", "Request creation of new policy Action", "200");
+
+        JSONObject actionjson = new JSONObject(tobject);
+        rulesEngineService.newAction(actionjson);
+
+        return this.buildPlainResponse("", HttpStatus.OK);
 
     }
 

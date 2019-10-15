@@ -5,14 +5,63 @@
  */
 package eu.tng.policymanager.facts.action;
 
+import com.google.gson.Gson;
+import eu.tng.policymanager.CataloguesConnector;
+import eu.tng.policymanager.Exceptions.VNFDoesNotExistException;
+import eu.tng.policymanager.Messaging.LogsFormat;
+import eu.tng.policymanager.RulesEngineService;
 import eu.tng.policymanager.facts.enums.LogMessage;
 import eu.tng.policymanager.facts.enums.Status;
+import eu.tng.policymanager.repository.dao.RecommendedActionRepository;
+import eu.tng.policymanager.repository.domain.RecommendedAction;
+import eu.tng.policymanager.rules.generation.Util;
+import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
+import java.util.Optional;
+import java.util.logging.Logger;
+import org.json.JSONObject;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Configurable;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
 /**
  *
  * @author Eleni Fotopoulou <efotopoulou@ubitech.eu>
  */
 public class AlertAction extends Action {
+
+    @Autowired
+    CataloguesConnector cataloguesConnector;
+
+    @Autowired
+    RecommendedActionRepository recommendedActionRepository;
+
+    @Autowired
+    private RabbitTemplate template;
+
+    @Qualifier("reconfigureActionsQueue")
+    @Autowired
+    private Queue reconfigure_queue;
+
+    @Autowired
+    private TopicExchange exchange;
+
+    @Autowired
+    LogsFormat logsFormat;
 
     String vnf_name;
     String vendor;
@@ -33,6 +82,26 @@ public class AlertAction extends Action {
         this.criterion = criterion;
         this.inertia = inertia;
         this.status = status;
+        generateAction();
+
+    }
+
+    public void generateAction() {
+
+        Gson gson = new Gson();
+        
+        String tobject = gson.toJson(this);
+        
+        JSONObject alertAction = new JSONObject();
+        alertAction.put("AlertAction", tobject);
+        
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> httpEntity = new HttpEntity<>(alertAction.toString(), httpHeaders);
+        restTemplate.postForObject("http://localhost:8081/api/v1/new_action", httpEntity, String.class);
+        
     }
 
     public String getVnf_name() {
@@ -101,7 +170,7 @@ public class AlertAction extends Action {
 
     @Override
     public String toString() {
-        return "ElasticityAction: { vnf_name=\"" + vnf_name + "\""
+        return "AlertAction: { vnf_name=\"" + vnf_name + "\""
                 + ", vendor=" + vendor
                 + ", version=" + version
                 + ", value=" + value

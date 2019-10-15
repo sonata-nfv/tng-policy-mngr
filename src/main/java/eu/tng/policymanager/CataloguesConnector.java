@@ -164,7 +164,8 @@ public class CataloguesConnector {
 
     }
 
-    String getVnfId(String vnfs_url, String name, String vendor, String version) throws VNFDoesNotExistException {
+    public String getVnfId(String name, String vendor, String version) throws VNFDoesNotExistException {
+        System.out.println("mpika edooo 111");
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -176,6 +177,10 @@ public class CataloguesConnector {
                 + "&version=" + version;
 
         ResponseEntity<String> response1 = restTemplate.exchange(vnfs_url_complete, HttpMethod.GET, entity, String.class);
+
+        System.out.println("mpika edooo 222");
+
+        System.out.println(response1.getBody());
 
         //log.info("invoke the " + vnfs_url_complete);
         JSONArray vnfs = new JSONArray(response1.getBody());
