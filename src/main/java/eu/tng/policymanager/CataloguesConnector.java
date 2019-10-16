@@ -299,12 +299,12 @@ public class CataloguesConnector {
 
                             }
                         }
+                        ns_metrics.put(vnf.getString("vnf_name") + ":" + virtual_deployment_unit.getString("id") + ":cpu_util");
+                        ns_metrics.put(vnf.getString("vnf_name") + ":" + virtual_deployment_unit.getString("id") + ":memory_usage");
+                        ns_metrics.put(vnf.getString("vnf_name") + ":" + virtual_deployment_unit.getString("id") + ":network_outgoing_bytes_rate");
+                        ns_metrics.put(vnf.getString("vnf_name") + ":" + virtual_deployment_unit.getString("id") + ":network_incoming_bytes_rate");
 
                     }
-                    ns_metrics.put(vnf.getString("vnf_name") + ":cpu_util");
-                    ns_metrics.put(vnf.getString("vnf_name") + ":memory_usage");
-                    ns_metrics.put(vnf.getString("vnf_name") + ":network_outgoing_bytes_rate");
-                    ns_metrics.put(vnf.getString("vnf_name") + ":network_incoming_bytes_rate");
 
                 } else if (vnf_descriptor.getJSONObject("vnfd").has("cloudnative_deployment_units")) {
 
@@ -337,12 +337,12 @@ public class CataloguesConnector {
                             }
                         }
 
-                    }
+                        ns_metrics.put(vnf.getString("vnf_name") + ":" + virtual_deployment_unit.getString("id") + ":container_cpu_load_average_10s");
+                        ns_metrics.put(vnf.getString("vnf_name") + ":" + virtual_deployment_unit.getString("id") + ":container_memory_usage_bytes");
+                        ns_metrics.put(vnf.getString("vnf_name") + ":" + virtual_deployment_unit.getString("id") + ":container_network_receive_bytes_total");
+                        ns_metrics.put(vnf.getString("vnf_name") + ":" + virtual_deployment_unit.getString("id") + ":container_network_transmit_bytes_total");
 
-                    ns_metrics.put(vnf.getString("vnf_name") + ":container_cpu_load_average_10s");
-                    ns_metrics.put(vnf.getString("vnf_name") + ":container_memory_usage_bytes");
-                    ns_metrics.put(vnf.getString("vnf_name") + ":container_network_receive_bytes_total");
-                    ns_metrics.put(vnf.getString("vnf_name") + ":container_network_transmit_bytes_total");
+                    }
 
                 }
 
