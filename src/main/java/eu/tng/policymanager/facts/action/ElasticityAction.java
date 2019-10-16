@@ -39,7 +39,7 @@ public class ElasticityAction extends Action {
         this.criterion = criterion;
         this.inertia = inertia;
         this.status = status;
-        generateAction();
+        //generateAction();
     }
 
     public void generateAction() {

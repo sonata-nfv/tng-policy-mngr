@@ -82,7 +82,7 @@ public class AlertAction extends Action {
         this.criterion = criterion;
         this.inertia = inertia;
         this.status = status;
-        generateAction();
+        //generateAction();
 
     }
 
