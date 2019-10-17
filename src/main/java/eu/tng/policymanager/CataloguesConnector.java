@@ -281,7 +281,7 @@ public class CataloguesConnector {
                             JSONArray monitoring_parameters = virtual_deployment_unit.getJSONArray("monitoring_parameters");
 
                             for (int k = 0; k < monitoring_parameters.length(); k++) {
-                                ns_metrics.put(vnf.getString("vnf_name") + ":" + monitoring_parameters.getJSONObject(k).getString("name"));
+                                ns_metrics.put(vnf.getString("vnf_name") + ":" + virtual_deployment_unit.getString("id")  + ":" + monitoring_parameters.getJSONObject(k).getString("name"));
                             }
 
                         }
@@ -295,7 +295,7 @@ public class CataloguesConnector {
 
                                 JSONObject oid = oids.getJSONObject(h);
 
-                                ns_metrics.put(vnf.getString("vnf_name") + ":" + oid.getString("metric_name"));
+                                ns_metrics.put(vnf.getString("vnf_name") + ":" + virtual_deployment_unit.getString("id") + ":" + oid.getString("metric_name"));
 
                             }
                         }
@@ -318,7 +318,7 @@ public class CataloguesConnector {
                             JSONArray monitoring_parameters = virtual_deployment_unit.getJSONArray("monitoring_parameters");
 
                             for (int k = 0; k < monitoring_parameters.length(); k++) {
-                                ns_metrics.put(vnf.getString("vnf_name") + ":" + monitoring_parameters.getJSONObject(k).getString("name"));
+                                ns_metrics.put(vnf.getString("vnf_name") + ":" + virtual_deployment_unit.getString("id") + ":" + monitoring_parameters.getJSONObject(k).getString("name"));
                             }
 
                         }
@@ -332,7 +332,7 @@ public class CataloguesConnector {
 
                                 JSONObject oid = oids.getJSONObject(h);
 
-                                ns_metrics.put(vnf.getString("vnf_name") + ":" + oid.getString("metric_name"));
+                                ns_metrics.put(vnf.getString("vnf_name") + ":" + virtual_deployment_unit.getString("id") + ":" + oid.getString("metric_name"));
 
                             }
                         }
