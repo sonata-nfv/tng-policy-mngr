@@ -257,6 +257,7 @@ public class RulesEngineController {
 
             monitoring_rule_name = defineRuleOperator(monitoring_rule_name);
             monitoring_rule.put("name", monitoring_rule_name);
+            monitoring_rule.put("condition", monitoring_rule.getString("condition").split(":")[2]);
 
         }
 
@@ -959,7 +960,7 @@ public class RulesEngineController {
         } else if (monitoring_rule_name.contains("<")) {
             monitoring_rule_name = monitoring_rule_name.replaceAll("<", "less");
         } else {
-            monitoring_rule_name = monitoring_rule_name.replaceAll("=", "less");
+            monitoring_rule_name = monitoring_rule_name.replaceAll("=", "equal");
         }
 
         return monitoring_rule_name;
