@@ -821,6 +821,7 @@ public class RulesEngineController {
 
             //parse network service record
             JSONArray vnfrs = service_json.getJSONArray("network_functions");
+                            JSONArray prometheous_vnfs = new JSONArray();
 
             for (int i = 0; i < vnfrs.length(); i++) {
 
@@ -834,13 +835,15 @@ public class RulesEngineController {
                 vnfr_object.put("id", vnfr_uuid);
 
                 //System.out.println("vnfr_object--> " + vnfr_object);
-                JSONArray prometheous_vnfs = new JSONArray();
+                JSONObject prometheous_vnf = new JSONObject();
                 if (vnfr_object.has("virtual_deployment_units")) {
-                    prometheous_vnfs = Util.compose_monitoring_rules_os(nsr_id, vnfr_object, monitoringRules);
+                    prometheous_vnf = Util.compose_monitoring_rules_os(nsr_id, vnfr_object, monitoringRules);
                 } else if (vnfr_object.has("cloudnative_deployment_units")) {
-                    prometheous_vnfs = Util.compose_monitoring_rules_k8s(nsr_id, vnfr_object, monitoringRules);
+                    prometheous_vnf = Util.compose_monitoring_rules_k8s(nsr_id, vnfr_object, monitoringRules);
                 }
 
+                prometheous_vnfs.put(prometheous_vnf);
+                }
                 prometheous_rules.put("vnfs", prometheous_vnfs);
 
                 //System.out.println("prometheous_vnfs ---->" + prometheous_vnfs);
@@ -858,7 +861,7 @@ public class RulesEngineController {
                             "Policy Enforcement was not succesful", "500");
                 }
 
-            }
+            
 
         } else {
             logsFormat.createLogInfo("E", timestamp.toString(), "Error in policy enforcement function",

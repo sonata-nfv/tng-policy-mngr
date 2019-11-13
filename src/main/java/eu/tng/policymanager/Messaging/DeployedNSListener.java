@@ -200,37 +200,35 @@ public class DeployedNSListener {
 
                             //parse newDeployedGraph
                             JSONArray vnfrs = newDeployedGraph.getJSONArray("vnfrs");
-
+                            JSONArray prometheous_vnfs = new JSONArray();
                             for (int i = 0; i < vnfrs.length(); i++) {
 
                                 JSONObject vnfr_object = vnfrs.getJSONObject(i);
 
                                 //logger.info("vnfr_object--> " + vnfr_object);
-                                JSONArray prometheous_vnfs = new JSONArray();
-
+                                JSONObject prometheous_vnf = new JSONObject();
                                 if (vnfr_object.has("virtual_deployment_units")) {
-                                    prometheous_vnfs = Util.compose_monitoring_rules_os(nsr_id, vnfr_object, monitoringRules);
+                                    prometheous_vnf = Util.compose_monitoring_rules_os(nsr_id, vnfr_object, monitoringRules);
                                 } else if (vnfr_object.has("cloudnative_deployment_units")) {
-                                    prometheous_vnfs = Util.compose_monitoring_rules_k8s(nsr_id, vnfr_object, monitoringRules);
+                                    prometheous_vnf = Util.compose_monitoring_rules_k8s(nsr_id, vnfr_object, monitoringRules);
                                 }
+                                prometheous_vnfs.put(prometheous_vnf);
+                            }
+                            prometheous_rules.put("vnfs", prometheous_vnfs);
 
-                                prometheous_rules.put("vnfs", prometheous_vnfs);
+                            // Create PLC rules to son-monitor
+                            //String monitoring_url = "http://" + monitoring_manager + "/api/v1/policymng/rules/service/" + nsr_id + "/configuration";
+                            String monitoring_url = "http://" + monitoring_manager + "/api/v2/policies/monitoring-rules";
 
-                                // Create PLC rules to son-monitor
-                                //String monitoring_url = "http://" + monitoring_manager + "/api/v1/policymng/rules/service/" + nsr_id + "/configuration";
-                                String monitoring_url = "http://" + monitoring_manager + "/api/v2/policies/monitoring-rules";
+                            logsFormat.createLogInfo("I", timestamp.toString(), "Submit monitoring rules to monitoring manager",
+                                    "POST CALL: " + monitoring_url + " with payload: " + prometheous_rules, "200");
 
-                                logsFormat.createLogInfo("I", timestamp.toString(), "Submit monitoring rules to monitoring manager",
-                                        "POST CALL: " + monitoring_url + " with payload: " + prometheous_rules, "200");
-
-                                try {
-                                    String monitoring_response = Util.sendPrometheusRulesToMonitoringManager(monitoring_url, prometheous_rules);
-                                    logsFormat.createLogInfo("I", timestamp.toString(), "Monitoring Manager response after submiting prometheus rules",
-                                            monitoring_response, "200");
-                                } catch (IOException ex) {
-                                    Logger.getLogger(DeployedNSListener.class.getName()).log(Level.SEVERE, null, ex);
-                                }
-
+                            try {
+                                String monitoring_response = Util.sendPrometheusRulesToMonitoringManager(monitoring_url, prometheous_rules);
+                                logsFormat.createLogInfo("I", timestamp.toString(), "Monitoring Manager response after submiting prometheus rules",
+                                        monitoring_response, "200");
+                            } catch (IOException ex) {
+                                Logger.getLogger(DeployedNSListener.class.getName()).log(Level.SEVERE, null, ex);
                             }
 
                         } else {

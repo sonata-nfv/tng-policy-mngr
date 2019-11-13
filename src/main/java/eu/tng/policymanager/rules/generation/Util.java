@@ -59,9 +59,9 @@ public class Util {
         return output;
     }
 
-    public static JSONArray compose_monitoring_rules_os(String nsr_id, JSONObject vnfr_object, List<MonitoringRule> monitoringRules) {
+    public static JSONObject compose_monitoring_rules_os(String nsr_id, JSONObject vnfr_object, List<MonitoringRule> monitoringRules) {
 
-        JSONArray prometheous_vnfs = new JSONArray();
+        //JSONObject prometheous_vnfs = new JSONObject();
 
         JSONObject prometheus_vnf = new JSONObject();
 
@@ -142,15 +142,15 @@ public class Util {
         }
 
         prometheus_vnf.put("vdus", prometheus_vdus);
-        prometheous_vnfs.put(prometheus_vnf);
+        //prometheous_vnfs.put(prometheus_vnf);
 
-        return prometheous_vnfs;
+        return prometheus_vnf;
 
     }
 
-    public static JSONArray compose_monitoring_rules_k8s(String nsr_id, JSONObject vnfr_object, List<MonitoringRule> monitoringRules) {
+    public static JSONObject compose_monitoring_rules_k8s(String nsr_id, JSONObject vnfr_object, List<MonitoringRule> monitoringRules) {
 
-        JSONArray prometheous_vnfs = new JSONArray();
+        //JSONArray prometheous_vnfs = new JSONArray();
 
         JSONObject prometheus_vnf = new JSONObject();
 
@@ -224,9 +224,9 @@ public class Util {
         }
 
         prometheus_vnf.put("vdus", prometheus_vdus);
-        prometheous_vnfs.put(prometheus_vnf);
+        //prometheous_vnfs.put(prometheus_vnf);
 
-        return prometheous_vnfs;
+        return prometheus_vnf;
 
     }
 
