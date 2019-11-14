@@ -760,6 +760,18 @@ public class RulesEngineController {
         //todo : check if exists before delete
         if (runtimePolicyRecord.isPresent()) {
             runtimePolicyRecordRepository.delete(runtimePolicyRecord.get());
+
+            //delete monitoring rules from son-monitor
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            String monitoring_url = "http://" + monitoring_manager + "/api/v2/policies/monitoring-rules/service/" + nsr_id;
+            ResponseEntity<String> response = restTemplate.exchange(monitoring_url, HttpMethod.DELETE, entity, String.class);
+            JSONObject myresponse = new JSONObject(response.getBody());
+            logsFormat.createLogInfo("I", timestamp.toString(), "Remove monitoring rules from monitoring manager",
+                    "DELETE CALL: " + monitoring_url +" with response "+myresponse.toString(), "200");
+
         } else {
             logsFormat.createLogInfo("I", timestamp.toString(), "Runtime policy is already deactivated", "Runtime policy is already deactivated for nsr_id " + nsr_id, "200");
         }
@@ -821,7 +833,7 @@ public class RulesEngineController {
 
             //parse network service record
             JSONArray vnfrs = service_json.getJSONArray("network_functions");
-                            JSONArray prometheous_vnfs = new JSONArray();
+            JSONArray prometheous_vnfs = new JSONArray();
 
             for (int i = 0; i < vnfrs.length(); i++) {
 
@@ -843,25 +855,23 @@ public class RulesEngineController {
                 }
 
                 prometheous_vnfs.put(prometheous_vnf);
-                }
-                prometheous_rules.put("vnfs", prometheous_vnfs);
+            }
+            prometheous_rules.put("vnfs", prometheous_vnfs);
 
-                //System.out.println("prometheous_vnfs ---->" + prometheous_vnfs);
-                // Create PLC rules to son-monitor
-                String monitoring_url = "http://" + monitoring_manager + "/api/v2/policies/monitoring-rules";
-                logsFormat.createLogInfo("I", timestamp.toString(), "Submit monitoring rules to monitoring manager",
-                        "POST CALL: " + monitoring_url + " with payload: " + prometheous_rules, "200");
+            //System.out.println("prometheous_vnfs ---->" + prometheous_vnfs);
+            // Create PLC rules to son-monitor
+            String monitoring_url = "http://" + monitoring_manager + "/api/v2/policies/monitoring-rules";
+            logsFormat.createLogInfo("I", timestamp.toString(), "Submit monitoring rules to monitoring manager",
+                    "POST CALL: " + monitoring_url + " with payload: " + prometheous_rules, "200");
 
-                try {
-                    String monitoring_response = Util.sendPrometheusRulesToMonitoringManager(monitoring_url, prometheous_rules);
-                    logsFormat.createLogInfo("I", timestamp.toString(), "Monitoring Manager response after submiting prometheus rules",
-                            monitoring_response, "200");
-                } catch (IOException ex) {
-                    logsFormat.createLogInfo("E", timestamp.toString(), "Communication problem with Monitoring Manager",
-                            "Policy Enforcement was not succesful", "500");
-                }
-
-            
+            try {
+                String monitoring_response = Util.sendPrometheusRulesToMonitoringManager(monitoring_url, prometheous_rules);
+                logsFormat.createLogInfo("I", timestamp.toString(), "Monitoring Manager response after submiting prometheus rules",
+                        monitoring_response, "200");
+            } catch (IOException ex) {
+                logsFormat.createLogInfo("E", timestamp.toString(), "Communication problem with Monitoring Manager",
+                        "Policy Enforcement was not succesful", "500");
+            }
 
         } else {
             logsFormat.createLogInfo("E", timestamp.toString(), "Error in policy enforcement function",
