@@ -767,10 +767,9 @@ public class RulesEngineController {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> entity = new HttpEntity<>(headers);
             String monitoring_url = "http://" + monitoring_manager + "/api/v2/policies/monitoring-rules/service/" + nsr_id;
-            ResponseEntity<String> response = restTemplate.exchange(monitoring_url, HttpMethod.DELETE, entity, String.class);
-            JSONObject myresponse = new JSONObject(response.getBody());
+            restTemplate.exchange(monitoring_url, HttpMethod.DELETE, entity, String.class);
             logsFormat.createLogInfo("I", timestamp.toString(), "Remove monitoring rules from monitoring manager",
-                    "DELETE CALL: " + monitoring_url +" with response "+myresponse.toString(), "200");
+                    "DELETE CALL: " + monitoring_url , "200");
 
         } else {
             logsFormat.createLogInfo("I", timestamp.toString(), "Runtime policy is already deactivated", "Runtime policy is already deactivated for nsr_id " + nsr_id, "200");
