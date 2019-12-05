@@ -257,7 +257,8 @@ public class RulesEngineController {
 
             monitoring_rule_name = defineRuleOperator(monitoring_rule_name);
             monitoring_rule.put("name", monitoring_rule_name);
-            monitoring_rule.put("condition", monitoring_rule.getString("condition").split(":")[2]);
+            //monitoring_rule.put("condition", monitoring_rule.getString("condition").split(":")[2]);
+            monitoring_rule.put("condition", monitoring_rule.getString("condition"));
 
         }
 
