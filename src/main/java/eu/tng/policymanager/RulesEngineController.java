@@ -296,6 +296,8 @@ public class RulesEngineController {
                 JSONObject policy_rules_action = policy_rules_actions.getJSONObject(k);
                 if (policy_rules_action.getString("action_object").equalsIgnoreCase("ElasticityAction")) {
                     policy_rules_action.put("action_type", "ScalingType");
+                }else if (policy_rules_action.getString("action_object").equalsIgnoreCase("AlertAction")) {
+                    policy_rules_action.put("action_type", "LogMessage");
                 }
 
             }
