@@ -69,7 +69,7 @@ Developing this micro-service is straightforward with a low amount of necessary 
 Changes to the repository can be requested using [this](https://github.com/sonata-nfv/tng-policy-mngr/issues) repository's issues and [pull requests](https://github.com/sonata-nfv/tng-policy-mngr/pulls) mechanisms.
 
 ## Versioning
-The most up-to-date version is v5.0. For the versions available, see the [link](https://github.com/sonata-nfv/tng-policy-mngr/releases) to tags on this repository.
+The most up-to-date version is v5.1. For the versions available, see the [link](https://github.com/sonata-nfv/tng-policy-mngr/releases) to tags on this repository.
 
 ## Configuration
 
