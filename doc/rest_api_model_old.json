@@ -1,9 +1,9 @@
-{
+ {
 	"swagger": "2.0",
 	"info": {
 		"description": "Api Documentation",
 		"version": "1.0",
-		"title": "Api Documentation",
+		"title": "5GTANGO tng-policy-mngr component REST API",
 		"termsOfService": "urn:tos",
 		"contact": {},
 		"license": {
@@ -11,7 +11,7 @@
 			"url": "http://www.apache.org/licenses/LICENSE-2.0"
 		}
 	},
-	"host": "int-sp-ath.5gtango.eu:8081",
+	"host": "pre-int-sp-ath.5gtango.eu:8081",
 	"basePath": "/",
 	"tags": [{
 		"name": "tng-policy-mngr",
@@ -386,76 +386,6 @@
 				}
 			}
 		},
-		"/api/v1/monitoring_metrics/{ns_id}": {
-			"get": {
-				"tags": ["tng-policy-mngr"],
-				"summary": "getNSMetrics",
-				"operationId": "getNSMetricsUsingGET",
-				"produces": ["*/*"],
-				"parameters": [{
-					"name": "ns_id",
-					"in": "path",
-					"description": "ns_id",
-					"required": true,
-					"type": "string"
-				}],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/JSONArray"
-						}
-					},
-					"401": {
-						"description": "Unauthorized"
-					},
-					"403": {
-						"description": "Forbidden"
-					},
-					"404": {
-						"description": "Not Found"
-					}
-				}
-			}
-		},
-		"/api/v1/new_action": {
-			"post": {
-				"tags": ["tng-policy-mngr"],
-				"summary": "newAction",
-				"operationId": "newActionUsingPOST",
-				"consumes": ["application/json"],
-				"produces": ["*/*"],
-				"parameters": [{
-					"in": "body",
-					"name": "tobject",
-					"description": "tobject",
-					"required": true,
-					"schema": {
-						"type": "string"
-					}
-				}],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/ResponseEntity"
-						}
-					},
-					"201": {
-						"description": "Created"
-					},
-					"401": {
-						"description": "Unauthorized"
-					},
-					"403": {
-						"description": "Forbidden"
-					},
-					"404": {
-						"description": "Not Found"
-					}
-				}
-			}
-		},
 		"/api/v1/pings": {
 			"get": {
 				"tags": ["tng-policy-mngr"],
@@ -542,79 +472,11 @@
 				}
 			}
 		},
-		"/api/v1/records/{nsr_id}": {
-			"get": {
-				"tags": ["tng-policy-mngr"],
-				"summary": "getPolicyStatusPerNSR",
-				"operationId": "getPolicyStatusPerNSRUsingGET",
-				"produces": ["*/*"],
-				"parameters": [{
-					"name": "nsr_id",
-					"in": "path",
-					"description": "nsr_id",
-					"required": true,
-					"type": "string"
-				}],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"type": "string"
-						}
-					},
-					"401": {
-						"description": "Unauthorized"
-					},
-					"403": {
-						"description": "Forbidden"
-					},
-					"404": {
-						"description": "Not Found"
-					}
-				}
-			}
-		},
 		"/api/v1/ui": {
 			"post": {
 				"tags": ["tng-policy-mngr"],
 				"summary": "createPolicyDescriptorFromUI",
 				"operationId": "createPolicyDescriptorFromUIUsingPOST",
-				"consumes": ["application/json"],
-				"produces": ["*/*"],
-				"parameters": [{
-					"in": "body",
-					"name": "tobject",
-					"description": "tobject",
-					"required": true,
-					"schema": {
-						"type": "string"
-					}
-				}],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/ResponseEntity"
-						}
-					},
-					"201": {
-						"description": "Created"
-					},
-					"401": {
-						"description": "Unauthorized"
-					},
-					"403": {
-						"description": "Forbidden"
-					},
-					"404": {
-						"description": "Not Found"
-					}
-				}
-			},
-			"put": {
-				"tags": ["tng-policy-mngr"],
-				"summary": "updatePolicyDescriptorFromUI",
-				"operationId": "updatePolicyDescriptorFromUIUsingPUT",
 				"consumes": ["application/json"],
 				"produces": ["*/*"],
 				"parameters": [{
@@ -712,10 +574,6 @@
 		}
 	},
 	"definitions": {
-		"JSONArray": {
-			"type": "object",
-			"title": "JSONArray"
-		},
 		"ResponseEntity": {
 			"type": "object",
 			"properties": {
