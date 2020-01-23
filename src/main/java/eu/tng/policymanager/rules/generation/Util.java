@@ -209,7 +209,7 @@ public class Util {
                     prometheus_rule.put("notification_type", new JSONObject("{\"id\": 2,\"type\":\"rabbitmq\"}"));
                     logger.info("monitoringRule condition " + monitoringRule.getCondition());
 
-                    prometheus_rule.put("condition", monitoringRule.getCondition() + "{container=\"" + vc_id + "\"} " + monitoringRule.getThreshold());
+                    prometheus_rule.put("condition", monitoringRule.getCondition() + "{container_name=\"" + vc_id + "\"} " + monitoringRule.getThreshold());
 
                     prometheus_rules.put(prometheus_rule);
                     System.out.println("prometheus_rule--->" + prometheus_rule);
