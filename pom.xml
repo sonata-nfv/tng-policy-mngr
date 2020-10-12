@@ -21,7 +21,7 @@
         <!--        <org.springframework.data>1.10.10.RELEASE</org.springframework.data>-->
            
         <!-- Testing -->
-        <junit>4.12</junit>               
+        <junit>4.13.1</junit>               
     </properties> 
     <dependencies>
         <dependency>
