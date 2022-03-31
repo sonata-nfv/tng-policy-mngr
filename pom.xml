@@ -17,7 +17,7 @@
         <kie.version>7.7.0.Final</kie.version>
         <!-- Global library versions-->      
        
-        <org.springframework.boot>2.0.3.RELEASE</org.springframework.boot>
+        <org.springframework.boot>2.5.12</org.springframework.boot>
         <!--        <org.springframework.data>1.10.10.RELEASE</org.springframework.data>-->
            
         <!-- Testing -->
