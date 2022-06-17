@@ -14,7 +14,7 @@
         <project.source.encoding>UTF-8</project.source.encoding>
         <java.version.source>1.8</java.version.source>
         <java.version.target>1.8</java.version.target>
-        <kie.version>7.7.0.Final</kie.version>
+        <kie.version>7.60.0.Final</kie.version>
         <!-- Global library versions-->      
        
         <org.springframework.boot>2.0.3.RELEASE</org.springframework.boot>
